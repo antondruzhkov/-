@@ -40,18 +40,25 @@ button:disabled{opacity:.6;cursor:wait}
 </form>
 </main>
 <script>
-const SALT="cNrc4EDqUmD+nrV1fXi46A==", ITER=250000;
+const SALT="JL8OjBNrEBAGqrZHeua08w==", ITER=250000, VER="24bf0e8c13";
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function keyFrom(pw){ const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(SALT),iterations:ITER,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']); }
 async function dec(key,buf){ const u=new Uint8Array(buf); return crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},key,u.slice(12)); }
+async function load(url,from,to){
+  const r=await fetch(url+'?v='+VER,{cache:'no-store'}); if(!r.ok) throw new Error('net');
+  const total=+r.headers.get('content-length')||0; if(!r.body||!total) return r.arrayBuffer();
+  const rd=r.body.getReader(), parts=[]; let got=0;
+  for(;;){ const {done,value}=await rd.read(); if(done) break; parts.push(value); got+=value.length; msg.textContent='Загружаю '+Math.round(from+(to-from)*got/total)+'%'; }
+  const out=new Uint8Array(got); let o=0; for(const c of parts){ out.set(c,o); o+=c.length; } return out.buffer;
+}
 async function open_(pw,remember){
   const key=await keyFrom(pw);
-  const site=await fetch('site.bin',{cache:'no-cache'}).then(r=>r.arrayBuffer());
+  const site=await load('site.bin',0,30);
   const html=new TextDecoder().decode(await dec(key,site));
   if(remember){ try{ localStorage.setItem('chtivo.pw',pw); }catch(_){} }
   let film='';
-  try{ const fb=await fetch('film.bin',{cache:'no-cache'}).then(r=>r.arrayBuffer()); film=URL.createObjectURL(new Blob([await dec(key,fb)],{type:'video/mp4'})); }catch(_){}
+  try{ const fb=await load('film.bin',30,100); film=URL.createObjectURL(new Blob([await dec(key,fb)],{type:'video/mp4'})); }catch(_){}
   const inj='<script>window.__FILM='+JSON.stringify(film||'film-missing.mp4')+';<\/script>';
   const out=html.replace('<body>','<body>'+inj);
   document.open(); document.write(out); document.close();
@@ -59,8 +66,8 @@ async function open_(pw,remember){
 const f=document.getElementById('f'), msg=document.getElementById('msg'), go=document.getElementById('go');
 f.addEventListener('submit',async e=>{ e.preventDefault(); go.disabled=true; msg.textContent='Открываю...';
   try{ await open_(document.getElementById('pw').value, document.getElementById('rm').checked); }
-  catch(_){ go.disabled=false; msg.textContent='Неверный пароль'; } });
-(async()=>{ let pw=null; try{ pw=localStorage.getItem('chtivo.pw'); }catch(_){} if(pw){ msg.textContent='Открываю...'; go.disabled=true; try{ await open_(pw,true); }catch(_){ try{ localStorage.removeItem('chtivo.pw'); }catch(__){} go.disabled=false; msg.textContent=''; } } })();
+  catch(e){ go.disabled=false; msg.textContent=(e&&e.message==='net')?'Не удалось загрузить сайт. Обнови страницу':'Неверный пароль'; } });
+(async()=>{ let pw=null; try{ pw=localStorage.getItem('chtivo.pw'); }catch(_){} if(pw){ msg.textContent='Открываю...'; go.disabled=true; try{ await open_(pw,true); }catch(e){ if(!(e&&e.message==='net')){ try{ localStorage.removeItem('chtivo.pw'); }catch(__){} } go.disabled=false; msg.textContent=(e&&e.message==='net')?'Не удалось загрузить сайт. Обнови страницу':''; } } })();
 </script>
 </body>
 </html>
