@@ -40,7 +40,7 @@ button:disabled{opacity:.6;cursor:wait}
 </form>
 </main>
 <script>
-const SALT="JL8OjBNrEBAGqrZHeua08w==", ITER=250000, VER="24bf0e8c13";
+const SALT="lqOe7SGF95NE1GUVmA7gUg==", ITER=250000, VER="96a39eed21";
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function keyFrom(pw){ const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(SALT),iterations:ITER,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']); }
