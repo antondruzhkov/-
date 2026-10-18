@@ -1678,7 +1678,8 @@ async function loadBody(){
     const b=box(p.g,[34,26,22],L(top[0],top[1],k*312),'coil');b.userData.alt=true;
     const lt=box(p.g,[10,6,6],L(top[0],top[1]+15,k*322),'red');lt.userData.alt=true;
     const w=tube(p.g,[L(top[0],top[1]-12,k*312),L(top[0]-6,top[1]-45,k*316),L(bot[0],bot[1],k*314),L(bot[0]-10,bot[1]-25,k*292),L(bot[0]-30,bot[1]-35,k*250)],5,'black',30);w.userData.alt=true;});
-  ['crashbars','rack'].forEach(id=>{if(P[id]){P[id].g.visible=false;P[id].gone=true;}});
+  ['crashbars','rack','camchains'].forEach(id=>{if(P[id]){P[id].g.visible=false;P[id].gone=true;}});
+  for(let i=pickables.length-1;i>=0;i--){const q=P[pickables[i].userData.part];if(q&&q.gone)pickables.splice(i,1);}
   /* hand-built parts with no scanned twin stay inside: shown in contours and service steps */
   const KEEP=new Set(['wheelF','wheelR','capR','capL']);
   Object.values(P).forEach(p=>{if(got.has(p.id)||KEEP.has(p.id))return;if(p.layer==='bike'||p.layer==='drive'){p.hid=true;if(p.layer==='bike'){p.wasBike=true;p.layer='internal';}}});
