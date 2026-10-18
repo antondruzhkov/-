@@ -1,0 +1,1690 @@
+<title>Сервисная книга R nineT</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: workshop lift. 3D bay on the left, service manual binder on the right; stacks on phones. */
+:root{
+  --bg:#E4E7EA; --panel:#F3F4F5; --sunk:#E9ECEE; --ink:#15181B; --muted:#596068; --line:#C7CCD1;
+  --hazard:#F2B705; --hazard-ink:#15181B; --warn:#B3261E; --ok:#2E7D4F; --flag:#8A5A00;
+  --f-disp:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121417; --panel:#1A1D21; --sunk:#202428; --ink:#E6E8EA; --muted:#9AA1A9; --line:#30353B;
+  --hazard:#F2B705; --hazard-ink:#15181B; --warn:#FF7A70; --ok:#5CC98A; --flag:#E9B44C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121417; --panel:#1A1D21; --sunk:#202428; --ink:#E6E8EA; --muted:#9AA1A9; --line:#30353B;
+  --hazard:#F2B705; --hazard-ink:#15181B; --warn:#FF7A70; --ok:#5CC98A; --flag:#E9B44C; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);overflow:hidden}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--hazard);outline-offset:2px}
+
+.app{height:100%;display:grid;grid-template-rows:auto 1fr;}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{display:flex;flex-direction:column;line-height:1.1;margin-right:auto;min-width:0}
+.brand b{font:700 16px/1.1 var(--f-disp);letter-spacing:.02em}
+.brand span{font:12px var(--f-mono);color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:10px}
+.tab{border:0;background:transparent;padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--hazard);color:var(--hazard-ink)}
+.tab:hover:not([aria-selected="true"]){color:var(--ink)}
+
+main{display:grid;grid-template-columns:1fr 400px;min-height:0}
+.bay{position:relative;min-height:0;min-width:0}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+.hud{position:absolute;left:12px;bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:calc(100% - 24px)}
+.chipbtn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 11px;font-size:13px;cursor:pointer}
+.chipbtn[aria-pressed="true"]{border-color:var(--ink)}
+.slider{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px}
+.slider input{width:150px;accent-color:var(--hazard)}
+.tag3d{position:absolute;top:12px;left:12px;font:12px var(--f-mono);color:var(--muted);pointer-events:none}
+.tip{position:absolute;z-index:5;pointer-events:none;max-width:300px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px;line-height:1.4;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.tip b{display:block;font-size:14px}.tip small{display:block;color:var(--muted);font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.ctr{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.ctr button{width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.ctr button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.ctr i{width:12px;height:12px;border-radius:3px;flex:none;margin-top:4px}
+.ctr span{display:flex;flex-direction:column;gap:2px;min-width:0}.ctr em{font-style:normal;color:var(--muted);font-size:12.5px}
+.hint{position:absolute;top:12px;right:12px;font-size:12px;color:var(--muted);pointer-events:none;text-align:right}
+
+aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;min-height:0;
+  padding-block:18px 28px;padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px))}
+aside h2{font:700 15px/1.25 var(--f-disp);margin:0 0 6px;letter-spacing:.01em;text-wrap:balance}
+aside h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 8px;font-weight:600}
+aside p{margin:0 0 10px;max-width:62ch}
+.lead{color:var(--muted);font-size:14px}
+.specs{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px;margin:0}
+.specs dt{color:var(--muted)}
+.specs dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:13px}
+.pick{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg);margin-top:10px}
+.pick b{display:block;font-weight:600}
+.pick small{color:var(--muted);font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+
+.ops{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.op{width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.op:hover{border-color:var(--ink)}
+.op b{font-weight:600}
+.op .sub{grid-column:1;color:var(--muted);font-size:12.5px}
+.op .diff{grid-row:1/3;grid-column:2;align-self:center;font:600 11px var(--f-mono);display:flex;gap:2px}
+.diff i{width:6px;height:14px;border-radius:2px;background:var(--line)}
+.diff i.on{background:var(--hazard)}
+.search{display:flex;gap:6px;margin:6px 0 4px}
+.search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;font:inherit;color:var(--ink)}
+.found{font-size:13px;color:var(--muted);min-height:20px}
+
+.step-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.back{border:0;background:none;padding:4px 0;color:var(--muted);cursor:pointer;font-size:13px}
+.back:hover{color:var(--ink)}
+.need{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;background:var(--bg)}
+.need ul{margin:4px 0 0;padding-left:18px}
+.stepbox{border-top:3px solid var(--hazard);margin-top:14px;padding-top:12px}
+.stepno{font:600 12px var(--f-mono);color:var(--muted);letter-spacing:.04em}
+.stepbox h4{font:700 16px/1.3 var(--f-disp);margin:4px 0 8px;text-wrap:balance}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.fact{font:12.5px var(--f-mono);border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--bg)}
+.fact.tq{border-color:var(--hazard);background:var(--hazard);color:var(--hazard-ink);font-weight:600}
+.fact.flag{border-style:dashed;color:var(--flag);border-color:var(--flag)}
+.warn{border-left:3px solid var(--warn);padding:6px 10px;font-size:13.5px;margin:8px 0;background:var(--bg);border-radius:0 8px 8px 0}
+.nav{display:flex;gap:8px;margin-top:14px}
+.nav button{flex:1;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:10px;cursor:pointer;font-weight:600}
+.nav button.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.nav button:disabled{opacity:.4;cursor:default}
+.dots{display:flex;gap:4px;margin-top:10px}
+.dots i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.dots i.on{background:var(--hazard)}
+
+.strokes{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 10px;font-size:13px;align-items:center}
+.strokes .h{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.strokes .cell{font-family:var(--f-mono);font-size:12px;padding:3px 6px;border-radius:5px;border:1px solid var(--line);text-align:center;transition:background .15s}
+.strokes .cell.on{background:var(--hazard);color:var(--hazard-ink);border-color:var(--hazard)}
+.gears{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+.gears button{width:38px;height:36px;border:1px solid var(--line);background:var(--bg);border-radius:7px;cursor:pointer;font:600 13px var(--f-mono)}
+.gears button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.ratio{font:13px var(--f-mono);color:var(--muted)}
+.src{font-size:12.5px;color:var(--muted)}
+.src a{color:inherit}
+.src li{margin-bottom:4px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+#dash{position:absolute;inset:0;z-index:6;background:radial-gradient(120% 90% at 50% 40%,#2A2F35 0%,#0E1013 70%);display:flex;align-items:center;justify-content:center;padding:16px}
+#dash[hidden]{display:none}
+.dwrap{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(100%,560px)}
+.clock{width:min(100%,62vh);height:auto;filter:drop-shadow(0 18px 40px rgba(0,0,0,.55))}
+.dcap{font:600 13px var(--f-mono);color:#C9D1D8;letter-spacing:.04em;text-align:center;min-height:20px}
+.lamp.b1{animation:bl 1s steps(1) infinite}.lamp.b2{animation:bl .32s steps(1) infinite}.lamp.b3{animation:bl 1.8s steps(1) infinite}#lsym.b1{animation:bl 1s steps(1) infinite}
+@keyframes bl{0%{opacity:1}50%{opacity:.12}}
+.sigs .sico{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:8px;background:#121417}
+.sev{display:inline-block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:5px;margin-top:6px;border:1px solid var(--line);color:var(--muted)}
+.sev.warn{border-color:var(--warn);color:var(--warn)}.sev.flag{border-color:var(--flag);color:var(--flag)}.sev.ok{border-color:var(--ok);color:var(--ok)}
+.pick.sig{border-top:3px solid var(--hazard);margin:0 0 6px}.sigdet{list-style:none}
+.mus{display:inline-flex;align-items:center;gap:6px}.mus[aria-pressed="true"]{background:var(--hazard);color:var(--hazard-ink);border-color:var(--hazard)}
+@media (prefers-reduced-motion: reduce){.lamp.b1,.lamp.b2,.lamp.b3,#lsym.b1{animation-duration:2s}}
+@media (max-width:860px){
+  .tabs{max-width:100%;overflow-x:auto;scrollbar-width:none}.tab{padding:7px 9px;font-size:13px;white-space:nowrap}
+  .clock{width:min(100%,50vh)}
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  main{grid-template-columns:1fr}
+  .bay{height:58vh;min-height:330px}
+  aside{border-left:0;border-top:1px solid var(--line);overflow:visible;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .hint{display:none}
+  .slider input{width:110px}
+}
+@media (prefers-reduced-motion: reduce){ .strokes .cell{transition:none} }
+</style>
+
+<div class="app">
+<header>
+  <div class="brand"><b>R nineT Scrambler</b><span>K23 · 2017-2020 · 1170 см³ · сервисная книга</span></div>
+  <nav class="tabs" role="tablist" aria-label="Разделы">
+    <button class="tab" role="tab" id="t-bike" aria-selected="true">Мотоцикл</button>
+    <button class="tab" role="tab" id="t-engine" aria-selected="false">Двигатель</button>
+    <button class="tab" role="tab" id="t-service" aria-selected="false">Обслуживание</button>
+    <button class="tab" role="tab" id="t-dash" aria-selected="false">Приборка</button>
+  </nav>
+  <button class="chipbtn mus" id="music" aria-pressed="false" title="Включить или выключить музыку"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>Музыка</span></button>
+</header>
+<main>
+  <div class="bay">
+    <canvas id="gl" aria-label="3D-модель мотоцикла, вращается мышью или пальцем"></canvas>
+    <div class="tag3d" id="tag3d">ВИД: ОБЩИЙ</div>
+    <div class="hint">Вращать во все стороны, даже снизу · Зум: колесо или щипок<br>Наведи на деталь: что это и зачем</div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="hud" id="hud"></div>
+    <div id="dash" hidden></div>
+  </div>
+  <aside id="panel" aria-live="polite"></aside>
+</main>
+</div>
+
+<script>
+/* ===== Приборка (по инструкции владельца BMW Motorrad R nineT Scrambler, 02/2019) + музыка ===== */
+(function(){
+"use strict";
+const NS='http://www.w3.org/2000/svg';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MANUAL='https://manuals.bmw-motorrad.com/manuals/BA-Extern/IN/BA-INTERNET-COM/PDF/R_0J33_RM_0219_07.pdf';
+
+/* ---------- icons (24x24, stroke) ---------- */
+const IC={
+  hb:'<path d="M13 5c4 0 7 3 7 7s-3 7-7 7c-1.5 0-2-1-2-7s.5-7 2-7z"/><path d="M8 7H2M8 10H2M8 13H2M8 16H2"/>',
+  gw:'<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r=".6"/>',
+  n:'<text x="12" y="17.5" text-anchor="middle" font-size="16" font-weight="700" stroke="none" fill="currentColor" font-family="Arial,sans-serif">N</text>',
+  asc:'<text x="12" y="15" text-anchor="middle" font-size="8.5" font-weight="700" stroke="none" fill="currentColor" font-family="Arial,sans-serif">ASC</text><path d="M3 19c3-2 6-2 9 0s6 2 9 0"/>',
+  turn:'<path d="M2 12l5-5v3h4v4H7v3z"/><path d="M22 12l-5-5v3h-4v4h4v3z"/>',
+  abs:'<circle cx="12" cy="12" r="7"/><path d="M4 6a10 10 0 0 0 0 12M20 6a10 10 0 0 1 0 12"/><text x="12" y="14.6" text-anchor="middle" font-size="6.5" font-weight="700" stroke="none" fill="currentColor" font-family="Arial,sans-serif">ABS</text>',
+  key:'<circle cx="7" cy="12" r="4"/><path d="M11 12h11M18 12v4M21 12v3"/>',
+  temp:'<path d="M12 3v11"/><circle cx="12" cy="17" r="3"/><path d="M15 6h3M15 9h3M15 12h3"/><path d="M3 20c2-1 3-1 4 0M17 20c2-1 3-1 4 0"/>',
+  eng:'<path d="M5 9h3V7h6l2 2h2v3h2V9h2v8h-2v-3h-2v3h-3l-2 2H8v-3H5z"/><path d="M2 11v5"/>',
+  bat:'<rect x="3" y="7" width="18" height="12" rx="1"/><path d="M7 7V5h3v2M14 7V5h3v2M6.5 13h3M15 13h3M16.5 11.5v3"/>',
+  bulb:'<path d="M9 17h6M10 20h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/>',
+  fuel:'<rect x="4" y="4" width="10" height="16" rx="1"/><path d="M6 8h6M14 9h3l2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
+  serv:'<path d="M14.5 6.5a4 4 0 0 0 5 5L21 13l-8 8-2-2 7-7-1.5-1.5a4 4 0 0 0-5-5l2.5 2.5-2 2z"/><path d="M3 21l6-6"/>',
+  dwab:'<rect x="3" y="9" width="18" height="11" rx="1"/><path d="M8 9V7h3v2M13 9V7h3v2"/><text x="12" y="17.3" text-anchor="middle" font-size="6" font-weight="700" stroke="none" fill="currentColor" font-family="Arial,sans-serif">DWA</text>'
+};
+const icon=(k,sz)=>`<svg viewBox="0 0 24 24" width="${sz||22}" height="${sz||22}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
+
+/* lamp order per manual: 1 high beam, 2 general warning, 3 neutral, 4 ASC, 5 turn, 6 ABS */
+const LAMPS=[['hb','#4FA3FF','Дальний свет'],['gw','#FFB020','Общая предупредительная'],['n','#3FD07A','Нейтраль'],['asc','#FFB020','ASC'],['turn','#3FD07A','Поворотники'],['abs','#FFB020','ABS']];
+
+/* ---------- signals straight from the rider's manual ---------- */
+const SIG=[
+ {g:'gw',id:'ews',t:'Ключ: иммобилайзер EWS',L:{gw:'on'},sym:'key',sev:'stop',
+  what:'Горит общая лампа, на дисплее ключ. Ключ не опознан или нарушена связь ключа с электроникой двигателя. Мотор не заведётся.',
+  todo:['Сними с кольца другие ключи.','Если ключ неисправен, его меняют у дилера BMW Motorrad.']},
+ {g:'gw',id:'temp',t:'Перегрев двигателя',L:{gw:'blink'},sym:'temp',sev:'soon',
+  what:'Мигает общая лампа, на дисплее термометр. Температура масла в двигателе слишком высокая. Мотор воздушно-масляный, отдельной охлаждайки у него нет.',
+  todo:['Если можно, едь дальше на частичной нагрузке, без газа в пол: мотор остынет на ходу.','Если повторяется часто, сразу в сервис.'],w:'Езда с перегретым двигателем может его повредить.'},
+ {g:'gw',id:'emerg',t:'Двигатель в аварийном режиме',L:{gw:'on'},sym:'eng',sev:'soon',
+  what:'Горит общая лампа, на дисплее значок двигателя. Блок управления нашёл неисправность и перевёл мотор в аварийный режим. Полной мощности может не быть. В редких случаях мотор глохнет и не заводится.',
+  todo:['Ехать можно, но без резких разгонов и обгонов.','Как можно скорее в сервис: там читают ошибку диагностикой.']},
+ {g:'gw',id:'engw',t:'Предупреждение двигателя',L:{gw:'blink'},sym:'eng',sev:'stop',
+  what:'Мигает общая лампа, на дисплее значок двигателя. Неисправность, которая может привести к тяжёлому повреждению. Мотор уже в аварийном режиме.',
+  todo:['Едь медленно: без разгонов, обгонов, высоких оборотов и нагрузки.','По инструкции лучше вызвать эвакуатор и везти в сервис.','Ехать дальше технически можно, но BMW это не рекомендует.']},
+ {g:'gw',id:'volt',t:'Низкое напряжение бортсети',L:{gw:'on'},sym:'bat',sev:'stop',
+  what:'Горит общая лампа, на дисплее аккумулятор. Аккумулятор неисправен, напряжение в сети слишком низкое.',
+  todo:['По инструкции дальше не ехать.','Как можно скорее устранить в сервисе.']},
+ {g:'gw',id:'bulb',t:'Перегорела лампа',L:{gw:'on'},sym:'bulb',sev:'soon',
+  what:'Горит общая лампа, на дисплее лампочка. Вышла из строя одна или несколько ламп.',
+  todo:['Обойди мотоцикл и найди, что не светит.','Замени как можно скорее: фара H4 12 В 60/55 Вт, габарит W5W 12 В 5 Вт, поворотники RY10W 12 В 10 Вт.','BMW советует возить с собой комплект запасных ламп.']},
+ {g:'gw',id:'fuel',t:'Резерв топлива',L:{gw:'on'},sym:'fuel',lab:'TRIP R',val:'12',unit:'km',sev:'soon',
+  what:'Горит общая лампа, на дисплее топливо и TRIP R. В баке осталось около 3,5 л из 17. TRIP R считает, сколько ты проехал на резерве.',
+  todo:['Заправься, не катай бак до пустого.','Запас хода на резерве зависит от манеры езды, TRIP R только помогает прикинуть.','Бензин по инструкции: рекомендуется 98, допускается 95.']},
+ {g:'gw',id:'serv',t:'Пора на ТО',L:{gw:'on'},sym:'serv',lab:'SERV',val:'',unit:'',sev:'info',
+  what:'Горит общая лампа, на дисплее ключ-гаечка. Срок ТО прошёл. За месяц до срока или примерно за 1000 км заранее значок появляется с датой или остатком пробега. Сразу после проверки при включении на секунду может мелькнуть SERV T или SERV D.',
+  todo:['Записаться на ТО.','Если отключали аккумулятор, дату сервиса иногда нужно выставить заново.']},
+ {g:'gw',id:'dwab',t:'Сел аккумулятор сигнализации',L:{},sym:'dwab',sev:'info',
+  what:'Значок DWA с батарейкой ненадолго появляется после проверки при включении. Аккумулятор сигнализации больше не держит заряд. Если отключить основной аккумулятор, сигнализация работать не будет.',
+  todo:['Обратиться в сервис, лучше к дилеру BMW Motorrad.'],opt:true},
+
+ {g:'abs',id:'absd',t:'ABS: самодиагностика не завершена',L:{abs:'blink'},sev:'info',
+  what:'Мигает лампа ABS. После включения зажигания ABS проверяет себя. Датчики колёс он проверяет только на ходу, от 5 км/ч. Пока лампа мигает, ABS не работает.',
+  todo:['Тронься и медленно разгонись больше 5 км/ч: лампа погаснет.']},
+ {g:'abs',id:'absoff',t:'ABS выключен',L:{abs:'on'},sev:'soon',
+  what:'Горит лампа ABS. ABS выключил ты сам кнопкой на левом пульте.',
+  todo:['Включить обратно: зажигание включено, зажми кнопку ABS/ASC, пока лампы ABS и ASC не поменяют поведение, отпусти в течение 2 секунд. Лампа погаснет или замигает, если диагностика ещё не прошла.']},
+ {g:'abs',id:'abserr',t:'Ошибка ABS',L:{abs:'on'},sev:'soon',
+  what:'Горит лампа ABS, хотя ты его не выключал. Блок ABS нашёл неисправность, ABS не работает.',
+  todo:['Ехать можно, но тормози с расчётом, что колёса могут заблокироваться.','Как можно скорее в сервис.'],w:'Горит постоянно и при выключенном ABS, и при ошибке. Если сам не выключал, это ошибка.'},
+
+ {g:'asc',id:'ascint',t:'ASC работает: колесо проскальзывает',L:{asc:'fast'},sev:'info',
+  what:'Лампа ASC быстро мигает. Система заметила, что заднее колесо теряет сцепление, и убрала момент двигателя. Мигает чуть дольше, чем длится вмешательство, чтобы ты успел заметить.',
+  todo:['Это штатная работа системы.']},
+ {g:'asc',id:'ascd',t:'ASC: самодиагностика не завершена',L:{asc:'slow'},sev:'info',
+  what:'Лампа ASC медленно мигает. ASC проверяет себя и заработает только после 5 км/ч.',
+  todo:['Тронься и медленно разгонись больше 5 км/ч.']},
+ {g:'asc',id:'ascoff',t:'ASC выключен',L:{asc:'on'},sev:'info',
+  what:'Горит лампа ASC. ASC выключил ты сам.',
+  todo:['Включить: зажми кнопку ABS/ASC, пока лампа ASC не поменяет поведение, отпусти в течение 2 секунд.','Ещё способ: выключить и включить зажигание и проехать больше 5 км/ч.']},
+ {g:'asc',id:'ascerr',t:'Ошибка ASC',L:{asc:'on'},sev:'soon',
+  what:'Горит лампа ASC, хотя ты его не выключал. Блок нашёл неисправность, ASC не работает.',
+  todo:['Ехать можно с учётом того, что ASC не работает.','Как можно скорее в сервис.','После смены шин на другой тип (например, дорожные на внедорожные) ASC нужно перепрограммировать у дилера.']},
+
+ {g:'norm',id:'hb',t:'Дальний свет',L:{hb:'on'},sev:'ok',what:'Синяя лампа: включён дальний или ты моргаешь светом.',todo:['Переключатель дальнего на левом пульте.']},
+ {g:'norm',id:'n',t:'Нейтраль',L:{n:'on'},sev:'ok',what:'Зелёная N: коробка в нейтрали. Заводить можно в нейтрали или с выжатым сцеплением.',todo:['Мотор заводится только когда аварийный выключатель на правом пульте в рабочем положении.']},
+ {g:'norm',id:'turn',t:'Поворотники и аварийка',L:{turn:'blink'},sev:'ok',what:'Зелёная лампа мигает вместе с поворотниками. Аварийку включают кнопкой на левом пульте, после этого зажигание можно выключить.',todo:['Аварийка сильно сажает аккумулятор: держи её включённой только сколько нужно.','Выключить аварийку: включить зажигание и нажать кнопку ещё раз.']},
+];
+const GROUPS=[['gw','Общая лампа + значок на дисплее'],['abs','ABS'],['asc','ASC: контроль пробуксовки'],['norm','Обычные индикаторы']];
+const SEV={stop:['Не ехать или вызвать эвакуатор','warn'],soon:['В сервис как можно скорее','flag'],info:['Информация','info'],ok:['Норма','ok']};
+
+/* ---------- SVG instrument ---------- */
+const dash=document.getElementById('dash');
+function dial(){
+  const a=v=>(-135+v/220*270)*Math.PI/180, P=(r,v)=>[300+r*Math.sin(a(v)),300-r*Math.cos(a(v))];
+  let ticks='',nums='';
+  for(let v=0;v<=220;v+=5){const big=v%20===0,mid=v%10===0;const [x1,y1]=P(258,v),[x2,y2]=P(big?228:mid?238:246,v);
+    ticks+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#E9EDF1" stroke-width="${big?4:mid?2.4:1.4}" stroke-linecap="round"/>`;
+    if(big){const [x,y]=P(200,v);nums+=`<text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" text-anchor="middle" font-size="26" font-weight="600" fill="#E9EDF1" font-family="Arial,Helvetica,sans-serif">${v}</text>`;}}
+  const lamps=LAMPS.map(([k,c],i)=>`<g class="lamp" id="lp-${k}" data-c="${c}" transform="translate(${(300+(i-2.5)*44-12).toFixed(1)},193)"><circle r="20" cx="12" cy="12" fill="#0B0D10" stroke="#2A2F35"/><g class="lg" color="#39404A"><svg x="0" y="0" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg></g></g>`).join('');
+  return `<svg viewBox="0 0 600 600" class="clock" role="img" aria-label="Приборная панель R nineT Scrambler">
+  <defs><radialGradient id="fc" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#23272C"/><stop offset="1" stop-color="#0C0E11"/></radialGradient>
+  <linearGradient id="bz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F6F8"/><stop offset=".5" stop-color="#8E959C"/><stop offset="1" stop-color="#DADFE4"/></linearGradient>
+  <linearGradient id="lcd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A1F24"/><stop offset="1" stop-color="#0E1216"/></linearGradient></defs>
+  <circle cx="300" cy="300" r="296" fill="url(#bz)"/><circle cx="300" cy="300" r="280" fill="#050607"/><circle cx="300" cy="300" r="274" fill="url(#fc)"/>
+  ${ticks}${nums}
+  <text x="300" y="356" text-anchor="middle" font-size="17" fill="#9AA3AC" font-family="Arial,sans-serif" letter-spacing="1">km/h</text>
+  ${lamps}
+  <g id="lcdg"><rect x="178" y="372" width="244" height="104" rx="10" fill="url(#lcd)" stroke="#2C333A" stroke-width="2"/>
+   <g id="lsym" transform="translate(190,388)" color="#FFB020"></g>
+   <text id="llab" x="410" y="402" text-anchor="end" font-size="17" fill="#C9E8FF" font-family="Menlo,Consolas,monospace" letter-spacing="1">ODO</text>
+   <text id="lval" x="378" y="458" text-anchor="end" font-size="44" fill="#E8F6FF" font-family="Menlo,Consolas,monospace" font-weight="700">18420</text>
+   <text id="lunit" x="410" y="458" text-anchor="end" font-size="17" fill="#C9E8FF" font-family="Menlo,Consolas,monospace">km</text></g>
+  <circle id="dwaled" cx="300" cy="518" r="6" fill="#2A0C0C" stroke="#3A3F45"/>
+  <text x="300" y="545" text-anchor="middle" font-size="11" fill="#5E6670" font-family="Arial,sans-serif" letter-spacing="2">DWA</text>
+  <g id="needle" transform="rotate(-135 300 300)"><path d="M296 312 L300 66 L304 312 Z" fill="#FF3B2F"/><circle cx="300" cy="300" r="26" fill="#15181B" stroke="#3B4248" stroke-width="3"/><circle cx="300" cy="300" r="9" fill="#3B4248"/></g>
+  <text x="300" y="585" text-anchor="middle" font-size="12" fill="#3A4047" font-family="Arial,sans-serif" letter-spacing="3">BMW MOTORRAD</text>
+  </svg>`;}
+dash.innerHTML=`<div class="dwrap">${dial()}<div class="dcap" id="dcap">Нажми сигнал справа</div></div>`;
+
+const $=id=>document.getElementById(id);
+let needle=0,needleTgt=0,timers=[];
+function clearT(){timers.forEach(clearTimeout);timers=[];}
+function setLamp(k,mode){const g=$('lp-'+k);if(!g)return;const c=g.dataset.c,on=mode&&mode!=='off';
+  const lg=g.querySelector('.lg');lg.setAttribute('color',on?c:'#39404A');g.querySelector('circle').setAttribute('fill',on?c+'22':'#0B0D10');
+  g.classList.remove('b1','b2','b3');if(mode==='blink')g.classList.add('b1');if(mode==='fast')g.classList.add('b2');if(mode==='slow')g.classList.add('b3');
+  lg.style.filter=on?`drop-shadow(0 0 6px ${c})`:'none';}
+function setLcd(o){o=o||{};$('lsym').innerHTML=o.sym?`<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[o.sym]}</svg>`:'';
+  $('lsym').classList.toggle('b1',!!o.symBlink);
+  $('llab').textContent=o.lab!=null?o.lab:'ODO';$('lval').textContent=o.val!=null?o.val:'18420';$('lunit').textContent=o.unit!=null?o.unit:'km';}
+function state(L,lcd){LAMPS.forEach(([k])=>setLamp(k,(L||{})[k]||'off'));setLcd(lcd);}
+function dwa(n){clearT();const led=$('dwaled');let i=0;
+  const seq=()=>{for(let k=0;k<n;k++){timers.push(setTimeout(()=>led.setAttribute('fill','#FF2A1E'),k*420));timers.push(setTimeout(()=>led.setAttribute('fill','#2A0C0C'),k*420+220));}timers.push(setTimeout(seq,n*420+1400));};seq();}
+function needleLoop(){needle+=(needleTgt-needle)*.08;$('needle').setAttribute('transform',`rotate(${(-135+needle/220*270).toFixed(2)} 300 300)`);requestAnimationFrame(needleLoop);}
+requestAnimationFrame(needleLoop);
+
+function preRide(){clearT();$('dwaled').setAttribute('fill','#2A0C0C');cap('Проверка при включении зажигания');
+  state({hb:'on',gw:'on',n:'on',asc:'on',turn:'on',abs:'on'},{sym:'eng',lab:'88888',val:'88888',unit:'km'});needleTgt=0;
+  timers.push(setTimeout(()=>{state({gw:'blink',n:'on',asc:'slow',abs:'blink'},{lab:'',val:'',unit:''});needleTgt=220;cap('Фаза 2: общая лампа мигает, стрелка уходит на максимум');},1600));
+  timers.push(setTimeout(()=>{needleTgt=0;state({n:'on',asc:'slow',abs:'blink'},{});cap('Фаза 3: стрелка на ноль, лампы гаснут. ABS и ASC мигают до 5 км/ч');},3400));}
+function cap(t){$('dcap').textContent=t;}
+
+/* ---------- side panel ---------- */
+let sel=null;
+function detail(s){if(!s)return `<div class="pick"><small>как пользоваться</small><b>Выбери сигнал ниже</b><p class="lead" style="margin:6px 0 0">Приборка покажет его так, как ты увидишь на своей: какая лампа горит или мигает и какой значок на дисплее. Под сигналом раскроется, что это значит и что делать.</p></div>`;
+  const sv=SEV[s.sev];return `<div class="pick sig"><small>${esc(GROUPS.find(g=>g[0]===s.g)[1])}</small><b>${esc(s.t)}</b>
+  <span class="sev ${sv[1]}">${sv[0]}</span><p style="margin:8px 0 6px">${esc(s.what)}</p>
+  <div class="need"><b>Что делать</b><ul>${s.todo.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+  ${s.w?`<div class="warn">${esc(s.w)}</div>`:''}${s.opt?'<p class="src" style="margin-top:6px">Только если стоит сигнализация DWA (опция).</p>':''}</div>`;}
+function show(id){clearT();$('dwaled').setAttribute('fill','#2A0C0C');needleTgt=0;const s=SIG.find(x=>x.id===id);sel=id;
+  state(s.L,{sym:s.sym,lab:s.lab,val:s.lab==='SERV'?'':s.val,unit:s.unit});cap(s.t);
+  document.querySelectorAll('.sigdet').forEach(x=>x.remove());document.querySelectorAll('.sigbtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===id));
+  const btn=document.querySelector(`.sigbtn[data-id="${id}"]`);if(btn){const li=document.createElement('li');li.className='sigdet';li.innerHTML=detail(s);btn.parentNode.after(li);}
+  if(window.matchMedia('(max-width:860px)').matches)dash.scrollIntoView({behavior:'smooth',block:'start'});}
+function row(s){const lampK=Object.keys(s.L)[0];const k=s.sym||lampK||'gw';const lc=(LAMPS.find(l=>l[0]===(lampK||'gw'))||LAMPS[1])[1];
+  const mode=lampK?s.L[lampK]:'';const ml={on:'горит',blink:'мигает',fast:'мигает часто',slow:'мигает медленно'}[mode]||'значок';
+  return `<li><button class="sigbtn" data-id="${s.id}" aria-pressed="false"><span class="sico" style="color:${s.g==='norm'?lc:(s.sym?'#C98A00':lc)}">${icon(k,22)}</span><span><b>${esc(s.t)}</b><em>${esc((lampK?LAMPS.find(l=>l[0]===lampK)[2]+': ':'')+ml)}</em></span></button></li>`;}
+function panelHTML(){return `<h2>Приборка: что значит каждая лампочка</h2>
+  <p class="lead">Всё на этой вкладке взято из официальной инструкции владельца BMW Motorrad именно для R nineT Scrambler, издание 02/2019. Нажми на сигнал: приборка покажет его так, как ты увидишь на своей.</p>
+  ${detail(null)}
+  <h3>При каждом включении зажигания</h3>
+  <p style="font-size:14px">Сначала загорается всё, потом мигает общая лампа и стрелка проходит до максимума, потом всё гаснет. Если стрелка не двинулась, какая-то лампа не загорелась или на дисплее нет сегментов, приборку надо проверить в сервисе.</p>
+  <button class="chipbtn" id="preride">Показать проверку при включении</button>
+  ${GROUPS.map(([g,n])=>`<h3>${esc(n)}</h3><ul class="ctr sigs">${SIG.filter(s=>s.g===g).map(row).join('')}</ul>`).join('')}
+  <h3>Сигнализация DWA (если стоит)</h3>
+  <p style="font-size:14px">Если сигнализация срабатывала, пока тебя не было, после включения зажигания красный светодиод минуту мигает кодом: сколько вспышек, такая причина.</p>
+  <ul class="ctr">${[['1','Датчик движения 1'],['2','Датчик движения 2'],['3','Зажигание включали чужим ключом'],['4','Сигнализацию отключали от аккумулятора мотоцикла'],['5','Датчик движения 3']].map(([n,t])=>`<li><button class="dwabtn" data-n="${n}"><i style="background:#FF2A1E;border-radius:50%"></i><span><b>${n} ${n==='1'?'вспышка':(+n<5?'вспышки':'вспышек')}</b><em>${t}</em></span></button></li>`).join('')}</ul>
+  <p class="src">Поставить на охрану: включить зажигание, в SETUP выбрать DWA ON, выключить зажигание. Через 30 секунд поворотники мигнут два раза. Снять: включить зажигание своим ключом.</p>
+  <h3>Кнопки на руле</h3>
+  <dl class="specs">
+   <dt>Левый пульт</dt><dd>дальний и моргание, аварийка, кнопка ABS/ASC, поворотники, сигнал, качелька MENU</dd>
+   <dt>Правый пульт</dt><dd>подогрев ручек (если есть), аварийный выключатель двигателя, стартер</dd></dl>
+  <p style="font-size:14px;margin-top:10px"><b>Выключить ASC:</b> зажигание включено, зажми кнопку, пока лампа ASC не поменяется, отпусти за 2 секунды. <b>Выключить ABS:</b> держи дольше, пока не поменяются лампы ABS и ASC, отпусти за 2 секунды. Включаются так же. Можно на ходу.</p>
+  <div class="warn">Аварийным выключателем на ходу не пользуйся: заднее колесо может заблокироваться. Заводится мотор только когда выключатель в рабочем положении.</div>
+  <h3>Бортовой компьютер</h3>
+  <p style="font-size:14px">Качелька MENU на левом пульте, коротко нажимать на стоящем мотоцикле с включённым зажиганием. Сброс трипа: выбрать его и держать кнопку.</p>
+  <dl class="specs"><dt>ODO</dt><dd>общий пробег</dd><dt>TRIP 1, TRIP 2</dt><dd>два счётчика поездки</dd><dt>TRIP A</dt><dd>сам сбрасывается, если прошло больше 5 часов и сменилась дата</dd><dt>TRIP R</dt><dd>пробег на резерве, только когда горит резерв</dd><dt>ENGTMP</dt><dd>температура двигателя</dd><dt>CLOCK</dt><dd>часы</dd><dt>SETUP</dt><dd>DWA вкл/выкл, часы, дата, яркость 1-5</dd></dl>
+  <h3>Цифры из инструкции</h3>
+  <dl class="specs">
+   <dt>Давление в шинах</dt><dd>2,5 бар перёд · 2,9 бар зад (на холодных)</dd>
+   <dt>Бак / резерв</dt><dd>17 л / около 3,5 л</dd>
+   <dt>Бензин</dt><dd>рекомендуется 98, допускается 95</dd>
+   <dt>Масло: долив</dt><dd>между MIN и MAX макс. 0,5 л, проверять на тёплом</dd>
+   <dt>Тормозная жидкость</dt><dd>DOT4, перёд и зад</dd>
+   <dt>Колодки</dt><dd>менять при 1,0 мм</dd>
+   <dt>Лампы</dt><dd>H4 60/55 Вт · W5W · RY10W</dd>
+   <dt>Ось переднего колеса</dt><dd>50 Н·м, зажим оси 19 Н·м</dd>
+   <dt>Передний суппорт</dt><dd>38 Н·м</dd>
+   <dt>Болты заднего колеса</dt><dd>60 Н·м, крест-накрест</dd>
+   <dt>Датчик скорости колеса</dt><dd>8 Н·м</dd>
+   <dt>Обкаточное ТО</dt><dd>на 500-1200 км</dd>
+   <dt>Каждую третью заправку</dt><dd>уровень масла, колодки, уровень тормозной жидкости</dd></dl>
+  <h3>А ремонтная книга дилеров?</h3>
+  <p style="font-size:14px">Дилеры работают в системе BMW ISTA: там ремонтные инструкции, все моменты затяжки и чтение ошибок. Она закрытая, в открытом доступе её нет. Публично BMW выкладывает только инструкцию владельца. Полная ремонтная книга для обычного человека: Haynes по R nineT 2014-2018, Scrambler в ней есть.</p>
+  <ul class="src"><li><a href="${MANUAL}" target="_blank" rel="noopener">Инструкция владельца R nineT Scrambler, BMW Motorrad, PDF</a></li>
+  <li><a href="https://uk.haynes.com/products/bmw-r-ninet-2014-2018-haynes-repair-manual" target="_blank" rel="noopener">Haynes: ремонтное руководство R nineT 2014-2018</a></li></ul>`;}
+function panel(el){el.innerHTML=panelHTML();
+  el.querySelectorAll('.sigbtn').forEach(b=>b.onclick=()=>show(b.dataset.id));
+  el.querySelectorAll('.dwabtn').forEach(b=>b.onclick=()=>{state({}, {});needleTgt=0;cap(`DWA: ${b.dataset.n} вспыш. → ${b.querySelector('em').textContent}`);dwa(+b.dataset.n);});
+  $('preride').onclick=preRide;
+  if(sel)show(sel);else state({n:'on'},{});}
+function onShow(){if(!sel){preRide();}}
+window.DASH={panel,onShow};
+
+/* ================= music: generative lo-fi, WebAudio ================= */
+let AC=null,master=null,playing=false,sched=null,nextT=0,step=0,crackle=null;
+const BPM=82,SIXT=60/BPM/4;
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+const CH=[{b:38,v:[53,57,60,64,65]},{b:43,v:[53,57,59,64]},{b:36,v:[52,55,59,62]},{b:45,v:[52,55,60,64,67]}]; // Dm9 G13 Cmaj9 Am9
+const PENT=[62,65,67,69,72,74,77,79,81];
+let noiseBuf=null,delay=null,fb=null;
+function initAudio(){AC=new (window.AudioContext||window.webkitAudioContext)();
+  master=AC.createGain();master.gain.value=0;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=5200;
+  const comp=AC.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;
+  master.connect(lp);lp.connect(comp);comp.connect(AC.destination);
+  delay=AC.createDelay(2);delay.delayTime.value=SIXT*3;fb=AC.createGain();fb.gain.value=.38;const dl=AC.createBiquadFilter();dl.type='lowpass';dl.frequency.value=2200;
+  delay.connect(dl);dl.connect(fb);fb.connect(delay);dl.connect(master);
+  noiseBuf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  /* vinyl crackle */
+  const cb=AC.createBuffer(1,AC.sampleRate*4,AC.sampleRate),cd=cb.getChannelData(0);for(let i=0;i<cd.length;i++){cd[i]=(Math.random()<.0009?(Math.random()*2-1)*.9:0)+(Math.random()*2-1)*.012;}
+  crackle=AC.createBufferSource();crackle.buffer=cb;crackle.loop=true;const cg=AC.createGain();cg.gain.value=.22;const ch=AC.createBiquadFilter();ch.type='highpass';ch.frequency.value=900;
+  crackle.connect(ch);ch.connect(cg);cg.connect(master);crackle.start();}
+function keys(t,m,vel,dur,send){const o=AC.createOscillator(),md=AC.createOscillator(),mg=AC.createGain(),g=AC.createGain();
+  const f=mtof(m);o.frequency.value=f;md.frequency.value=f*1.0;mg.gain.setValueAtTime(f*1.6,t);mg.gain.exponentialRampToValueAtTime(f*.08,t+.9);
+  md.connect(mg);mg.connect(o.frequency);o.type='sine';
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+.012);g.gain.exponentialRampToValueAtTime(vel*.35,t+.5);g.gain.exponentialRampToValueAtTime(.0008,t+dur);
+  const pan=AC.createStereoPanner?AC.createStereoPanner():null;o.connect(g);if(pan){pan.pan.value=(Math.random()-.5)*.5;g.connect(pan);pan.connect(master);}else g.connect(master);
+  if(send){const s=AC.createGain();s.gain.value=send;g.connect(s);s.connect(delay);}
+  o.start(t);md.start(t);o.stop(t+dur+.05);md.stop(t+dur+.05);}
+function bass(t,m,dur){const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type='triangle';o.frequency.value=mtof(m);f.type='lowpass';f.frequency.value=420;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.42,t+.02);g.gain.setTargetAtTime(.0001,t+dur*.7,.12);o.connect(f);f.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.4);}
+function kick(t,v){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+.42);o.connect(g);g.connect(master);o.start(t);o.stop(t+.45);}
+function noise(t,type,freq,q,v,len){const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=AC.createGain();
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+len);s.connect(f);f.connect(g);g.connect(master);s.start(t,Math.random()*1.5);s.stop(t+len+.02);}
+function pad(t,ns,dur){ns.forEach((m,i)=>{[-7,7].forEach(dt=>{const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type='sawtooth';o.frequency.value=mtof(m+12*(i<2?0:0));o.detune.value=dt;
+  f.type='lowpass';f.frequency.setValueAtTime(500,t);f.frequency.linearRampToValueAtTime(900,t+dur*.5);f.frequency.linearRampToValueAtTime(500,t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.012,t+dur*.4);g.gain.linearRampToValueAtTime(0,t+dur);o.connect(f);f.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05);});});}
+function tick(t,s){const bar=Math.floor(s/16)%4,pos=s%16,c=CH[bar],sw=(pos%2)?SIXT*.32:0,T=t+sw,section=Math.floor(s/64)%4;
+  if(pos===0){pad(T,c.v,SIXT*16);c.v.forEach((m,i)=>keys(T+i*.012,m,.075,2.6,.12));}
+  if(pos===7||pos===10){c.v.slice(1,4).forEach((m,i)=>keys(T+i*.01,m,.05,1.2,.18));}
+  if(pos===0)bass(T,c.b,SIXT*6);if(pos===6)bass(T,c.b+12,SIXT*2);if(pos===10)bass(T,c.b,SIXT*4);if(pos===14&&bar===3)bass(T,c.b+7,SIXT*2);
+  if(section>0){if(pos===0||pos===9)kick(T,pos?0.55:0.8);if(pos===4||pos===12){noise(T,'bandpass',1900,1.2,.22,.16);noise(T,'lowpass',260,1,.12,.08);}
+    if(pos%2===0)noise(T,'highpass',7500,.7,(pos%4?0.035:0.06)*(0.7+Math.random()*.5),.05);}
+  if(section>=2&&pos%2===0&&Math.random()<(pos%4?0.18:0.34)){const m=PENT[Math.floor(Math.random()*PENT.length)];keys(T,m,.045,1.4,.45);}}
+function schedule(){while(nextT<AC.currentTime+.15){tick(nextT,step);nextT+=SIXT;step++;}}
+function music(on){if(on){if(!AC)initAudio();AC.resume();if(!sched){nextT=AC.currentTime+.08;sched=setInterval(schedule,25);}
+    master.gain.cancelScheduledValues(AC.currentTime);master.gain.setTargetAtTime(.55,AC.currentTime,.6);}
+  else if(AC){master.gain.cancelScheduledValues(AC.currentTime);master.gain.setTargetAtTime(0,AC.currentTime,.25);
+    setTimeout(()=>{if(!playing&&sched){clearInterval(sched);sched=null;AC.suspend();}},1200);}}
+const mb=document.getElementById('music');
+mb.onclick=()=>{playing=!playing;mb.setAttribute('aria-pressed',playing);mb.querySelector('span').textContent=playing?'Музыка: вкл':'Музыка';music(playing);};
+})();
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+"use strict";
+const V3=THREE.Vector3, S=0.01;
+const RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- renderer ---------- */
+const canvas=document.getElementById('gl');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.physicallyCorrectLights=false;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(34,1,0.05,400);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2.2;controls.maxDistance=60;
+controls.minPolarAngle=0;controls.maxPolarAngle=Math.PI;controls.autoRotateSpeed=1.1;
+scene.add(new THREE.HemisphereLight(0xffffff,0x5d6268,0.35));
+const key=new THREE.DirectionalLight(0xfff6ea,0.9);key.position.set(6,11,8);scene.add(key);
+const rim=new THREE.DirectionalLight(0xe8f0ff,0.55);rim.position.set(-9,6,-7);scene.add(rim);
+const root=new THREE.Group();root.scale.setScalar(S);scene.add(root);
+
+/* studio reflections: soft boxes painted into an equirect, prefiltered */
+(function(){const c=document.createElement('canvas');c.width=1024;c.height=512;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,512);g.addColorStop(0,'#eef1f4');g.addColorStop(.46,'#b9bfc6');g.addColorStop(.5,'#6d737a');g.addColorStop(1,'#2a2d31');
+  x.fillStyle=g;x.fillRect(0,0,1024,512);
+  x.fillStyle='#ffffff';x.fillRect(90,70,230,80);x.fillRect(560,40,320,60);x.fillRect(420,150,70,150);x.fillRect(930,120,60,140);
+  x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,226,1024,5);x.fillRect(0,250,1024,3);
+  const t=new THREE.CanvasTexture(c);t.mapping=THREE.EquirectangularReflectionMapping;t.encoding=THREE.sRGBEncoding;
+  const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromEquirectangular(t).texture;t.dispose();pm.dispose();})();
+
+function themeColor(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#E4E7EA';}
+function applyTheme(){
+  const bg=new THREE.Color(themeColor('--bg'));scene.background=bg;
+  const dark=bg.getHSL({}).l<.4;
+  turntable.material.color.set(dark?0x1a1d21:0xd3d7db);
+  ticks.material.color.set(dark?0x3a4047:0xa9afb6);
+}
+
+/* ---------- turntable + contact shadow ---------- */
+const turntable=new THREE.Mesh(new THREE.CylinderGeometry(1500,1500,12,96),new THREE.MeshStandardMaterial({color:0xd3d7db,roughness:.95,metalness:0}));
+turntable.position.set(760,-6,0);root.add(turntable);
+const tg=[];for(let i=0;i<72;i++){const a=i/72*Math.PI*2,r1=i%6?1440:1400;tg.push(760+Math.cos(a)*r1,1,Math.sin(a)*r1,760+Math.cos(a)*1490,1,Math.sin(a)*1490);}
+const tgeo=new THREE.BufferGeometry();tgeo.setAttribute('position',new THREE.Float32BufferAttribute(tg,3));
+const ticks=new THREE.LineSegments(tgeo,new THREE.LineBasicMaterial({color:0xa9afb6}));root.add(ticks);
+(function(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+  const g=x.createRadialGradient(128,128,8,128,128,128);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.18)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,256,256);
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(2400,620),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));
+  sh.rotation.x=-Math.PI/2;sh.position.set(760,2,0);root.add(sh);window.__floorSh=sh;})();
+
+/* ---------- materials (BMW finish per press kit: black-coated engine, frame, swingarm; Monolith matt tank) ---------- */
+const M={
+  case:[0x1b1c1e,.55,.35],  fin:[0x222427,.45,.45], edge:[0xb8bdc2,.28,1], alu:[0xc9cdd1,.26,1], brushed:[0xbfc4c9,.34,1],
+  chrome:[0xf0f2f4,.05,1], blast:[0xa7acb1,.55,1], pipe:[0xdfe2e5,.16,1], well:[0x2c2e31,.8,.2], dirt:[0xa08763,.85,0], tool:[0xd5d9dd,.18,1], grip:[0x1f2022,.75,0], gripr:[0xb3261e,.6,0], black:[0x18191b,.5,.35], satin:[0x232528,.4,.55], rubber:[0x141516,.9,0],
+  steel:[0xa2a7ac,.32,1], paint:[0x5a5e5f,.42,.55], seat:[0x6a3519,.62,0], frame:[0x141517,.42,.35], red:[0xc0281f,.3,0],
+  glass:[0xdde7ee,.04,.1], ceramic:[0xf1efe9,.35,0], coil:[0x1d1f22,.55,.2], brass:[0xc9a24a,.3,1], spring:[0xf2f2ee,.35,.1],
+  blue:[0x2b4f8a,.45,.2], oil:[0xd8a21f,.2,0], lens:[0xf4f7fa,.08,0], gold:[0x8f7a45,.35,.8], disc:[0x8a8f94,.28,1], copper:[0xb06a3a,.35,1], cast:[0x232527,.5,.55], heat:[0x9c7a5c,.3,1], ti:[0xb3b0aa,.38,1], headcov:[0xa3a7ab,.42,.85], rimblk:[0x161719,.35,.6]
+};
+const ENVI={rubber:.18,case:.45,fin:.55,frame:.45,black:.4,satin:.6,seat:.35,rimblk:.6,coil:.4};
+function mat(k,dbl){const a=M[k];const m=new THREE.MeshStandardMaterial({color:a[0],roughness:a[1],metalness:a[2],envMapIntensity:ENVI[k]==null?1:ENVI[k]});if(dbl)m.side=THREE.DoubleSide;return m;}
+
+const PHOTO={};
+const PHT={};function phTex(k){if(!PHT[k]){const t=new THREE.TextureLoader().load(PHOTO[k]);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;PHT[k]=t;}return PHT[k];}
+function phMat(k,o){o=o||{};const t=phTex(k);const m=new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:new THREE.Color(o.em==null?.62:o.em,o.em==null?.62:o.em,o.em==null?.62:o.em),roughness:o.r==null?.45:o.r,metalness:o.m||0,envMapIntensity:o.env==null?.35:o.env});m.userData.baseEm=m.emissive.clone();return m;}
+const PMAP={R:(X,Y)=>[(392+X/1.46)/1920,1-(955-(Y-315)/1.46)/1280],L:(X,Y)=>[(890-X/2.286)/1112,1-(525-(Y-315)/2.286)/716],T:(X,Z)=>[(255+(1120-X)/2.05)/1024,1-(345-Z/2.05)/698]};
+/* project photos onto a mesh: pick(worldNormal) -> [photoKey, (worldPoint)->[u,v]] */
+function skin(m){return m;}
+function skinOld(m,off,pick,mo){mo=mo||{};off=new V3(...(off||[0,0,0]));m.updateMatrix();const g0=m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone();
+  m.geometry.computeBoundingBox();const ctr=m.geometry.boundingBox.getCenter(new V3()).applyMatrix4(m.matrix).add(off),shk=mo.shrink||1;
+  const pa=g0.attributes.position,na=g0.attributes.normal,M=m.matrix,NM=new THREE.Matrix3().getNormalMatrix(M);const buckets={};
+  const a=new V3(),b=new V3(),c=new V3(),fn=new V3();
+  for(let t=0;t<pa.count;t+=3){a.fromBufferAttribute(pa,t).applyMatrix4(M).add(off);b.fromBufferAttribute(pa,t+1).applyMatrix4(M).add(off);c.fromBufferAttribute(pa,t+2).applyMatrix4(M).add(off);
+    fn.subVectors(c,b).cross(new V3().subVectors(a,b)).normalize();const [k,f]=pick(fn,a);(buckets[k]=buckets[k]||[]).push([t,f]);}
+  const keys=Object.keys(buckets),P=[],N=[],UV=[],g=new THREE.BufferGeometry();let start=0;const mats=[];
+  keys.forEach((k,mi)=>{buckets[k].forEach(([t,f])=>{for(let i=0;i<3;i++){const v=new V3().fromBufferAttribute(pa,t+i);P.push(v.x,v.y,v.z);if(na){N.push(na.getX(t+i),na.getY(t+i),na.getZ(t+i));}
+      const w=v.clone().applyMatrix4(M).add(off);w.sub(ctr).multiplyScalar(shk).add(ctr);const uv=f(w);UV.push(uv[0],uv[1]);}});
+    const n=buckets[k].length*3;g.addGroup(start,n,mi);start+=n;mats.push(phMat(k,mo));});
+  g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));if(na)g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));else g.computeVertexNormals();g.setAttribute('uv',new THREE.Float32BufferAttribute(UV,2));
+  m.geometry=g;m.material=mats;return m;}
+const sideRL=(n)=>n.z>=0?'R':'L';
+/* ---------- part registry ---------- */
+const P={};const pickables=[];
+function part(id,o){const g=new THREE.Group();g.name=id;root.add(g);
+  P[id]=Object.assign({id,g,ex:new V3(0,0,0),layer:'bike',cur:{off:0,op:1,hl:0},tgt:{off:0,op:1,hl:0},ops:[]},o);
+  P[id].ex=new V3(...(o.ex||[0,0,0]));P[id].home=new V3();return g;}
+function add(g,geo,k,pos,rot){const m=new THREE.Mesh(geo,typeof k==='string'?mat(k):k);if(pos)m.position.set(...pos);if(rot)m.rotation.set(...rot);
+  m.userData.part=g.name;g.add(m);pickables.push(m);return m;}
+function box(g,s,p,k,rot){return add(g,new THREE.BoxGeometry(...s),k,p,rot);}
+function cyl(g,r,h,ax,p,k,seg,r2){const geo=new THREE.CylinderGeometry(r2==null?r:r2,r,h,seg||32);
+  if(ax==='x')geo.rotateZ(Math.PI/2);if(ax==='z')geo.rotateX(Math.PI/2);return add(g,geo,k,p);}
+function orient(m,a,b){const A=new V3(...a),B=new V3(...b),d=B.clone().sub(A);m.position.copy(A);m.quaternion.setFromUnitVectors(new V3(0,1,0),d.normalize());return d.length();}
+function rod(g,a,b,r,k,seg){const A=new V3(...a),B=new V3(...b),L=B.clone().sub(A).length();
+  const m=add(g,new THREE.CylinderGeometry(r,r,L,seg||14),k);m.position.copy(A).add(B).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new V3(0,1,0),B.clone().sub(A).normalize());return m;}
+function tube(g,pts,r,k,seg,rs){const c=new THREE.CatmullRomCurve3(pts.map(p=>new V3(...p)),false,'centripetal');const m=add(g,new THREE.TubeGeometry(c,seg||64,r,rs||16,false),k);
+  [pts[0],pts[pts.length-1]].forEach(p=>{const cap=add(g,new THREE.SphereGeometry(r,rs||16,10),m.material,p);});return m;}
+function rr(w,h,r){const s=new THREE.Shape(),x=-w/2,y=-h/2;s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+h-r);
+  s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);s.lineTo(x+r,y+h);s.quadraticCurveTo(x,y+h,x,y+h-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);return s;}
+function rrH(w,h,r,hr){const s=rr(w,h,r);const p=new THREE.Path();p.absarc(0,0,hr,0,Math.PI*2,true);s.holes.push(p);return s;}
+function poly(pts){const s=new THREE.Shape();s.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)s.lineTo(pts[i][0],pts[i][1]);s.closePath();return s;}
+function smooth(pts,n){const c=new THREE.SplineCurve(pts.map(p=>new THREE.Vector2(p[0],p[1])));return new THREE.Shape(c.getPoints(n||60));}
+/* extrude a 2D shape (in its own XY) along Z by depth, centred; axis rotates the result */
+function slab(g,shape,depth,bevel,k,pos,axis,curve){const b=bevel||0;
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:Math.max(.5,depth-2*b),bevelEnabled:b>0,bevelThickness:b,bevelSize:b,bevelSegments:4,curveSegments:curve||14});
+  geo.translate(0,0,-(depth-2*b)/2);if(axis==='x')geo.rotateY(Math.PI/2);if(axis==='y')geo.rotateX(-Math.PI/2);geo.computeVertexNormals();return add(g,geo,k,pos);}
+/* lathe: profile [[radius, along-axis],...] around axis */
+function lathe(g,prof,axis,pos,k,seg){const geo=new THREE.LatheGeometry(prof.map(p=>new THREE.Vector2(Math.max(0.01,p[0]),p[1])),seg||48);
+  if(axis==='x')geo.rotateZ(-Math.PI/2);if(axis==='z')geo.rotateX(Math.PI/2);if(axis==='-z')geo.rotateX(-Math.PI/2);if(axis==='-x')geo.rotateZ(Math.PI/2);
+  const m=add(g,geo,typeof k==='string'?mat(k,true):k,pos);return m;}
+function latheAB(g,prof,a,b,k,seg){const m=add(g,new THREE.LatheGeometry(prof.map(p=>new THREE.Vector2(Math.max(.01,p[0]),p[1])),seg||40),mat(k,true));orient(m,a,b);return m;}
+function inst(g,geo,k,mats){const m=new THREE.InstancedMesh(geo,typeof k==='string'?mat(k):k,mats.length);mats.forEach((x,i)=>m.setMatrixAt(i,x));
+  m.userData.part=g.name;g.add(m);pickables.push(m);return m;}
+function mirrorZ(fn){fn(1);fn(-1);}
+/* loft: a closed body from side profiles (top, bottom) and plan half-width, sampled along X */
+function interp(pts,x){if(x<=pts[0][0])return pts[0][1];for(let i=1;i<pts.length;i++){if(x<=pts[i][0]){const a=pts[i-1],b=pts[i],t=(x-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*(t*t*(3-2*t));}}return pts[pts.length-1][1];}
+function spow(v,e){return Math.sign(v)*Math.pow(Math.abs(v),e);}
+function loft(g,o,k){const NX=o.nx||64,NA=o.na||56,x0=o.top[0][0],x1=o.top[o.top.length-1][0];const pos=[],idx=[];
+  for(let i=0;i<=NX;i++){const x=x0+(x1-x0)*i/NX,yt=interp(o.top,x),yb=interp(o.bot,x),hw=interp(o.hw,x),yc=(yt+yb)/2,ry=Math.max(1,(yt-yb)/2);
+    for(let j=0;j<NA;j++){const th=j/NA*Math.PI*2,c=Math.cos(th),s=Math.sin(th);const ey=s>=0?spow(s,2/o.nt):spow(s,2/o.nb),ez=spow(c,2/o.nz);
+      let z=hw*ez*(1-(o.taper||0)*Math.max(0,ey)),y=yc+ry*ey;if(o.rip&&ey>0)y+=o.rip(x,z,ey);pos.push(x,y,z);}}
+  for(let i=0;i<NX;i++)for(let j=0;j<NA;j++){const a=i*NA+j,b=i*NA+(j+1)%NA,c2=(i+1)*NA+j,d=(i+1)*NA+(j+1)%NA;idx.push(a,c2,b,b,c2,d);}
+  [[0,-1],[NX,1]].forEach(([i,dir])=>{const x=x0+(x1-x0)*i/NX,yt=interp(o.top,x),yb=interp(o.bot,x);const ci=pos.length/3;pos.push(x+dir*(o.dome||6),(yt+yb)/2,0);
+    for(let j=0;j<NA;j++){const a=i*NA+j,b=i*NA+(j+1)%NA;dir<0?idx.push(ci,a,b):idx.push(ci,b,a);}});
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();return add(g,geo,k);}
+
+function gearGeo0(r,teeth){const s=new THREE.Shape();const n=teeth*2;for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rad=i%2?r:r-4;i?s.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):s.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
+  const g=new THREE.ExtrudeGeometry(s,{depth:8,bevelEnabled:false});g.translate(0,0,-4);g.rotateX(Math.PI/2);return g;}
+/* ================= BUILD ================= */
+/* coordinates in mm: X forward (rear axle = 0), Y up, Z to rider's right */
+const CR=new V3(770,430,0);
+
+/* --- wheels: spoked, 17" rims, adventure-pattern tyres 120/70 R17 and 180/55 R17 --- */
+const TYRE={};function tyreMat(w){if(TYRE[w])return TYRE[w];const c=document.createElement('canvas');c.width=2048;c.height=512;const x=c.getContext('2d');
+  x.fillStyle='#1c1d1f';x.fillRect(0,0,2048,512);x.fillStyle='#232426';x.fillRect(0,0,2048,90);x.fillRect(0,422,2048,90);
+  x.strokeStyle='#2e3033';x.lineWidth=2;[40,60,452,472].forEach(y=>{x.beginPath();x.moveTo(0,y);x.lineTo(2048,y);x.stroke();});
+  x.strokeStyle='#08090a';x.lineCap='round';const n=44;
+  for(let i=0;i<n;i++){const u=i/n*2048;x.lineWidth=9;
+    x.beginPath();x.moveTo(u,256+18);x.bezierCurveTo(u+24,256+60,u+30,256+110,u+64,256+150);x.stroke();
+    x.beginPath();x.moveTo(u+24,256-18);x.bezierCurveTo(u+48,256-60,u+54,256-110,u+88,256-150);x.stroke();
+    x.lineWidth=6;x.beginPath();x.moveTo(u+10,256+170);x.lineTo(u+30,256+200);x.stroke();x.beginPath();x.moveTo(u+34,256-170);x.lineTo(u+54,256-200);x.stroke();}
+  const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.anisotropy=8;t.encoding=THREE.sRGBEncoding;
+  const m=new THREE.MeshStandardMaterial({map:t,bumpMap:t,bumpScale:-3,roughness:.88,metalness:0,envMapIntensity:.2,side:THREE.DoubleSide});TYRE[w]=m;return m;}
+function wheel(id,x,y,secH,secW,name,desc,ex){
+  const g=part(id,{name,desc,sys:'Ходовая',ex});
+  const R=216+secH,hw=secW/2;
+  const prof=[[208,-hw*.62],[222,-hw*.92],[R-secH*.55,-hw],[R-secH*.2,-hw*.94],[R-3,-hw*.66],[R,-hw*.3],[R+1,0],[R,hw*.3],[R-3,hw*.66],[R-secH*.2,hw*.94],[R-secH*.55,hw],[222,hw*.92],[208,hw*.62]];
+  const tp=[];for(let i=0;i<=40;i++){const u=i/40*2-1,ang=u*Math.PI*.5;tp.push([R-secH*(1-Math.cos(ang))*.62-(Math.abs(u)>.85?(Math.abs(u)-.85)*secH*1.6:0),Math.sin(ang)*hw*(1-.06*Math.abs(u))]);}
+  const prf=[[208,-hw*.62],[222,-hw*.92]].concat(tp.filter(q=>Math.abs(q[1])<hw*.94)).concat([[222,hw*.92],[208,hw*.62]]);
+  const t=lathe(g,prf,'z',[x,y,0],tyreMat(secW),128);t.userData.tyre=true;
+  /* rim: alloy hoop with flanges */
+  const rw=secW*.62/2;lathe(g,[[200,-rw-4],[214,-rw-4],[216,-rw+2],[204,-rw+6],[198,0],[204,rw-6],[216,rw-2],[214,rw+4],[200,rw+4]],'z',[x,y,0],'rimblk',96);
+  /* hub */
+  lathe(g,[[30,-78],[46,-78],[50,-62],[62,-56],[62,-40],[44,-30],[40,0],[44,30],[62,40],[62,56],[50,62],[46,78],[30,78]],'z',[x,y,0],'satin',40);
+  /* cross-laced spokes: 40, tangent to hub flange */
+  const o=new THREE.Object3D();const sp=new THREE.CylinderGeometry(1.8,1.8,1,6);sp.translate(0,.5,0);const sm=[];
+  for(let i=0;i<40;i++){const side=i%2?1:-1,a=i/40*Math.PI*2,tw=(i%4<2?1:-1)*.42;
+    const A=new V3(x+Math.cos(a+tw)*58,y+Math.sin(a+tw)*58,side*52),B=new V3(x+Math.cos(a)*200,y+Math.sin(a)*200,side*9);
+    const d=B.clone().sub(A);o.position.copy(A);o.quaternion.setFromUnitVectors(new V3(0,1,0),d.clone().normalize());o.scale.set(1,d.length(),1);o.updateMatrix();sm.push(o.matrix.clone());}
+  o.scale.set(1,1,1);inst(g,sp,'steel',sm);
+  return g;
+}
+wheel('wheelF',1527,300,84,120,'Переднее колесо','Спицованное колесо 17", шина 120/70 R17. Давление 2,5 бар на холодную.',[420,0,0]);
+wheel('wheelR',0,315,99,180,'Заднее колесо','Спицованное колесо 17", шина 180/55 R17. Давление 2,7 бар одному, 2,9 бар с пассажиром. Крепится болтами к фланцу главной передачи.',[-420,0,0]);
+
+/* drilled floating disc */
+function disc(g,x,y,z,R,ri,holes){const s=new THREE.Shape();s.absarc(0,0,R,0,Math.PI*2,false);
+  const h0=new THREE.Path();h0.absarc(0,0,ri,0,Math.PI*2,true);s.holes.push(h0);
+  for(let i=0;i<holes;i++){const a=i/holes*Math.PI*2,rr2=(R+ri)/2+(i%2?9:-9);const h=new THREE.Path();h.absarc(Math.cos(a)*rr2,Math.sin(a)*rr2,4.2,0,Math.PI*2,true);s.holes.push(h);}
+  const geo=new THREE.ExtrudeGeometry(s,{depth:5,bevelEnabled:false,curveSegments:48});geo.translate(0,0,-2.5);add(g,geo,'disc',[x,y,z]);
+  const c=new THREE.Shape();c.absarc(0,0,ri+2,0,Math.PI*2,false);const ch=new THREE.Path();ch.absarc(0,0,52,0,Math.PI*2,true);c.holes.push(ch);
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2;const h=new THREE.Path();h.absarc(Math.cos(a)*((ri+52)/2),Math.sin(a)*((ri+52)/2),13,0,Math.PI*2,true);c.holes.push(h);}
+  const cg=new THREE.ExtrudeGeometry(c,{depth:6,bevelEnabled:false,curveSegments:32});cg.translate(0,0,-3);add(g,cg,'alu',[x,y,z+(z>0?3:-3)]);
+  for(let i=0;i<10;i++){const a=i/10*Math.PI*2;cyl(g,5,10,'z',[x+Math.cos(a)*(ri+1),y+Math.sin(a)*(ri+1),z],'alu',10);}
+}
+function caliper(g,x,y,z,ang,big){const cg=new THREE.Group();cg.position.set(x,y,z);cg.rotation.z=ang;g.add(cg);
+  const w=big?118:84;const m1=add(cg,new THREE.ExtrudeGeometry(rr(w,big?52:44,16),{depth:16,bevelEnabled:true,bevelThickness:4,bevelSize:4,bevelSegments:3}),'satin');m1.position.z=4;
+  const m2=add(cg,new THREE.ExtrudeGeometry(rr(w,big?52:44,16),{depth:16,bevelEnabled:true,bevelThickness:4,bevelSize:4,bevelSegments:3}),'satin');m2.position.z=-24;
+  box(cg,[w-20,14,30],[0,(big?26:22),-2],'satin');
+  [-1,1].forEach(s=>cyl(cg,5,40,'z',[s*w*.3,-(big?18:14),-2],'steel',10));
+  cg.children.forEach(m=>m.userData.part=g.name);return cg;}
+const gB=part('brakeF',{name:'Передние тормоза',desc:'Два плавающих диска 320 мм, четырёхпоршневые суппорты, армированные шланги. Колодки: минимум 1,0 мм накладки.',sys:'Тормоза',ex:[380,120,0]});
+mirrorZ(s=>{disc(gB,1527,300,s*74,160,112,28);caliper(gB,1527-120,300+96,s*(74+(s>0?-6:6)),-0.85,true);});
+const gBR=part('brakeR',{name:'Задний тормоз',desc:'Диск 265 мм, двухпоршневой плавающий суппорт. Износ видно по оси с тремя кольцами между колодками.',sys:'Тормоза',ex:[-300,-60,120]});
+disc(gBR,0,315,58,132,92,22);caliper(gBR,-92,222,64,.65,false);slab(gBR,poly([[-120,190],[-60,180],[40,290],[20,330],[-30,320]]),10,3,'case',[0,0,92]);cyl(gBR,4,40,'z',[-92,222,64],'brass',10);
+
+/* --- fork: 43 mm conventional, black sliders, gaiters; steering head angle 61.5° --- */
+const FA=new V3(1527,300,0), FU=new V3(-Math.cos(61.5*Math.PI/180),Math.sin(61.5*Math.PI/180),0);
+const fpt=t=>FA.clone().addScaledVector(FU,t);
+
+const gF=part('fork',{name:'Вилка',desc:'Классическая телескопическая вилка 43 мм с резиновыми гофрами, ход 125 мм. Перья чёрные. Масло в вилке по регламенту Scrambler не меняется.',sys:'Ходовая',ex:[360,200,0]});
+mirrorZ(s=>{const z=s*104;
+  latheAB(gF,[[22,-40],[34,-30],[36,0],[33,240],[31,300],[24,312]],[FA.x,FA.y-0,z],[fpt(1).x,fpt(1).y,z],'satin');
+  const a=fpt(300),c=fpt(780);rod(gF,[a.x,a.y,z],[c.x,c.y,z],21.5,'chrome',24);
+  const gp=[];for(let i=0;i<=20;i++){gp.push([i%2?30:25,i*10]);}latheAB(gF,gp,[fpt(312).x,fpt(312).y,z],[fpt(313).x,fpt(313).y,z],'rubber');
+  latheAB(gF,[[0.1,0],[21.5,0],[22,2],[22,7],[19,9],[19,12],[0.1,12]],fpt(780).setZ(z).toArray(),fpt(781).setZ(z).toArray(),'alu',24);
+  {const m=add(gF,new THREE.CylinderGeometry(9,9,6,6),'steel');m.position.copy(fpt(794)).setZ(z);m.quaternion.setFromUnitVectors(new V3(0,1,0),FU);}
+});
+cyl(gF,13,240,'z',[1527,300,0],'steel',16);
+mirrorZ(s=>cyl(gF,20,24,'z',[1527,300,s*118],'alu',6));
+/* triple clamps: cast plates square to the steering axis, fork tubes clamped through them, steering stem between */
+const FP_=new V3(FU.y,-FU.x,0), FZ_=new V3(0,0,-1), CLB=new THREE.Matrix4().makeBasis(FP_,FZ_,FU);
+function clampPlate(g,t,th,k,stemR){const G=new THREE.Group();G.position.copy(fpt(t));G.quaternion.setFromRotationMatrix(CLB);g.add(G);
+  const sh=new THREE.Shape(new THREE.SplineCurve([[42,0],[36,62],[38,104],[26,134],[0,144],[-26,134],[-38,104],[-46,62],[-60,24],[-60,-24],[-46,-62],[-38,-104],[-26,-134],[0,-144],[26,-134],[38,-104],[36,-62],[42,0]].map(p=>new THREE.Vector2(p[0],p[1]))).getPoints(120));
+  [104,-104].forEach(y=>{const p=new THREE.Path();p.absarc(0,y,21.6,0,Math.PI*2,true);sh.holes.push(p);});
+  if(stemR){const p=new THREE.Path();p.absarc(0,0,stemR,0,Math.PI*2,true);sh.holes.push(p);}
+  const geo=new THREE.ExtrudeGeometry(sh,{depth:th-8,bevelEnabled:true,bevelThickness:4,bevelSize:4,bevelSegments:3,curveSegments:24});geo.translate(0,0,-(th-8)/2);
+  const m=add(G,geo,k);
+  /* pinch slots + bolts on the rear of each fork-tube lobe */
+  [104,-104].forEach(y=>{box(G,[30,3,th+1],[-34,y,0],'black');const b=add(G,new THREE.CylinderGeometry(6,6,40,6),'steel',[-40,y,0]);b.rotation.x=0;
+    const hd=add(G,new THREE.CylinderGeometry(8,8,6,6),'steel',[-40,y+(y>0?22:-22),0]);});
+  G.children.forEach(c=>c.userData.part=g.name);return G;}
+const gTC=part('triple',{name:'Траверсы вилки',desc:'Верхняя литая алюминиевая и нижняя траверсы. Перья вилки зажаты в них стяжными болтами, между траверсами рулевая колонка в подшипниках рулевой колонки. На верхней траверсе стойки руля. Люфт руля проверяют при каждом ТО.',sys:'Ходовая',ex:[260,260,0]});
+clampPlate(gTC,532,34,'satin',0);
+const UC=clampPlate(gTC,764,26,'brushed',0);
+/* steering stem nut on the top clamp, stem between the clamps */
+{const n=add(UC,new THREE.CylinderGeometry(20,20,12,6).rotateX(Math.PI/2),'steel',[0,0,19]);const w=add(UC,new THREE.CylinderGeometry(26,26,2,32).rotateX(Math.PI/2),'steel',[0,0,14]);n.userData.part=w.userData.part='triple';}
+rod(gTC,fpt(515).toArray(),fpt(751).toArray(),14,'steel');
+/* short front cover bolted to sliders (fork stabiliser) */
+const gFen=part('fender',{name:'Переднее крыло',desc:'Короткое крыло, прикручено к перьям вилки и работает как стабилизатор вилки.',sys:'Кузов',ex:[300,260,0]});
+(function(){const s=new THREE.Shape();s.absarc(0,0,334,0.62,1.95,false);s.absarc(0,0,326,1.95,0.62,true);
+  const geo=new THREE.ExtrudeGeometry(s,{depth:120,bevelEnabled:true,bevelThickness:3,bevelSize:3,bevelSegments:2,curveSegments:40});geo.translate(0,0,-60);add(gFen,geo,'black',[1527,300,0]);
+  mirrorZ(z=>{const p=fpt(150);box(gFen,[60,14,8],[p.x-10,p.y+40,z*70],'black',[0,0,.5]);});})();
+
+/* --- handlebar, levers, switchgear, mirrors --- */
+const gH=part('bars',{name:'Руль и органы управления',desc:'Алюминиевый руль переменной толщины: 28 мм в стойках, 22 мм под рукоятками, с подъёмом и загибом к водителю. Стоит в двух стойках на верхней траверсе, крышки стоек на 4 болтах Torx. Справа ручка газа (трос, электронного газа до 2021 года нет) и тормозной рычаг. Слева сцепление с гидроприводом.',sys:'Управление',ex:[200,380,0]});
+/* bar risers on the top clamp with split clamp caps, 4 Torx bolts each */
+mirrorZ(s=>{const base=fpt(777).addScaledVector(FP_,10).setZ(s*40),bar=new V3(1150,1032,s*40);
+  latheAB(gH,[[0.1,0],[19,0],[20,3],[17,8],[16,30],[19,34],[19,36]],base.toArray(),bar.clone().addScaledVector(new V3(0,1,0),-14).toArray(),'brushed',24);
+  slab(gH,rr(44,44,10),46,6,'brushed',[1150,1032,s*40]);
+  slab(gH,rr(46,6,2),48,1,'black',[1150,1032,s*40]);
+  [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([u,v])=>cyl(gH,4.5,6,'x',[1126,1032+u*15,s*40+v*14],'steel',12));});
+/* Scrambler bar: straight centre in the clamps, bend up and back, straight grip sections; 28 mm centre tapering to 22 mm */
+(function(){const P=[[986,1070,-424],[988,1070,-290],[996,1068,-262],[1022,1061,-226],[1060,1050,-190],[1102,1040,-150],[1132,1034,-112],[1146,1032,-70],[1150,1032,0]];
+  const pts=P.concat(P.slice(0,-1).reverse().map(p=>[p[0],p[1],-p[2]]));
+  const cv=new THREE.CatmullRomCurve3(pts.map(p=>new V3(...p)),false,'centripetal',.5);
+  const N=160,geo=new THREE.TubeGeometry(cv,N,1,20,false),pa=geo.attributes.position,fr=cv.computeFrenetFrames(N,false);
+  for(let i=0;i<=N;i++){const c=cv.getPointAt(i/N),z=Math.abs(c.z),r=z<90?14:(z<190?14-(z-90)/100*3:11);
+    for(let j=0;j<=20;j++){const k=i*21+j,v=new V3(pa.getX(k),pa.getY(k),pa.getZ(k)).sub(c).multiplyScalar(r).add(c);pa.setXYZ(k,v.x,v.y,v.z);}}
+  geo.computeVertexNormals();add(gH,geo,'alu');
+  mirrorZ(s=>lathe(gH,[[0.1,0],[12,0],[15,3],[15,14],[12,17],[0.1,17]],s>0?'z':'-z',[986,1070,s*420],'black',24));})();
+/* controls ride on the swept-back grips */
+const gHc=new THREE.Group();gHc.name='bars';gHc.position.set(-140,14,0);gH.add(gHc);
+function lever(g,s){const sh=smooth([[1176,6],[1196,-4],[1214,-60],[1236,-140],[1246,-196],[1240,-206],[1228,-200],[1218,-140],[1198,-60],[1182,-14]],60);
+  const m=slab(g,sh,10,3,mat('satin',true),[0,1046,s*206],'y');m.scale.z=s;return m;}
+mirrorZ(s=>{
+  lathe(gHc,[[16,0],[19,6],[18,60],[19,110],[22,118],[0.1,120]],s>0?'z':'-z',[1128,1056,s*296],'rubber',24);
+  /* switch housing: rounded, black */
+  const sw=slab(gHc,rr(66,58,20),50,10,'satin',[1152,1048,s*258]);
+  /* master cylinder body + lever + adjuster + mirror clamp */
+  cyl(gHc,13,56,'z',[1180,1042,s*206],'satin',20);cyl(gHc,7,16,'y',[1194,1060,s*230],'black',16);
+  lever(gHc,s);cyl(gHc,6,14,'y',[1190,1046,s*214],'alu',12);
+  tube(gHc,[[1170,1050,s*222],[1166,1100,s*246],[1150,1150,s*292],[1140,1160,s*318]],5,'black',20);
+  const mr=lathe(gHc,[[0.1,-10],[34,-7],[36,0],[34,7],[0.1,10]],'x',[1136,1160,s*330],'black',32);mr.scale.set(1,.8,1.3);
+});
+/* right switch: heated grips (top), red STOP rocker with starter (front) */
+box(gHc,[20,8,16],[1150,1080,270],'steel');
+slab(gHc,rr(18,34,6),12,3,'red',[1186,1036,262],'x');
+box(gHc,[4,12,10],[1192,1030,262],'ceramic');
+/* left switch: MENU rocker, indicator switch with OFF, red hazard button, headlight flasher */
+slab(gHc,rr(26,36,6),10,3,'steel',[1186,1050,-262],'x');
+box(gHc,[22,10,26],[1172,1022,-262],'black');
+slab(gHc,rr(18,18,5),10,3,'red',[1160,1080,-246],'y');
+box(gHc,[14,8,12],[1130,1056,-232],'black');
+/* throttle drum and cables to the right throttle body */
+lathe(gHc,[[24,0],[26,4],[26,24],[22,30]],'z',[1128,1056,282],'satin',24);
+tube(gH,[[1006,1054,232],[1060,1000,170],[1120,900,110],[1112,760,122],[950,620,200],[800,560,262],[740,520,284]],4,'black',80);
+/* hydraulic clutch line on the left, down to the slave cylinder on the gearbox */
+tube(gH,[[1042,1046,-182],[1080,980,-140],[1125,880,-100],[1110,740,-120],[900,640,-140],[700,580,-128],[500,520,-92]],4,'black',80);
+/* ignition lock: left of the top clamp, at the tank */
+lathe(gH,[[0.1,0],[28,0],[30,6],[26,22],[18,26],[0.1,27]],'y',[1116,962,0],'black',32);box(gH,[4,6,14],[1116,990,0],'steel');
+const gRes=part('resF',{name:'Бачок переднего тормоза',desc:'На правой стороне руля. Жидкость DOT 4. Уровень проверяют при ровном руле, бачок горизонтально, не ниже MIN.',sys:'Тормоза',ex:[150,320,160]});
+slab(gRes,rr(54,40,8),40,4,'black',[1180,1080,196],'z');slab(gRes,rr(58,8,4),44,2,'satin',[1180,1102,196],'z');add(gRes,new THREE.PlaneGeometry(34,12),mat('glass'),[1207.5,1074,196],[0,Math.PI/2,0]);
+/* headlight: steel shell in Monolith, chrome ring, H4 reflector look */
+const gL=part('light',{name:'Фара и прибор',desc:'Круглая фара в стальном корпусе, H4 60/55 Вт, габарит W5W. Круглый аналоговый спидометр в металлическом корпусе.',sys:'Электрика',ex:[420,220,0]});
+lathe(gL,[[0.1,-58],[52,-55],[80,-38],[94,-8],[96,22],[94,30]],'x',[1330,905,0],'paint',64);
+lathe(gL,[[86,24],[98,26],[100,34],[92,40],[86,38]],'x',[1330,905,0],'chrome',64);
+lathe(gL,[[0.1,40],[60,38],[86,32]],'x',[1330,905,0],mat('lens'),64).material.transparent=true;
+lathe(gL,[[18,-10],[70,10],[84,30]],'x',[1330,905,0],'chrome',48);
+mirrorZ(s=>{rod(gL,[1250,880,s*96],[1330,905,s*96],6,'black');cyl(gL,10,10,'z',[1330,905,s*96],'alu',12);});
+/* turn indicators front */
+mirrorZ(s=>{rod(gL,[1250,870,s*90],[1270,866,s*150],5,'black');lathe(gL,[[0.1,0],[16,4],[17,26],[0.1,30]],'x',[1262,866,s*152],mat('lens'),20);});
+
+/* --- frame: black tubular, front section + bolted rear section + passenger frame --- */
+const gFr=part('frame',{name:'Рама',desc:'Трубчатая стальная рама из трёх частей на болтах: передняя, задняя и пассажирская. Двигатель несущий: верхние трубы идут от рулевой колонки под баком к коробке, нижние к передней опоре двигателя. Пассажирскую часть можно снять.',sys:'Рама',ex:[0,420,0]});
+mirrorZ(s=>{
+  tube(gFr,[[1180,925,s*40],[1110,850,s*80],[980,740,s*100],[820,690,s*112],[660,660,s*120],[580,650,s*124]],14,'frame');
+  tube(gFr,[[1242,825,s*40],[1190,765,s*80],[1140,700,s*120],[1100,645,s*145]],14,'frame');
+  rod(gFr,[1100,645,s*145],[1045,615,s*140],16,'frame');
+  tube(gFr,[[580,650,s*124],[560,560,s*126],[540,440,s*126]],15,'frame');
+  tube(gFr,[[580,650,s*122],[520,720,s*115],[420,768,s*108],[200,780,s*98],[0,788,s*88],[-130,790,s*70]],11,'frame');
+  tube(gFr,[[545,470,s*122],[360,640,s*112],[150,770,s*96]],10,'frame');
+  /* cast aluminium passenger-frame bracket with the footrest boss */
+  /* cast aluminium passenger-frame bracket: three arms from the footrest boss */
+  const B0=[168,680,s*128];
+  [[[400,758,s*124],13],[[40,786,s*112],11],[[150,562,s*132],12]].forEach(([e,r])=>{const m=tube(gFr,[B0,[(B0[0]+e[0])/2,(B0[1]+e[1])/2+(e[1]>B0[1]?6:0),(B0[2]+e[2])/2],e],r,'alu',24,14);m.scale.z=1;});
+  slab(gFr,smooth([[250,730],[330,748],[300,722],[230,700]],20),6,2,'black',[0,0,s*136]);
+  lathe(gFr,[[0.1,0],[22,0],[25,4],[23,12],[0.1,13]],s>0?'z':'-z',[168,680,s*130],'alu',28);
+});
+lathe(gFr,[[30,0],[38,4],[36,186],[40,192],[30,196]],'y',[fpt(552).x,fpt(552).y,0],'frame').quaternion.setFromUnitVectors(new V3(0,1,0),FU);
+rod(gFr,[580,650,-124],[580,650,124],11,'frame');rod(gFr,[0,788,-88],[0,788,88],10,'frame');rod(gFr,[1140,700,-120],[1140,700,120],12,'frame');rod(gFr,[-130,790,-70],[-130,790,70],9,'frame');
+
+/* --- tank: steel, Monolith metallic matt, alu trim over right-hand air intake --- */
+const gT=part('tank',{name:'Бак',desc:'Стальной бак 17 л, длинный и высокий, от рулевой колонки до сиденья. Под баком справа алюминиевая накладка воздухозаборника, слева окрашенная крышка. Бензин АИ-98, допускается АИ-95.',sys:'Топливо',ex:[0,520,0]});
+const TANK={top:[[515,780],[522,840],[537,867],[596,917],[654,943],[712,954],[771,962],[829,966],[888,966],[961,960],[1034,943],[1080,922],[1100,900],[1112,860]],
+  bot:[[515,760],[522,705],[600,712],[742,731],[900,740],[1034,760],[1100,768],[1112,800]],
+  hw:[[515,60],[540,95],[618,130],[720,160],[823,172],[925,176],[1028,160],[1080,125],[1112,80]],nz:2.6,nt:2.2,nb:4,taper:.22,dome:8};
+{const m=loft(gT,TANK,'paint');skin(m,null,(n,w)=>n.y>.78?['T',q=>PMAP.T(q.x,q.z)]:(n.z>=0?['R',q=>PMAP.R(q.x,q.y)]:['L',q=>PMAP.L(548+(q.x-548)*1.032,q.y)]),{em:.6,r:.4,env:.5,shrink:.84});}
+mirrorZ(s=>{lathe(gT,[[0.1,0],[28,0],[31,2],[31,5],[0.1,6]],s>0?'z':'-z',[968,877,s*157],'chrome',40);add(gT,new THREE.CircleGeometry(25,40),new THREE.MeshStandardMaterial({color:0xe8eaec,roughness:.3,metalness:.2}),[968,877,s*163.2],[0,s>0?0:Math.PI,0]);});
+/* round side badges and filler neck ring */
+(function(){/* right: brushed alu snorkel cover over a black duct; left: painted cover. Profiles traced from the photos */
+  const pnl=[[455,700],[600,712],[742,731],[900,740],[1034,760],[1062,748],[1052,700],[975,660],[800,640],[620,624],[520,628],[455,660]];
+  slab(gT,smooth(pnl.map(q=>[q[0],q[1]]),80),40,8,'black',[0,0,112]);{const m=slab(gT,smooth(pnl,80),14,5,new THREE.MeshStandardMaterial({color:0xd4d8dc,roughness:.32,metalness:.85,envMapIntensity:1.3}),[0,0,146]);skin(m,null,()=>['R',q=>PMAP.R(q.x,q.y)],{em:.62,r:.35,m:.2,env:.6});}
+  for(let i=0;i<3;i++)slab(gT,rr(60,6,3),3,1,'satin',[930-i*26,700-i*4,154]);
+  lathe(gT,[[0.1,-30],[36,-30],[42,-26],[42,26],[38,30],[30,30],[30,6],[0.1,6]],'x',[1040,716,112],'black',40);
+  slab(gT,smooth(pnl,80),46,8,'black',[0,0,-118]);skin(slab(gT,smooth(pnl,80),8,2,'paint',[0,0,-148]),null,()=>['L',q=>PMAP.L(548+(q.x-548)*1.032,q.y)],{em:.6,r:.4,env:.5});})();
+/* --- seat: tapered two-up bench, Saddle Brown leather look --- */
+const gS=part('seat',{name:'Сиденье',desc:'Длинное двухместное сиденье до самого хвоста. Под ним аккумулятор, блок управления, предохранители, разъём диагностики и штатный набор инструментов. Высота по водителю 820 мм.',sys:'Кузов',ex:[0,600,0]});
+skin(loft(gS,{top:[[-118,845],[-108,866],[-70,877],[18,874],[105,874],[149,868],[193,849],[237,839],[280,830],[324,822],[368,819],[412,826],[456,835],[499,848],[530,846],[548,825]],
+  bot:[[-118,830],[-70,814],[18,800],[105,784],[149,770],[193,756],[280,753],[324,745],[412,757],[456,778],[499,784],[548,812]],
+  hw:[[-118,40],[-100,85],[-60,118],[7,133],[100,140],[219,143],[300,130],[431,112],[500,92],[548,55]],nz:3.2,nt:3,nb:6,taper:.08,dome:4,nx:90,
+  rip:(x,z,ey)=>ey>.55?2.6*Math.abs(Math.sin(x*Math.PI/34))*(ey-.55)/.45:0},'seat'),null,(n)=>n.y>.6?['T',q=>[(545+(548-q.x)/2.12)/1024,1-(345-q.z/2.12)/698]]:['R',q=>PMAP.R(q.x,q.y)],{em:.62,r:.6,shrink:.93});
+/* --- tail: short rear section, LED light, plate holder --- */
+const gTl=part('tail',{name:'Хвост и фонарь',desc:'Короткий чёрный хвост за сиденьем, светодиодный фонарь (меняется только целиком), поворотники и наклонный номерной кронштейн с подсветкой.',sys:'Кузов',ex:[-260,380,0]});
+loft(gTl,{top:[[-302,782],[-290,800],[-220,810],[-150,816],[-110,814]],bot:[[-302,770],[-220,768],[-110,774]],hw:[[-302,30],[-280,62],[-180,78],[-110,72]],nz:3,nt:2.5,nb:5,dome:4},'black');
+lathe(gTl,[[0.1,0],[26,2],[28,10],[0.1,12]],'-x',[-298,786,0],'red',32);
+mirrorZ(s=>{rod(gTl,[-250,776,s*60],[-262,772,s*110],5,'black');lathe(gTl,[[0.1,0],[12,4],[13,20],[0.1,24]],'-x',[-262,772,s*112],mat('lens'),18);});
+tube(gTl,[[-200,770,0],[-232,760,0],[-246,730,0]],8,'black',20);
+{const pl=box(gTl,[8,170,200],[-262,680,0],'black');pl.rotation.z=-.33;const pf=add(gTl,new THREE.PlaneGeometry(196,150),mat('lens'),[-268,676,0],[0,-Math.PI/2,0]);pf.rotation.order='YXZ';pf.rotation.x=.33;}
+lathe(gTl,[[0.1,0],[12,0],[13,6],[0.1,8]],'-x',[-236,770,0],'lens',16);
+/* --- battery, airbox, oil cooler --- */
+const gBat=part('battery',{name:'Аккумулятор',desc:'12 В, 14 А·ч, под сиденьем за корпусом воздушного фильтра. Доступ: снять сиденье. Рядом блок управления, предохранители и разъём диагностики. Если стоит больше 4 недель, подключай поддерживающее зарядное.',sys:'Электрика',ex:[-80,300,0]});
+box(gBat,[150,145,87],[370,665,0],'black');box(gBat,[156,8,93],[370,733,0],'satin');
+cyl(gBat,7,12,'y',[330,743,26],'red');cyl(gBat,7,12,'y',[330,743,-26],'satin');
+const gAir=part('airbox',{name:'Корпус воздушного фильтра',desc:'Чёрный корпус за двигателем, над коробкой. Воздух заходит через заборник справа под баком. С боков в него входят патрубки от дросселей. Фильтр меняют каждые 20 000 км, оригинал BMW 13 71 7 706 414.',sys:'Впуск',ex:[0,300,0]});
+slab(gAir,rr(220,140,40),250,14,'black',[560,630,0]);
+mirrorZ(k=>{slab(gAir,rr(112,150,34),32,8,'black',[600,540,k*138]);
+  lathe(gAir,[[0.1,0],[38,0],[44,2],[44,14],[38,16],[0.1,16]],k>0?'z':'-z',[614,502,k*150],'black',40);});
+slab(gAir,rr(80,56,6),1,0,'ceramic',[560,620,-126]);
+const gOC=part('cooler',{name:'Масляный радиатор',desc:'Перед двигателем слева под фарой. Двигатель воздушно-масляного охлаждения: масло охлаждает головки и проходит через этот радиатор.',sys:'Смазка',ex:[300,40,0]});
+slab(gOC,rr(34,190,8),130,3,'black',[1095,640,-70],'z');
+for(let i=0;i<18;i++)box(gOC,[36,2,118],[1100,560+i*9.5,-70],'satin');
+
+
+/* --- engine (black coating, brushed alu covers) --- */
+const gCase=part('crankcase',{name:'Картер двигателя',desc:'Оппозитный двухцилиндровый «боксер» 1170 см³, 101 на 73 мм, сжатие 12:1. Внизу сливная пробка, спереди масляный фильтр, слева окошко уровня масла.',sys:'Двигатель',layer:'drive',ex:[0,-160,0]});
+slab(gCase,smooth([[640,300],[700,268],[860,262],[930,300],[950,380],[948,520],[905,572],[760,580],[650,560],[628,470]],80),246,18,'case',[0,0,0]);
+lathe(gCase,[[0.1,-125],[108,-125],[122,-112],[124,0],[122,112],[108,125],[0.1,125]],'x',[778,452,0],'case',56);
+for(let i=0;i<6;i++)box(gCase,[300-i*20,5,250],[795,270+i*12,0],'fin');
+slab(gCase,smooth([[700,266],[920,266],[905,232],[715,232]],40),200,10,'case',[0,0,0]);
+slab(gCase,smooth([[508,300],[650,290],[660,560],[520,560],[505,470]],50),224,14,'case',[0,0,0]);
+const gBelt=part('beltcover',{name:'Крышка ремня генератора',desc:'Алюминиевая крышка спереди двигателя. Под ней поликлиновой ремень от коленвала к генератору. Замена ремня раз в 6 лет или 40 000 км.',sys:'Электрика',layer:'drive',ex:[260,0,0]});
+slab(gBelt,rr(200,300,100),30,10,'brushed',[968,530,0],'x');slab(gBelt,rr(120,220,60),4,1,'satin',[984,530,0],'x');
+for(let i=0;i<6;i++){cyl(gBelt,6,6,'x',[985,410+i*48,(i%2?1:-1)*84],'steel',6);}
+const gGB=part('gearbox',{name:'Коробка передач',desc:'Шесть передач, сухое сцепление с гидроприводом. Первичная передача 1,737. Стартер слева под впускным патрубком. Пробки: заливная M14 и сливная M18, обе 30 Нм.',sys:'Трансмиссия',layer:'drive',ex:[-200,0,0]});
+slab(gGB,smooth([[630,300],[560,296],[480,330],[466,400],[476,500],[540,560],[630,566]],60),206,14,'case',[0,0,0]);
+
+lathe(gGB,[[58,0],[60,6],[56,40],[0.1,44]],'-x',[470,395,96],'case',36);
+const gTB=part('throttle',{name:'Дроссели и впуск',desc:'Два чёрных дроссельных узла по 50 мм на тросе, сразу за головками на хомутах. Сбоку датчик положения дросселя, сверху форсунка. Толстый патрубок идёт прямо назад в окно корпуса фильтра. Синхронизацию делают каждые 10 000 км.',sys:'Впуск',layer:'drive',ex:[-140,160,0]});
+mirrorZ(s=>{
+  /* throttle body: black, short, straight behind the head on a clamp */
+  lathe(gTB,[[0.1,0],[34,0],[34,10],[31,14],[31,70],[34,74],[34,84],[0.1,84]],'-x',[652,462,s*250],'black',40);
+  lathe(gTB,[[35,0],[37,2],[37,10],[35,12]],'-x',[660,462,s*250],'steel',32);
+  /* throttle position sensor on the outer face, with its plug */
+  slab(gTB,rr(38,48,6),14,3,'black',[612,454,s*290]);for(let i=0;i<4;i++)box(gTB,[3,40,4],[600+i*8,454,s*299],'black');
+  box(gTB,[22,20,18],[612,422,s*292],'black');cyl(gTB,4,10,'z',[598,466,s*299],'steel',8);cyl(gTB,4,10,'z',[626,442,s*299],'steel',8);
+  /* injector on top with its plug and lines */
+  cyl(gTB,11,44,'y',[628,512,s*250],'black',16);box(gTB,[24,18,26],[628,540,s*250],'black');
+  tube(gTB,[[628,550,s*250],[620,580,s*226],[600,600,s*190],[590,610,s*130]],3.5,'black',20);
+  tube(gTB,[[640,520,s*262],[660,560,s*240],[690,590,s*200]],3,'black',16);
+  /* intake duct: thick, straight back into the airbox side port, clamps both ends */
+  tube(gTB,[[580,462,s*250],[556,462,s*250],[530,462,s*226],[506,462,s*190],[494,462,s*166]],40,'rubber',48);
+  lathe(gTB,[[41,0],[43,2],[43,12],[41,14]],'-x',[574,462,s*250],'steel',32);});
+
+const cyls={};
+mirrorZ(s=>{
+  const side=s>0?'R':'L', nm=s>0?'правый':'левый';
+  const gC=part('cyl'+side,{name:'Цилиндр, '+nm,desc:'Цилиндр с рёбрами воздушного охлаждения, диаметр 101 мм.',sys:'Двигатель',layer:'drive',ex:[0,0,s*170]});
+  lathe(gC,[[70,0],[78,0],[78,100],[70,100]],'z',[770,430,s>0?112:-212],'case',40);
+  for(let i=0;i<8;i++){slab(gC,rr(204-i*3,204-i*3,96-i*1.5),4,1,'fin',[770,430,s*(124+i*11)],null,24);
+    lathe(gC,[[96,0],[99,0],[99,2],[96,2]],'z',[770,430,s*(123+i*11)],'edge',4).visible=false;}
+  const gHd=part('head'+side,{name:'Головка цилиндра, '+nm,desc:'Два распредвала с цепным приводом, 4 клапана: впуск 39 мм сзади, выпуск 33 мм спереди. В центре колодец свечи.',sys:'Двигатель',layer:'drive',ex:[0,0,s*260]});
+  slab(gHd,rrH(226,226,96,15+14),76,14,'case',[770,430,s*252],null,24);
+  {const sh=rr(226,226,96);const ho=rr(184,184,74);sh.holes.push(new THREE.Path(ho.getPoints(40).reverse()));
+   const g=new THREE.ExtrudeGeometry(sh,{depth:30,bevelEnabled:true,bevelThickness:3,bevelSize:3,bevelSegments:2,curveSegments:14});g.translate(0,0,-15);add(gHd,g,'case',[770,430,s*308]);
+   add(gHd,new THREE.PlaneGeometry(184,196),mat('well',true),[770,430,s*289.5]);
+   [-50,50].forEach(dx=>[-32,32].forEach(dy=>add(gHd,new THREE.RingGeometry(14.2,17,24),mat('steel',true),[770+dx,430+dy,s*290.2])));}
+  for(let i=0;i<3;i++)slab(gHd,rrH(248,244,108,16),4,1,'fin',[770,430,s*(232+i*16)],null,24);
+  /* spark-plug well: bore Ø30 from the cover face down to the plug seat, ~12 cm deep */
+  const gW=part('well'+side,{name:'Колодец свечи, '+nm,desc:'Отверстие диаметром около 30 мм через крышку клапанов и головку, глубиной около 12 см. На дне свеча. Сюда вставляется катушка.',sys:'Зажигание',layer:'drive',ex:[0,0,0]});
+  lathe(gW,[[15,0],[15,128]],s>0?'z':'-z',[770,430,s*238],'well',32);
+  add(gW,new THREE.RingGeometry(8.4,15,32),mat('well',true),[770,430,s*238],[0,s>0?0:Math.PI,0]);
+  lathe(gW,[[5.2,0],[5.2,24]],s>0?'z':'-z',[770,430,s*214],'well',16);
+  slab(gHd,rr(70,120,30),40,8,'case',[858,368,s*262]);slab(gHd,rr(80,110,30),40,8,'case',[674,466,s*262]);
+  const gCv=part('cover'+side,{name:'Крышка клапанов, '+nm,desc:'Алюминиевая крышка на болтах M6, момент 10 Нм. Под ней распредвалы и толкатели. При снятии ставь новую прокладку.',sys:'Двигатель',layer:'drive',ex:[0,0,s*360]});
+  skin(slab(gCv,rrH(214,200,84,15+12),40,16,'headcov',[770,430,s*344],null,24),[120,40,0],()=>s>0?['R',q=>[(995+(q.x-890)/1.63)/1920,1-(850-(q.y-470)/1.63)/1280]]:['L',q=>[(480-(q.x-890)/2.2)/1112,1-(457-(q.y-470)/2.2)/716]],{em:.6,r:.35,m:.3,env:.7,shrink:.9});
+  {const sh=rr(214,224,62);sh.holes.push(new THREE.Path(rr(196,206,54).getPoints(40).reverse()));const g=new THREE.ExtrudeGeometry(sh,{depth:2,bevelEnabled:false,curveSegments:14});g.translate(0,0,-1);add(gCv,g,'rubber',[770,430,s*326]);}
+  lathe(gCv,[[15,0],[15,36],[19,40]],s>0?'z':'-z',[770,430,s*327],'headcov',32);
+  const gCo=part('coil'+side,{name:'Катушка зажигания, '+nm,desc:'Стержневая катушка, стоит прямо на свече через центр крышки клапанов. Снимается рукой: отщёлкнуть разъём и тянуть прямо наружу.',sys:'Зажигание',layer:'drive',ex:[70,300,s*360]});
+  lathe(gCo,[[6,0],[10,4],[11,18],[12,22]],s>0?'z':'-z',[770,430,s*282],'rubber',20);
+  cyl(gCo,12,66,'z',[770,430,s*337],'coil',20);lathe(gCo,[[0.1,-6],[14,-6],[22,0],[24,6],[22,30],[16,36],[0.1,38]],s>0?'z':'-z',[770,430,s*368],'coil',28);
+  const gCn=part('conn'+side,{name:'Разъём катушки, '+nm,desc:'Пластиковый разъём на верхушке катушки. Снимается нажатием на защёлку. Тянуть за корпус разъёма, не за провода.',sys:'Зажигание',layer:'drive',ex:[50,230,s*200]});
+  box(gCn,[30,24,22],[770,468,s*388],'black');box(gCn,[12,4,14],[770,482,s*388],'red');
+  tube(gCn,[[770,476,s*398],[760,500,s*392],[700,520,s*360],[640,540,s*300],[610,580,s*200],[620,660,s*128]],4,'black',40);
+  gCn.position.y=0;
+  const gPl=part('plug'+side,{name:'Свеча зажигания, '+nm,desc:'NGK MAR8B-JDS, резьба M10x1, зазор 0,8 мм, момент 12 Нм. Замена каждые 20 000 км.',sys:'Зажигание',layer:'drive',ex:[0,0,s*620]});
+  cyl(gPl,5,24,'z',[770,430,s*226],'steel',12);
+  cyl(gPl,8.08,14,'z',[770,430,s*245],'steel',6);cyl(gPl,8.6,2,'z',[770,430,s*239],'copper',20);
+  lathe(gPl,[[6.5,0],[7.5,4],[7,20],[5.5,34],[4.5,38]],s>0?'z':'-z',[770,430,s*252],'ceramic',20);
+  cyl(gPl,3.6,8,'z',[770,430,s*294],'steel',12);
+  cyl(gPl,1.3,8,'z',[770,430,s*210],'steel',8);
+  [-1,1].forEach(k=>box(gPl,[3,1.6,10],[770,430+k*3.4,s*209],'steel'));
+  /* internals */
+  const gCam=part('cams'+side,{name:'Распредвалы и толкатели, '+nm,desc:'Впускной вал сзади, выпускной спереди, привод цепью. Зазор меряют щупом между кулачком и толкателем на холодном двигателе.',sys:'ГРМ',layer:'internal',ex:[0,0,s*120]});
+  const cams=[];
+  [[-50,'in'],[50,'ex']].forEach(([dx,kind])=>{const cg=new THREE.Group();cg.position.set(770+dx,430,s*309);gCam.add(cg);
+    add(cg,new THREE.CylinderGeometry(11,11,180,16),'steel').userData.part='cams'+side;
+    const spr=gearGeo0(30,24);add(cg,spr,'steel',[0,82,0]).userData.part='cams'+side;
+    [-32,32].forEach(y=>{const lobe=new THREE.Shape();lobe.absarc(0,0,16,Math.PI*.2,Math.PI*.8,true);lobe.quadraticCurveTo(-10,24,0,26);lobe.quadraticCurveTo(10,24,16*Math.cos(Math.PI*.2),16*Math.sin(Math.PI*.2));
+      const lg=new THREE.ExtrudeGeometry(lobe,{depth:16,bevelEnabled:true,bevelThickness:1,bevelSize:1,bevelSegments:1});lg.translate(0,0,-8);lg.rotateX(Math.PI/2);lg.rotateY(s>0?Math.PI:0);
+      const mm=add(cg,lg,'steel',[0,y,0]);mm.userData.part='cams'+side;});
+    cams.push({g:cg,kind});});
+  /* cam bearing caps bridging both shafts, between the lobes */
+  [0,-64,64].forEach(y=>{const b=slab(gCam,rr(120,16,6),20,3,'case',[770,430+y,s*309]);b.material=mat('case');
+    [-50,50].forEach(dx=>cyl(gCam,5,8,'z',[770+dx+(dx>0?22:-22),430+y,s*320],'steel',6));});
+  const valves=[];
+  [[-50,'in'],[50,'ex']].forEach(([dx,kind])=>[-32,32].forEach(dy=>{const vg=new THREE.Group();gCam.add(vg);
+    add(vg,new THREE.CylinderGeometry(14,14,14,24).rotateX(Math.PI/2),'alu',[770+dx,430+dy,s*283]);add(vg,new THREE.CylinderGeometry(11,11,1.5,24).rotateX(Math.PI/2),'brass',[770+dx,430+dy,s*290.3]);
+    add(vg,new THREE.CylinderGeometry(3,3,70,8).rotateX(Math.PI/2),'steel',[770+dx,430+dy,s*245]);
+    add(vg,new THREE.CylinderGeometry(kind==='in'?19.5:16.5,kind==='in'?19.5:16.5,3,20).rotateX(Math.PI/2),'steel',[770+dx,430+dy,s*211]);
+    valves.push({g:vg,kind});}));
+  const gPi=part('piston'+side,{name:'Поршень, '+nm,desc:'Поршень 101 мм. В боксере оба поршня одновременно уходят наружу и возвращаются к коленвалу.',sys:'Двигатель',layer:'internal',ex:[0,0,0]});
+  const pg=new THREE.Group();gPi.add(pg);
+  const pm=lathe(pg,[[0.1,-25],[44,-25],[50,-20],[50.5,25],[46,27],[0.1,28]],'z',[0,0,0],'alu',36);if(s<0)pm.scale.z=-1;
+  for(let i=0;i<3;i++)lathe(pg,[[50.6,0],[50.8,0],[50.8,2],[50.6,2]],'z',[0,0,s*(12+i*5)],'steel',36);
+  const conrod=add(gPi,new THREE.CylinderGeometry(9,9,125,10),'steel');
+  const spark=new THREE.Mesh(new THREE.SphereGeometry(30,16,12),new THREE.MeshBasicMaterial({color:0xffc83d,transparent:true,opacity:0}));
+  spark.position.set(770,430,s*205);spark.userData.own=true;gPi.add(spark);
+  cyls[side]={s,cams,valves,pg,conrod,spark};
+});
+const gCrank=part('crank',{name:'Коленвал',desc:'Коленвал идёт вдоль мотоцикла. Шатунные шейки развёрнуты на 180°, поэтому поршни двигаются зеркально.',sys:'Двигатель',layer:'internal',ex:[0,0,0]});
+const crankRot=new THREE.Group();crankRot.position.copy(CR);gCrank.add(crankRot);
+add(crankRot,new THREE.CylinderGeometry(20,20,300,16).rotateZ(Math.PI/2),'steel');
+const pins={R:new V3(-30,0,0),L:new V3(30,0,0)};
+['R','L'].forEach(k=>{const sgn=k==='R'?1:-1;add(crankRot,new THREE.BoxGeometry(14,70,60),'steel',[pins[k].x-12,0,sgn*18]);
+  add(crankRot,new THREE.CylinderGeometry(16,16,28,14).rotateZ(Math.PI/2),'steel',[pins[k].x,0,sgn*36.5]);});
+crankRot.children.forEach(m=>m.userData.part='crank');
+
+/* gearbox internals */
+const RATIOS=[2.38,1.70,1.30,1.07,0.94,0.85], PRIMARY=1.737, FINAL=2.91;
+const gGear=part('gears',{name:'Шестерни коробки',desc:'Передаточные числа: 2,38 / 1,70 / 1,30 / 1,07 / 0,94 / 0,85. Первичная 1,737, главная передача 2,91.',sys:'Трансмиссия',layer:'internal',ex:[0,0,0]});
+const inShaft=new THREE.Group(),outShaft=new THREE.Group();inShaft.position.set(545,480,-28);outShaft.position.set(545,395,30);gGear.add(inShaft,outShaft);
+add(inShaft,new THREE.CylinderGeometry(8,8,180,10).rotateZ(Math.PI/2),'steel');add(outShaft,new THREE.CylinderGeometry(8,8,180,10).rotateZ(Math.PI/2),'steel');
+function gearGeo(r,teeth){const s=new THREE.Shape();const n=teeth*2;for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rad=i%2?r:r-4;i?s.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):s.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
+  const g=new THREE.ExtrudeGeometry(s,{depth:14,bevelEnabled:false});g.translate(0,0,-7);g.rotateY(Math.PI/2);return g;}
+const gearPairs=RATIOS.map((r,i)=>{const C=96;const ri=C/(1+r),ro=C-ri;const x=-70+i*28;
+  const a=add(inShaft,gearGeo(ri,Math.round(ri*.6)),'steel',[x,0,0]);const b=add(outShaft,gearGeo(ro,Math.round(ro*.6)),'steel',[x,0,0]);
+  a.userData.part=b.userData.part='gears';a.userData.ownEm=b.userData.ownEm=true;return [a,b];});
+
+/* driveline: Paralever single-sided swingarm (black), shaft inside, bevel final drive */
+const gSA=part('swingarm',{name:'Маятник Paralever и кардан',desc:'Литой однорычажный маятник справа, чёрный, внутри карданный вал. Снизу реактивная тяга Paralever.',sys:'Трансмиссия',layer:'drive',ex:[-160,-80,180]});
+(function(){const sh=smooth([[490,438],[300,402],[110,368],[48,352],[48,284],[110,288],[300,330],[490,352]],60);slab(gSA,sh,62,14,'case',[0,0,104]);
+  rod(gSA,[470,318,82],[80,252,92],9,'steel');cyl(gSA,16,20,'z',[470,318,82],'alu',16);cyl(gSA,16,20,'z',[80,252,92],'alu',16);
+  lathe(gSA,[[44,-70],[50,-62],[50,62],[44,70]],'z',[500,392,0],'case',32);})();
+const gShaft=part('driveshaft',{name:'Карданный вал',desc:'Передаёт вращение от коробки на главную передачу. Смазки и регулировки не требует.',sys:'Трансмиссия',layer:'internal',ex:[0,0,0]});
+rod(gShaft,[460,392,100],[60,317,105],15,'steel');
+lathe(gShaft,[[18,0],[24,8],[24,22],[18,30]],'x',[430,388,100],'steel',16);lathe(gShaft,[[18,0],[24,8],[24,22],[18,30]],'x',[90,322,104],'steel',16);
+const gFD=part('finaldrive',{name:'Главная передача (редуктор)',desc:'Конический редуктор в ступице заднего колеса, отношение 2,91. Масло гипоидное SAE 70W-80, замена раз в 2 года.',sys:'Трансмиссия',layer:'drive',ex:[-240,0,220]});
+lathe(gFD,[[0.1,40],[60,40],[92,30],[104,8],[104,-8],[96,-20],[70,-30]],'z',[8,315,120],'case',56);
+lathe(gFD,[[0.1,41],[56,41],[60,44],[0.1,46]],'z',[8,315,120],'brushed',48);
+for(let i=0;i<5;i++){const a=i/5*Math.PI*2;cyl(gFD,6,8,'z',[8+Math.cos(a)*76,315+Math.sin(a)*76,166],'steel',6);}
+slab(gFD,rr(110,80,30),60,10,'case',[60,330,108]);
+const gFDf=part('fdfill',{name:'Заливная пробка редуктора',desc:'M12x1,5, момент 20 Нм. Новое уплотнительное кольцо при каждом открытии.',sys:'Трансмиссия',layer:'drive',ex:[-80,120,160]});
+cyl(gFDf,11,12,'z',[50,390,154],'brass',6);
+const gFDd=part('fddrain',{name:'Сливная пробка редуктора',desc:'M12x1, момент 20 Нм. Внизу корпуса.',sys:'Трансмиссия',layer:'drive',ex:[-60,-140,160]});
+cyl(gFDd,11,12,'y',[8,214,120],'brass',6);
+const gSh=part('shock',{name:'Задний амортизатор',desc:'Центральный амортизатор с белой пружиной: преднатяг регулируется гайкой, отбой винтом. Ход 140 мм.',sys:'Ходовая',ex:[-60,300,-160]});
+(function(){const A=[350,396,40],B=[520,690,30];rod(gSh,A,B,11,'chrome',20);
+  slab(gSh,rr(50,46,14),34,4,'case',[350,396,52]);rod(gSh,[350,396,104],[350,396,56],9,'case');
+  rod(gSh,[520,690,-128],[520,690,128],10,'frame');slab(gSh,rr(44,40,12),40,4,'frame',[520,690,30]);
+  const d=new V3(190,300,0);const L=d.length();d.normalize();
+  const pts=[];for(let i=0;i<=220;i++){const t=i/220,a=t*Math.PI*2*9;const c=new V3(...A).addScaledVector(d,L*(.22+.56*t));
+    const n1=new V3(-d.y,d.x,0),n2=new V3(0,0,1);pts.push(c.clone().addScaledVector(n1,Math.cos(a)*30).addScaledVector(n2,Math.sin(a)*30).toArray());}
+  tube(gSh,pts,5,'spring',400,8);
+  latheAB(gSh,[[24,0],[26,4],[26,90],[22,96]],[A[0]+d.x*L*.62,A[1]+d.y*L*.62,A[2]],[B[0],B[1],B[2]],'satin');
+  cyl(gSh,14,28,'z',A,'alu',16);cyl(gSh,14,28,'z',B,'alu',16);})();
+
+/* oil service points */
+const gF1=part('oilfilter',{name:'Масляный фильтр',desc:'Спереди внизу картера. BMW/Mahle 11 42 7 673 541 или Hiflofiltro HF164. Момент 11 Нм, кольцо смазать маслом.',sys:'Смазка',layer:'drive',ex:[360,-60,0]});
+lathe(gF1,[[30,0],[38,4],[38,64],[34,70],[0.1,72]],'x',[928,300,0],'blue',36);
+const gDr=part('drainplug',{name:'Сливная пробка масла',desc:'Внизу картера. Резьба M16x1,5, момент 32 Нм, новое уплотнительное кольцо.',sys:'Смазка',layer:'drive',ex:[0,-260,0]});
+cyl(gDr,13,14,'y',[800,226,0],'steel',6);cyl(gDr,15,2,'y',[800,234,0],'copper',24);
+const gSG=part('sightglass',{name:'Окошко уровня масла',desc:'Слева внизу картера. Уровень между MIN и MAX на прогретом двигателе, мотоцикл ровно, через 5 минут после остановки.',sys:'Смазка',layer:'drive',ex:[0,0,-260]});
+lathe(gSG,[[12,0],[18,0],[18,8],[12,8]],'-z',[740,330,-122],'brushed',28);add(gSG,new THREE.CircleGeometry(12,28),'oil',[740,330,-128],[0,Math.PI,0]);
+box(gSG,[18,1.5,1],[740,336,-129],'black');box(gSG,[18,1.5,1],[740,324,-129],'black');
+const gFill=part('filler',{name:'Пробка маслозаливной горловины',desc:'Чёрная круглая пробка сверху сзади на правой крышке клапанов. По инструкции BMW: очисти вокруг, вставь биту из бортового набора крестом вперёд в рукоятку отвёртки, поставь на замок пробки и поверни против часовой. Потом сними пробку.',sys:'Смазка',layer:'drive',ex:[0,110,140]});
+lathe(gFill,[[0.1,10],[22,10],[24,4],[24,0]],'y',[688,566,96],'brushed',32);box(gFill,[34,8,8],[688,578,96],'satin');
+
+/* exhaust: one chrome manifold for both cylinders -> catalyst collector under the engine -> riser on the left -> two silencers stacked vertically, raised */
+const gEx=part('headers',{name:'Выпускной коллектор',desc:'Хромированные трубы от передней части головок уходят вниз и под двигатель. По каталогу BMW это одна деталь на оба цилиндра. Гайки фланцев на головках.',sys:'Выпуск',ex:[180,-120,0]});
+mirrorZ(s=>{tube(gEx,[[862,392,s*258],[930,382,s*284],[990,330,s*262],[1000,250,s*205],[960,200,s*140],[860,196,s*70],[800,192,s*20]],22,'pipe',80);
+  slab(gEx,rr(52,68,14),10,3,'steel',[868,392,s*254],'x');});
+const gCol=part('collector',{name:'Сборник с катализатором',desc:'Под двигателем: сюда сходятся газы обоих цилиндров, внутри катализатор, сверху лямбда-зонд. Поэтому по глушителям нельзя понять, какой цилиндр не работает.',sys:'Выпуск',ex:[0,-200,0]});
+lathe(gCol,[[0.1,-130],[22,-128],[34,-100],[36,-50],[36,70],[32,110],[18,130],[0.1,132]],'x',[690,192,0],'blast',48);
+for(let i=0;i<3;i++)lathe(gCol,[[36.5,0],[38,2],[36.5,4]],'x',[640+i*60,192,0],'blast',48);
+
+const gSil=part('silencers',{name:'Глушители (два)',desc:'Два глушителя слева один над другим, как на Scrambler. Оба питаются от общего сборника под двигателем. Перед ними заслонка выпуска с сервоприводом на тросике.',sys:'Выпуск',ex:[-120,160,-200]});
+tube(gSil,[[440,232,-118],[392,240,-150],[340,262,-172],[300,310,-178],[280,420,-178],[268,470,-176]],30,'pipe',60);
+lathe(gSil,[[0.1,-44],[24,-40],[36,-20],[40,0],[36,20],[26,40],[0.1,46]],'y',[266,486,-176],'pipe',40);
+
+const silProf=[[34,0],[40,8],[50,60],[56,250],[57,282],[54,284],[57,288],[54,292],[57,296],[54,300],[52,312],[36,326],[28,330],[24,328],[23,296],[0.1,294]];
+function shieldGeo(){const s=rr(150,70,16);for(let i=0;i<4;i++){const h=new THREE.Path();h.absarc(-45+i*30,-8,9-i*.8,0,Math.PI*2,true);s.holes.push(h);
+  const h2=new THREE.Path();h2.moveTo(-58+i*30,16);h2.lineTo(-38+i*30,16);h2.lineTo(-38+i*30,26);h2.lineTo(-58+i*30,26);h2.closePath();s.holes.push(h2);}
+  const g=new THREE.ExtrudeGeometry(s,{depth:3,bevelEnabled:true,bevelThickness:1.5,bevelSize:1.5,bevelSegments:2,curveSegments:16});g.translate(0,0,-3);return g;}
+[[[200,500,-172],[-170,575,-172]],[[180,612,-166],[-166,690,-166]]].forEach(([A,B],i)=>{const z0=A[2];
+  skin(latheAB(gSil,silProf,A,B,'ti',56),null,()=>['L',q=>PMAP.L(q.x,q.y)],{em:.55,r:.3,m:.5,env:.8});latheAB(gSil,[[0.1,296],[22.5,296],[22.5,297],[0.1,297]],A,B,'black',32);
+  const d=new V3(...B).sub(new V3(...A)).normalize();
+  latheAB(gSil,[[57.5,118],[59.5,120],[59.5,136],[57.5,138]],A,B,'black',48);
+  tube(gSil,i?[[268,470,-176],[262,560,-172],[220,606,-168],[A[0]+4,A[1],z0]]:[[268,470,-176],[240,500,-174],[A[0]+4,A[1],z0]],26,'pipe',24);});
+/* hanger: from the upper clamp to the left passenger-footrest bracket */
+tube(gSil,[[150,668,-160],[200,610,-166],[262,540,-170]],7,'black',16);
+
+/* Hepco & Becker engine guards, rear rack, cast alu rear-frame piece (as on this bike) */
+const gCB=part('crashbars',{name:'Дуги Hepco & Becker',desc:'Защитные дуги двигателя, чёрные. Мешают доступу к крышкам клапанов снизу: для проверки зазоров удобнее снять нижнее крепление.',sys:'Кузов',ex:[120,0,0]});
+mirrorZ(s=>{tube(gCB,[[985,600,s*140],[978,590,s*260],[962,540,s*370],[945,440,s*402],[905,330,s*404],[820,272,s*384],[720,262,s*330],[650,272,s*240],[612,300,s*112]],15,'frame',120);
+  tube(gCB,[[956,512,s*388],[900,586,s*352],[790,604,s*318],[700,610,s*240],[650,630,s*160],[640,640,s*124]],13,'frame',80);
+  cyl(gCB,16,20,'z',[612,300,s*104],'frame',16);slab(gCB,rr(40,40,12),12,3,'frame',[985,600,s*134]);});
+const gLoom=part('loom',{name:'Основной жгут проводки',desc:'Жгут идёт по раме от блока под сиденьем к фаре и рулю. К нему подключены катушки зажигания, датчики и дроссели.',sys:'Электрика',ex:[0,200,0]});
+mirrorZ(s=>tube(gLoom,[[220,756,s*55],[450,772,s*100],[600,680,s*126],[740,700,s*128],[900,760,s*104],[1060,850,s*50],[1180,880,s*20],[1270,890,0]],7,'black',90));
+const gRack=part('rack',{name:'Багажник',desc:'Задний багажник на пассажирской раме.',sys:'Кузов',ex:[-200,260,0]});
+mirrorZ(s=>{tube(gRack,[[-100,812,s*80],[-104,870,s*92],[-160,884,s*96],[-260,880,s*86],[-290,860,s*60]],9,'frame',40);rod(gRack,[-260,880,s*86],[-250,812,s*62],8,'frame');});
+rod(gRack,[-290,860,-60],[-290,860,60],9,'frame');slab(gRack,rr(150,170,20),8,2,'frame',[-190,888,0],'y');
+
+
+
+/* footrests (toothed steel with rubber), levers, side stand */
+const gPeg=part('pegs',{name:'Подножки и рычаги',desc:'Зубчатые стальные подножки со съёмными резинками, ниже и дальше назад, чем у R nineT. Слева рычаг переключения, справа педаль тормоза. С выдвинутой боковой подножкой и включённой передачей двигатель не заведётся.',sys:'Управление',ex:[0,-80,0]});
+mirrorZ(s=>{slab(gPeg,rr(56,30,6),110,3,'steel',[540,400,s*190]);for(let i=0;i<5;i++)box(gPeg,[4,8,104],[518+i*11,418,s*190],'steel');
+  slab(gPeg,rr(110,60,20),12,3,'alu',[560,440,s*136],'z');});
+tube(gPeg,[[560,420,-152],[620,412,-170],[700,402,-196]],6,'alu',16);cyl(gPeg,8,30,'z',[702,402,-200],'rubber',12);
+tube(gPeg,[[560,420,152],[620,404,170],[690,396,196]],6,'alu',16);slab(gPeg,rr(30,12,4),36,2,'alu',[694,394,200]);
+tube(gPeg,[[600,300,-130],[580,170,-190],[548,30,-260]],10,'black',24);
+mirrorZ(s=>{rod(gPeg,[230,548,s*132],[230,548,s*196],12,'rubber');cyl(gPeg,14,10,'z',[230,548,s*134],'alu',16);});box(gPeg,[50,8,30],[548,24,-262],'black');
+const gRR=part('resR',{name:'Бачок заднего тормоза',desc:'Справа, у подножки водителя. DOT 4, не ниже MIN при вертикальном мотоцикле.',sys:'Тормоза',ex:[0,120,170]});
+lathe(gRR,[[0.1,0],[16,0],[17,4],[17,40],[18,44],[18,52],[0.1,52]],'y',[520,500,176],mat('lens'),24).material.transparent=true;
+cyl(gRR,12,30,'y',[520,520,176],'oil',20);
+
+
+
+/* =====================================================================
+   FULL SYSTEMS: every unit the bike needs to run, placed where it sits,
+   connected end to end (BMW K23 parts catalogue groups 11-65).
+   ===================================================================== */
+const SYS={air:'Воздух',fuel:'Топливо',elec:'Электрика и зажигание',oil:'Смазка и охлаждение',exh:'Выпуск',drive:'Трансмиссия',brake:'Тормоза и ABS',chassis:'Ходовая',ctrl:'Управление',body:'Кузов'};
+
+/* ---------- AIR: snorkel -> duct under the tank -> airbox with filter -> ducts -> throttles -> heads ---------- */
+const gDuct=part('intakeDuct',{name:'Воздуховод от заборника',desc:'Чёрный пластиковый канал под баком справа: ведёт воздух от круглого заборника спереди назад в корпус воздушного фильтра.',sys:SYS.air,ex:[60,240,120]});
+tube(gDuct,[[1050,718,112],[980,722,110],[860,712,106],[740,690,100],[668,668,92]],34,'black',60,20);
+const gAF=part('airfilter',{name:'Воздушный фильтр',desc:'Бумажный элемент внутри корпуса за двигателем. Чистит воздух до дросселей. Замена каждые 20 000 км, оригинал 13 71 7 706 414. Доступ сверху после снятия сиденья и крышки корпуса.',sys:SYS.air,layer:'internal',ex:[0,260,0]});
+slab(gAF,rr(180,40,10),200,4,'brass',[560,630,0]);for(let i=0;i<14;i++)box(gAF,[3,42,198],[480+i*12,630,0],'gold');
+const gIAT=part('iat',{name:'Датчик температуры воздуха',desc:'На корпусе фильтра. Блок управления по нему поправляет количество топлива: холодный воздух плотнее.',sys:SYS.elec,ex:[0,120,-80]});
+cyl(gIAT,9,30,'z',[620,640,-126],'black',12);box(gIAT,[20,16,14],[620,640,-146],'black');
+const gBr=part('breather',{name:'Сапун картера',desc:'Шланг вентиляции картера: газы, прорвавшиеся мимо колец, уходят в корпус фильтра и дожигаются в цилиндрах.',sys:SYS.oil,ex:[0,180,0]});
+tube(gBr,[[850,622,0],[790,650,0],[720,654,0],[672,650,0]],12,'rubber',24);
+
+/* ---------- FUEL: tank -> in-tank pump with filter -> pressure line -> distributor -> injectors; vapour -> canister -> purge ---------- */
+const gFP=part('fuelPump',{name:'Топливный насос с фильтром',desc:'Стоит внутри бака на фланце снизу. Электронасос с сетчатым и тонким фильтром подаёт бензин под давлением к форсункам. Рядом поплавковый датчик уровня.',sys:SYS.fuel,ex:[0,-160,0]});
+lathe(gFP,[[0.1,0],[38,0],[40,6],[40,10],[0.1,10]],'y',[820,730,0],'satin',36);
+lathe(gFP,[[0.1,0],[24,0],[24,70],[20,76],[0.1,76]],'y',[820,738,0],'black',28);
+box(gFP,[30,8,30],[820,742,40],'gold');rod(gFP,[830,770,30],[900,770,60],2.5,'steel');box(gFP,[30,14,20],[900,770,60],'black');
+const gFL=part('fuelLine',{name:'Топливопровод и распределитель',desc:'Напорная трубка от насоса вниз к распределителю над коробкой, оттуда по шлангу к форсунке каждого цилиндра. Быстроразъёмы с защёлками.',sys:SYS.fuel,ex:[0,120,0]});
+tube(gFL,[[820,730,0],[800,700,-30],[770,660,-40],[742,640,0]],5,'black',40);
+box(gFL,[40,24,40],[742,630,0],'satin');
+mirrorZ(s=>tube(gFL,[[742,630,s*20],[744,622,s*100],[748,606,s*190],[748,596,s*236]],4.5,'black',40));
+const gCC=part('canister',{name:'Адсорбер паров бензина',desc:'Цилиндр с активированным углём позади коробки. Бак дышит через него: пары бензина не уходят в атмосферу, а на работающем двигателе высасываются во впуск через клапан продувки.',sys:SYS.fuel,ex:[-200,-60,0]});
+lathe(gCC,[[0.1,0],[34,0],[36,4],[36,116],[34,120],[0.1,120]],'z',[404,500,-60],'black',32);
+tube(gCC,[[404,536,-30],[400,600,-60],[470,690,-70],[530,705,-30]],3.5,'rubber',40);
+tube(gCC,[[404,540,40],[440,560,160],[600,540,220],[700,532,252]],3.5,'rubber',40);
+cyl(gCC,9,24,'y',[440,560,160],'black',12);
+const gCap=part('fuelCap',{name:'Крышка бака',desc:'Замок крышки открывается ключом зажигания. Лить до нижней кромки горловины: перелив уходит в адсорбер и портит его.',sys:SYS.fuel,ex:[0,200,0]});
+lathe(gCap,[[0.1,0],[38,0],[40,4],[38,10],[0.1,11]],'y',[895,960,0],'brushed',40);box(gCap,[20,6,30],[895,972,0],'satin');
+
+/* ---------- ELECTRICS: battery -> fuses/relays -> ECU -> coils, injectors, pump; alternator -> regulator -> battery; starter circuit ---------- */
+const gECU=part('ecu',{name:'Блок управления двигателем BMS-MP',desc:'Под сиденьем. Считает зажигание и впрыск по датчикам: коленвала, распредвала, дросселя, температуры, детонации и лямбда-зонду. Сюда подключается диагностика.',sys:SYS.elec,ex:[-60,300,0]});
+slab(gECU,rr(150,34,10),118,4,'satin',[200,738,0]);box(gECU,[30,22,60],[122,738,0],'black');
+const gReg=part('regulator',{name:'Регулятор напряжения',desc:'Оребрённый блок на раме: выпрямляет ток генератора и держит напряжение 14 В для зарядки аккумулятора. Если на приборе горит значок батареи, проверять его и ремень генератора.',sys:SYS.elec,ex:[100,60,-160]});
+slab(gReg,rr(70,90,8),24,3,'black',[1080,700,-110],'z');for(let i=0;i<6;i++)box(gReg,[64,3,8],[1080,666+i*13,-124],'black');
+tube(gReg,[[1080,650,-110],[1078,640,-80],[1072,646,-40]],4,'black',24);
+const gAlt=part('alternator',{name:'Генератор 720 Вт',desc:'Спереди сверху на двигателе, крутится поликлиновым ремнём от коленвала. Даёт ток на всю электрику и зарядку аккумулятора.',sys:SYS.elec,layer:'drive',ex:[220,120,0]});
+lathe(gAlt,[[0.1,0],[50,0],[54,8],[54,96],[48,104],[0.1,106]],'-x',[952,604,0],'black',40);
+for(let i=0;i<10;i++)box(gAlt,[90,2,4],[900,604+Math.sin(i/10*Math.PI*2)*54,Math.cos(i/10*Math.PI*2)*54],'satin');
+lathe(gAlt,[[0.1,0],[30,0],[30,14],[0.1,14]],'x',[952,604,0],'steel',24);
+const gBeltI=part('belt',{name:'Ремень генератора',desc:'Поликлиновой ремень от шкива коленвала к генератору под передней крышкой. Замена раз в 6 лет или каждые 40 000 км. Порвался: генератор не крутится, аккумулятор садится.',sys:SYS.elec,layer:'internal',ex:[180,0,0]});
+(function(){const pts=[];const c1=[462,0],c2=[604,0];for(let i=0;i<=40;i++){const a=Math.PI+i/40*Math.PI;pts.push([960,c1[0]+Math.sin(a)*44,Math.cos(a)*44]);}
+  for(let i=0;i<=40;i++){const a=i/40*Math.PI;pts.push([960,c2[0]+Math.sin(a)*32,Math.cos(a)*32]);}
+  const c=new THREE.CatmullRomCurve3(pts.map(p=>new V3(...p)),true);add(gBeltI,new THREE.TubeGeometry(c,120,5,8,true),'rubber');})();
+const gStarter=part('starter',{name:'Стартер 1,2 кВт',desc:'Слева под впускным патрубком. Крутит двигатель через венец маховика. Питание толстым кабелем от аккумулятора через реле стартера.',sys:SYS.elec,layer:'drive',ex:[0,-60,-200]});
+lathe(gStarter,[[0.1,0],[36,0],[38,4],[38,124],[34,130],[0.1,132]],'-x',[662,380,-150],'black',36);
+lathe(gStarter,[[0.1,0],[17,0],[18,3],[18,70],[0.1,72]],'-x',[640,426,-150],'black',24);
+add(gStarter,new THREE.PlaneGeometry(22,60),'ceramic',[560,380,-189],[0,Math.PI,Math.PI/2]);
+const gRel=part('relays',{name:'Предохранители и реле',desc:'Блок предохранителей и реле под сиденьем: реле стартера, реле топливного насоса, главный предохранитель. Сгорел предохранитель: менять на такой же номинал.',sys:SYS.elec,ex:[-40,240,80]});
+box(gRel,[70,24,46],[200,705,70],'black');box(gRel,[30,30,30],[260,705,96],'black');box(gRel,[30,30,30],[260,705,-96],'black');
+const gCab=part('powerCables',{name:'Силовые кабели',desc:'Плюс от аккумулятора через реле к стартеру, масса от аккумулятора на коробку. Окисленная клемма = стартер щёлкает и не крутит.',sys:SYS.elec,ex:[0,0,-140]});
+tube(gCab,[[330,749,-26],[320,700,-60],[400,580,-100],[540,460,-140],[632,442,-170]],6,'black',60);
+tube(gCab,[[330,749,26],[380,650,80],[470,520,104]],6,'black',40);
+const gHorn=part('horn',{name:'Звуковой сигнал',desc:'Спереди под баком. Кнопка на левом блоке переключателей.',sys:SYS.elec,ex:[200,0,100]});
+lathe(gHorn,[[0.1,0],[40,0],[42,6],[30,20],[0.1,22]],'x',[1170,800,70],'black',32);
+const gDiag=part('diag',{name:'Разъём диагностики',desc:'Под сиденьем, под колпачком. Сюда подключают BMW ISTA или OBD-адаптер: чтение ошибок, сброс сервиса, адаптации.',sys:SYS.elec,ex:[-40,200,-60]});
+box(gDiag,[30,20,24],[200,705,-60],'black');box(gDiag,[34,6,28],[200,717,-60],'red');
+/* sensors */
+const gSens=part('sensors',{name:'Датчики двигателя',desc:'Коленвала (обороты и положение), распредвала (такт), детонации на цилиндрах, температуры головки и масла, положения передачи. Блок управления без них не заведёт или включит аварийный режим.',sys:SYS.elec,layer:'drive',ex:[0,-80,0]});
+cyl(gSens,10,30,'x',[930,350,-90],'black',12);
+mirrorZ(s=>{cyl(gSens,12,14,'z',[800,560,s*170],'black',14);});
+cyl(gSens,9,24,'z',[700,380,-334],'black',12);cyl(gSens,8,22,'y',[660,300,-100],'black',12);cyl(gSens,10,24,'z',[520,360,-108],'black',12);
+mirrorZ(s=>tube(gSens,[[800,568,s*178],[760,600,s*160],[680,640,s*130],[620,700,s*126]],2.5,'black',24));
+tube(gSens,[[930,350,-110],[880,320,-130],[700,300,-130],[610,300,-120]],2.5,'black',30);
+const gLam=part('lambda',{name:'Лямбда-зонд',desc:'Вкручен в сборник выпуска до катализатора. Измеряет кислород в выхлопе: блок управления держит смесь точно. Сдох: расход вверх, на приборе ошибка двигателя.',sys:SYS.exh,ex:[0,-140,120]});
+cyl(gLam,9,40,'y',[740,240,24],'steel',10);box(gLam,[18,14,18],[740,264,24],'black');
+tube(gLam,[[740,270,24],[700,300,90],[620,320,110],[600,400,108]],2.5,'black',24);
+/* exhaust flap servo */
+const gFlap=part('flap',{name:'Заслонка выпуска с сервоприводом',desc:'Заслонка перед глушителями открывается сервоприводом по тросику: тише на малых оборотах, свободнее на высоких. Сервопривод под сиденьем.',sys:SYS.exh,ex:[-100,60,-160]});
+lathe(gFlap,[[30,0],[33,0],[33,24],[30,24]],'y',[280,404,-178],'steel',32);
+box(gFlap,[60,44,40],[300,730,-90],'black');tube(gFlap,[[290,710,-110],[280,620,-150],[280,500,-176],[280,430,-178]],2.5,'black',30);
+
+/* ---------- OIL: sump -> pump -> filter -> galleries -> heads; cooler loop at the front ---------- */
+const gPump=part('oilpump',{name:'Масляный насос',desc:'Внутри картера спереди, приводится от коленвала. Забирает масло из поддона и гонит через фильтр к подшипникам, головкам и через радиатор.',sys:SYS.oil,layer:'internal',ex:[0,-80,0]});
+slab(gPump,rr(80,60,16),60,6,'alu',[900,320,0]);lathe(gPump,[[0.1,0],[24,0],[24,40],[0.1,40]],'y',[860,270,0],'brass',20);
+const gOL=part('oilLines',{name:'Маслопроводы радиатора',desc:'Две трубки от картера спереди к масляному радиатору и обратно. Течь здесь = масло на переднем колесе. Проверять при каждом ТО.',sys:SYS.oil,ex:[160,0,-60]});
+tube(gOL,[[1105,450,-40],[1090,420,-60],[1060,400,-90]],7,'black',30);
+tube(gOL,[[1105,450,-100],[1085,400,-110],[1060,370,-110]],7,'black',30);
+/* engine internals for the engine tab */
+const gClutch=part('clutch',{name:'Сухое сцепление',desc:'Однодисковое сухое сцепление между двигателем и коробкой, с гидроприводом от рычага. Диск, нажимной диск и пружина на маховике.',sys:SYS.drive,layer:'internal',ex:[-80,0,0]});
+lathe(gClutch,[[40,0],[110,0],[110,12],[40,12]],'x',[650,430,0],'steel',48);lathe(gClutch,[[30,0],[96,0],[96,8],[30,8]],'x',[636,430,0],'gold',48);lathe(gClutch,[[30,0],[104,0],[104,8],[30,8]],'x',[626,430,0],'steel',48);
+const gBal=part('balancer',{name:'Балансирный вал',desc:'Вал с противовесом под коленвалом гасит вибрации оппозита. Крутится от коленвала.',sys:SYS.drive,layer:'internal',ex:[0,-60,0]});
+cyl(gBal,12,240,'x',[790,340,0],'steel',16);box(gBal,[50,36,30],[790,322,0],'steel');
+const gChain=part('camchains',{name:'Цепи привода ГРМ',desc:'По одной цепи на цилиндр: от коленвала к звёздочкам распредвалов. Натяжитель гидравлический, от давления масла.',sys:SYS.drive,layer:'internal',ex:[0,0,0]});
+mirrorZ(s=>{const c=new THREE.CatmullRomCurve3([[862,452,s*120],[836,578,s*296],[812,520,s*300],[850,408,s*120]].map(p=>new V3(...p)),true);
+  add(gChain,new THREE.TubeGeometry(c,100,4,6,true),'steel');slab(gChain,rr(14,150,6),8,2,'black',[860,500,s*210],'z').rotation.x=-s*.9;});
+/* drive-side controls: clutch slave, shift linkage */
+const gSlave=part('clutchSlave',{name:'Рабочий цилиндр сцепления',desc:'Сзади на коробке слева. Гидравлика от рычага давит шток, тот выжимает сухое сцепление. Тормозная жидкость DOT 4 в бачке на левой рукоятке.',sys:SYS.drive,ex:[-120,0,-80]});
+lathe(gSlave,[[0.1,0],[20,0],[22,4],[22,50],[0.1,52]],'-x',[516,520,-92],'satin',24);
+const gShift=part('shiftLink',{name:'Тяга переключения передач',desc:'От рычага на левой подножке к валу переключения коробки. Люфт или задевание: регулировать длину тяги.',sys:SYS.ctrl,ex:[0,-40,-120]});
+rod(gShift,[700,402,-196],[620,360,-150],5,'alu');cyl(gShift,10,30,'z',[620,360,-140],'satin',12);rod(gShift,[620,360,-128],[600,380,-108],8,'satin');
+
+/* ---------- BRAKES + ABS: lever -> master -> ABS modulator -> calipers; pedal -> rear master -> ABS -> rear caliper ---------- */
+const gABS=part('abs',{name:'Модулятор ABS',desc:'Гидроблок с клапанами и насосом под сиденьем справа. Сравнивает скорости колёс и при блокировке за доли секунды сбрасывает давление в суппорте. Все тормозные трубки идут через него.',sys:SYS.brake,ex:[0,200,180]});
+slab(gABS,rr(100,80,14),70,6,'satin',[395,640,140]);lathe(gABS,[[0.1,0],[26,0],[26,40],[0.1,42]],'z',[430,630,176],'black',24);
+const gBL=part('brakeLines',{name:'Тормозные магистрали',desc:'Стальные армированные шланги и трубки: от главных цилиндров в модулятор ABS и от него к суппортам. Жидкость DOT 4, замена раз в 2 года.',sys:SYS.brake,ex:[0,0,140]});
+tube(gBL,[[1042,1048,186],[1090,990,140],[1130,890,105],[1110,760,125],[800,690,150],[440,660,150]],4,'black',80);
+{const p2=fpt(560);tube(gBL,[[400,672,120],[700,720,110],[1000,780,90],[1180,820,50],[p2.x+20,p2.y,0]],4,'black',80);
+ mirrorZ(k=>tube(gBL,[[p2.x+20,p2.y,0],[p2.x+10,p2.y-60,k*90],[1460,470,k*106],[1430,420,k*84]],4,'black',40));}
+tube(gBL,[[450,480,176],[480,560,170],[420,622,150]],4,'black',30);
+tube(gBL,[[380,612,130],[300,500,120],[150,380,100],[-60,250,70]],4,'black',60);
+const gRM=part('rearMaster',{name:'Задний главный цилиндр и педаль',desc:'Педаль справа давит на главный цилиндр, рядом бачок. Отсюда жидкость идёт в модулятор ABS и дальше к заднему суппорту. На педали датчик стоп-сигнала.',sys:SYS.brake,ex:[0,-60,140]});
+lathe(gRM,[[0.1,0],[14,0],[14,60],[0.1,62]],'y',[540,420,176],'satin',20);rod(gRM,[540,420,176],[600,380,186],5,'alu');
+const gWS=part('wheelSensors',{name:'Датчики скорости колёс',desc:'Спереди на левом пере у ступицы, сзади на редукторе. Читают зубчатые кольца. Без них не работают ABS и ASC, на приборе загорается значок ABS.',sys:SYS.brake,ex:[0,0,0]});
+cyl(gWS,8,30,'z',[1505,330,-112],'black',12);cyl(gWS,8,30,'z',[40,270,150],'black',12);
+tube(gWS,[[1505,330,-122],[1480,420,-118],[fpt(560).x+10,fpt(560).y,-100]],2.5,'black',24);
+tube(gWS,[[40,270,160],[150,320,140],[350,380,130],[400,600,140]],2.5,'black',40);
+
+/* ---------- small chassis/control items ---------- */
+const gSS=part('standSwitch',{name:'Боковая подножка с датчиком',desc:'Датчик сообщает блоку, что подножка откинута: с откинутой подножкой и включённой передачей двигатель заглохнет. Не заводится на передаче: проверить его.',sys:SYS.ctrl,ex:[0,-100,-120]});
+cyl(gSS,14,30,'z',[600,300,-140],'black',12);box(gSS,[20,14,20],[620,316,-150],'black');
+const gGauge=part('instrument',{name:'Спидометр',desc:'Круглый аналоговый спидометр в металлическом корпусе на кронштейне над верхней траверсой, слева от центра. Шкала до 220 км/ч, внизу ЖК-строка: пробег, суточный, время, температура двигателя, напряжение. Над ней лампы: нейтраль, ABS, ASC, двигатель, дальний свет. Кнопка MENU на левой рукоятке листает экраны.',sys:SYS.elec,ex:[100,240,0]});
+(function(){
+  /* dial face: black, white km/h scale 0-220, red zone marks, warning lights, LCD strip, needle */
+  const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d'),C=256;
+  x.fillStyle='#0d0e10';x.beginPath();x.arc(C,C,256,0,7);x.fill();
+  x.strokeStyle='#2a2c30';x.lineWidth=6;x.beginPath();x.arc(C,C,246,0,7);x.stroke();
+  const a0=Math.PI*0.75,a1=Math.PI*2.25,ang=v=>a0+(a1-a0)*v/220;
+  for(let v=0;v<=220;v+=5){const a=ang(v),big=v%20===0,mid=v%10===0;const r1=232,r2=big?200:(mid?212:220);
+    x.strokeStyle='#f2f2ee';x.lineWidth=big?5:(mid?3:2);x.beginPath();x.moveTo(C+Math.cos(a)*r1,C+Math.sin(a)*r1);x.lineTo(C+Math.cos(a)*r2,C+Math.sin(a)*r2);x.stroke();
+    if(big){x.fillStyle='#f2f2ee';x.font='600 34px "Golos Text",Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(String(v),C+Math.cos(a)*166,C+Math.sin(a)*166);}}
+  x.fillStyle='#9aa0a6';x.font='500 24px "Golos Text",Arial,sans-serif';x.textAlign='center';x.fillText('km/h',C,C-70);
+  x.fillStyle='#c9cdd1';x.font='600 22px "Golos Text",Arial,sans-serif';x.fillText('BMW Motorrad',C,C+138);
+  /* LCD strip */
+  x.fillStyle='#1b2a24';x.fillRect(C-112,C+28,224,72);x.strokeStyle='#3b4a44';x.lineWidth=3;x.strokeRect(C-112,C+28,224,72);
+  x.fillStyle='#b6d9c7';x.font='600 34px "JetBrains Mono",monospace';x.textAlign='right';x.fillText('28600',C+92,C+64);x.font='500 20px "JetBrains Mono",monospace';x.textAlign='left';x.fillText('ODO km',C-100,C+90);x.textAlign='right';x.fillText('12:00',C+100,C+90);
+  /* warning lights in a row */
+  [['#2fbf4a',-90],['#f2b705',-45],['#e8402f',0],['#f2b705',45],['#2f7de8',90]].forEach(([col,dx])=>{x.fillStyle=col;x.globalAlpha=.55;x.beginPath();x.arc(C+dx,C-24,11,0,7);x.fill();x.globalAlpha=1;});
+  {const a=ang(0);x.strokeStyle='#e8402f';x.lineWidth=7;x.lineCap='round';x.beginPath();x.moveTo(C-Math.cos(a)*30,C-Math.sin(a)*30);x.lineTo(C+Math.cos(a)*205,C+Math.sin(a)*205);x.stroke();}
+  const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=8;
+  const G=new THREE.Group();G.position.set(1212,1058,0);G.rotation.z=.62;gGauge.add(G);
+  /* housing: closed metal cup in tank colour, chrome bezel, glass, face, needle */
+  const cup=lathe(G,[[0.1,-44],[30,-43],[46,-34],[54,-18],[56,0],[55,6]],'y',[0,0,0],'paint',56);
+  lathe(G,[[50,4],[57,5],[59,10],[56,14],[50,13]],'y',[0,0,0],'chrome',64);
+  const face=add(G,new THREE.CircleGeometry(50,64),new THREE.MeshStandardMaterial({map:tex,roughness:.6,metalness:0}),[0,6,0],[-Math.PI/2,0,0]);
+  face.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new V3(0,1,0),-Math.PI/2));
+  const glass=add(G,new THREE.CircleGeometry(51,64),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.02,metalness:0,transparent:true,opacity:.12,envMapIntensity:1.6}),[0,12,0],[-Math.PI/2,0,0]);glass.userData.baseOpacity=.12;
+  cyl(G,5,4,'y',[0,8,0],'black',20);
+  /* bracket from the top clamp to the cup */
+  G.updateMatrixWorld();
+  {const b=fpt(777).addScaledVector(FP_,30).setZ(0);rod(gGauge,b.toArray(),[1214,1022,0],7,'brushed');cyl(gGauge,12,10,'y',b.toArray(),'brushed',16);}
+  /* loom to the instrument */
+  tube(gGauge,[[1212,1010,0],[1222,990,-40],[1250,940,-10],[1270,900,0]],3,'black',24);
+})();
+
+/* ---------- workshop tools and dirt for the spark-plug job (right cylinder) ---------- */
+function toolPart(id,name,desc){const g=part(id,{name,desc,sys:'Инструмент',layer:'tool',ex:[0,0,620]});const rg=new THREE.Group();rg.name=id;rg.position.set(770,430,0);g.add(rg);return rg;}
+function socket(rg){lathe(rg,[[8.6,0],[10.6,0],[10.9,58],[9.6,64],[6.2,68],[6.2,72]],'z',[0,0,238],'tool',32);
+  lathe(rg,[[7.2,0],[7.2,12]],'z',[0,0,262],'grip',20);
+  lathe(rg,[[6.2,0],[6.4,4],[6.4,140],[8,146],[8,156],[6,160]],'z',[0,0,308],'tool',20);}
+function label(txt){const c=document.createElement('canvas');c.width=256;c.height=80;const x=c.getContext('2d');
+  x.fillStyle='#F2B705';x.beginPath();x.roundRect?x.roundRect(4,4,248,72,14):x.rect(4,4,248,72);x.fill();x.fillStyle='#15181B';x.font='600 44px "JetBrains Mono",monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,128,42);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));sp.scale.set(96,30,1);sp.renderOrder=10;return sp;}
+const TOOL={};
+TOOL.socket=toolPart('toolSocketR','Свечная головка 14 мм с удлинителем и трещоткой','Тонкостенная головка 14 мм с резинкой внутри, удлинитель 3/8", трещотка 3/8". Выкручивать против часовой.');
+socket(TOOL.socket);lathe(TOOL.socket,[[0.1,0],[20,0],[22,4],[22,20],[20,24],[0.1,24]],'z',[0,0,462],'tool',28);
+box(TOOL.socket,[230,24,14],[124,0,474],'tool');box(TOOL.socket,[100,30,20],[200,0,474],'grip');
+TOOL.ext=toolPart('toolExtR','Головка с удлинителем, без трещотки','Наживляй свечу пальцами за удлинитель, без трещотки: так сразу почувствуешь перекос.');
+socket(TOOL.ext);lathe(TOOL.ext,[[0.1,0],[14,0],[15,3],[15,36],[0.1,38]],'z',[0,0,466],'grip',24);
+TOOL.torque=toolPart('toolTorqueR','Динамометрический ключ','Ключ 1/4" с диапазоном 2-25 Нм. Выставь 12 Нм, тяни плавно за рукоятку до щелчка.');
+socket(TOOL.torque);lathe(TOOL.torque,[[0.1,0],[19,0],[20,4],[20,20],[0.1,24]],'z',[0,0,462],'tool',28);
+cyl(TOOL.torque,12,300,'x',[170,0,474],'tool',20);cyl(TOOL.torque,15,110,'x',[290,0,474],'gripr',20);cyl(TOOL.torque,13,24,'x',[220,0,474],'grip',20);
+const tql=label('12 Нм');tql.position.set(240,60,474);TOOL.torque.add(tql);
+TOOL.air=toolPart('toolAirR','Сжатый воздух','Продувочный пистолет компрессора или баллончик со сжатым воздухом. Сопло к краю колодца, очки на глаза.');
+lathe(TOOL.air,[[2.5,0],[3.5,0],[3.5,90],[6,100],[6,120]],'z',[0,0,372],'tool',14);
+box(TOOL.air,[60,40,40],[10,0,512],'grip');box(TOOL.air,[30,110,30],[24,-70,512],'grip');
+const airM=new THREE.MeshBasicMaterial({color:0xbfe6ff,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false});
+lathe(TOOL.air,[[13,0],[2,128]],'z',[0,0,244],airM,24);
+TOOL.feel=toolPart('toolFeelerR','Набор плоских щупов','Лезвие нужной толщины заводишь в щель между круглой частью кулачка и толкателем, сбоку, плоско. Щуп нижнего допуска должен проходить, щуп верхнего допуска уже не должен.');
+const blM=new THREE.MeshStandardMaterial({color:0xf2b705,roughness:.3,metalness:.6});box(TOOL.feel,[80,12,1.6],[30,0,291.5],blM);box(TOOL.feel,[50,16,8],[94,0,293],'grip');
+for(let i=1;i<6;i++){const b=box(TOOL.feel,[60,12,0.8],[46+i*3,0,293+i*1.8],'tool');b.rotation.y=-i*.1;}
+const feelLbl=[label('0,10-0,17'),label('0,34-0,41')];feelLbl.forEach(l=>{l.scale.set(48,15,1);l.position.set(60,22,310);TOOL.feel.add(l);});
+TOOL.gauge=toolPart('toolGaugeR','Плоский щуп 0,8 мм','Лезвие щупа 0,8 мм должно проходить между центральным и каждым боковым электродом с лёгким касанием.');
+box(TOOL.gauge,[70,0.8,9],[34,2.1,209],'tool');box(TOOL.gauge,[70,6,14],[100,2.1,209],'grip');
+for(let i=1;i<6;i++){const b=box(TOOL.gauge,[70,0.6,9],[100+Math.cos(i*.22)*0,2.1+i*1.2,209],'tool');b.rotation.z=-i*.12;b.position.x=34+70*(1-Math.cos(i*.12))*0+ (1-Math.cos(i*.12))*30;}
+(function(){const g=part('dirtR',{name:'Песок и грязь в колодце',desc:'То, что за сезон насыпается в колодец свечи. Если не продуть до выкручивания свечи, всё упадёт в цилиндр.',sys:'Зажигание',layer:'fx',ex:[0,0,420]});
+  const geo=new THREE.IcosahedronGeometry(1,0),o=new THREE.Object3D(),mm=[];let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+  for(let i=0;i<70;i++){const a=rnd()*Math.PI*2,onFloor=i<46,r=onFloor?9.5+rnd()*5:14+rnd()*0.6,z=onFloor?239.5+rnd()*2.5:244+rnd()*70;
+    o.position.set(770+Math.cos(a)*r,430+Math.sin(a)*r,z);o.rotation.set(rnd()*3,rnd()*3,rnd()*3);const sc=1.6+rnd()*2.2;o.scale.set(sc,sc*.8,sc);o.updateMatrix();mm.push(o.matrix.clone());}
+  inst(g,geo,'dirt',mm);})();
+
+/* store home transforms */
+const ENG=[120,40,0];
+const OFFS={light:[-30,-12,0],pegs:[-90,0,0],rearMaster:[-90,0,0],shiftLink:[-90,0,0],standSwitch:[-90,0,0],resR:[-140,70,-10],cooler:[15,-100,0],starter:[80,20,0],resF:[-140,14,0]};
+['crankcase','beltcover','cylL','cylR','headL','headR','wellL','wellR','coverL','coverR','coilL','coilR','connL','connR','plugL','plugR','camsL','camsR','pistonL','pistonR','crank','throttle','oilfilter','drainplug','sightglass','filler','headers','collector','lambda','alternator','belt','oilpump','balancer','camchains','sensors','crashbars','toolSocketR','toolExtR','toolTorqueR','toolAirR','toolGaugeR','toolFeelerR','dirtR'].forEach(id=>OFFS[id]=ENG);
+/* align each cylinder to the scanned engine: left cylinder sits 54 mm ahead of the right one */
+const SIDE={R:[0,-16,-36],L:[54,-16,38]};
+['cyl','head','well','cover','coil','conn','plug','cams','piston'].forEach(b=>['L','R'].forEach(s=>{OFFS[b+s]=ENG.map((v,i)=>v+SIDE[s][i]);}));
+['toolSocketR','toolExtR','toolTorqueR','toolAirR','toolGaugeR','toolFeelerR','dirtR'].forEach(id=>OFFS[id]=ENG.map((v,i)=>v+SIDE.R[i]));
+OFFS.wheelF=[-35,0,0];
+['coil','conn'].forEach(b=>{OFFS[b+'R'][2]-=40;OFFS[b+'L'][2]+=40;});
+OFFS.camsR[2]-=40;OFFS.camsL[2]+=40;OFFS.toolFeelerR=OFFS.toolFeelerR.slice();OFFS.toolFeelerR[2]-=40;
+OFFS.drainplug=ENG.map((v,i)=>v+[0,-72,0][i]);
+Object.values(P).forEach(p=>{p.home.copy(p.g.position);if(OFFS[p.id])p.home.add(new V3(...OFFS[p.id]));
+  p.g.traverse(o=>{if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];o.userData.baseOpacity=ms[0].opacity;ms.forEach(q=>q.transparent=true);}});});
+
+/* ---------- highlight / visibility ---------- */
+const HL=new THREE.Color(0xf2b705);
+function applyPartState(p,dt){
+  const c=p.cur,t=p.tgt,k=Math.min(1,FADEDT*(RM?60:6));
+  c.off+=(t.off-c.off)*k;c.op+=(t.op-c.op)*k;c.hl+=(t.hl-c.hl)*k;
+  p.g.position.copy(p.home).addScaledVector(p.ex,c.off);
+  const pulse=c.hl>0.01?(0.55+0.45*Math.sin(performance.now()/220)):0;
+  p.g.visible=c.op>0.02;
+  p.g.traverse(o=>{if(!o.material||o.userData.own)return;const ms=Array.isArray(o.material)?o.material:[o.material];
+    ms.forEach(q=>{q.opacity=c.op*(o.userData.baseOpacity==null?1:o.userData.baseOpacity);q.depthWrite=c.op>0.9;
+      if(q.emissive&&!o.userData.ownEm){const be=q.userData.baseEm;if(be)q.emissive.copy(be).lerp(HL,c.hl*pulse*.85);else q.emissive.copy(HL).multiplyScalar(c.hl*pulse*0.85);}});});
+}
+
+/* ---------- camera views (mm) ---------- */
+const VIEWS={
+  overall:{p:[2700,1300,2700],t:[780,560,0],n:'ОБЩИЙ'},
+  engine:{p:[1950,1150,1950],t:[730,430,0],n:'ДВИГАТЕЛЬ'},
+  rightSide:{p:[1000,650,1800],t:[770,420,150],n:'ДВИГАТЕЛЬ СПРАВА'},
+  leftLow:{p:[800,450,-1600],t:[760,350,-100],n:'ДВИГАТЕЛЬ СЛЕВА'},
+  sump:{p:[1600,200,1050],t:[830,280,0],n:'КАРТЕР СНИЗУ'},
+  filter:{p:[1850,420,650],t:[950,300,0],n:'МАСЛЯНЫЙ ФИЛЬТР'},
+  headR:{p:[1350,850,1450],t:[770,430,330],n:'ГОЛОВКА СПРАВА'},
+  headRclose:{p:[1150,700,1100],t:[770,430,300],n:'ГОЛОВКА СПРАВА, БЛИЗКО'},
+  headL:{p:[1350,850,-1450],t:[770,430,-330],n:'ГОЛОВКА СЛЕВА'},
+  fd:{p:[-850,600,1200],t:[20,315,110],n:'ГЛАВНАЯ ПЕРЕДАЧА'},
+  brakeF:{p:[2150,600,800],t:[1460,390,70],n:'ПЕРЕДНИЕ ТОРМОЗА'},
+  brakeR:{p:[-500,420,800],t:[-40,260,60],n:'ЗАДНИЙ ТОРМОЗ'},
+  barR:{p:[1500,1500,950],t:[1050,1050,190],n:'РУЛЬ СПРАВА'},
+  resR:{p:[900,900,1250],t:[380,590,165],n:'БАЧОК ЗАДНЕГО ТОРМОЗА'},
+  drive:{p:[350,1000,2200],t:[480,400,40],n:'ПРИВОД НА КОЛЕСО'},
+  headOpen:{p:[1180,780,820],t:[770,440,300],n:'ГОЛОВКА ОТКРЫТА'},
+  gapView:{p:[1080,480,480],t:[790,430,292],n:'ЗАЗОР КЛАПАНА'},
+  wheelTurn:{p:[-700,700,1300],t:[200,380,150],n:'ЗАДНЕЕ КОЛЕСО'},
+  wellR:{p:[812,476,700],t:[770,430,250],n:'КОЛОДЕЦ СВЕЧИ СПРАВА'},
+  wellX:{p:[1300,760,880],t:[770,430,300],n:'КОЛОДЕЦ В РАЗРЕЗЕ'},
+  plugOut:{p:[930,540,860],t:[770,430,500],n:'СВЕЧА СНАРУЖИ'},
+  gap:{p:[860,470,620],t:[790,432,490],n:'ЗАЗОР СВЕЧИ'},
+  torque:{p:[1350,900,1250],t:[860,430,430],n:'ЗАТЯЖКА'},
+  coilsBoth:{p:[1500,1300,0],t:[770,430,0],n:'ОБЕ КАТУШКИ'},
+  exhaustL:{p:[250,800,-1900],t:[250,500,-160],n:'ВЫПУСК СЛЕВА'},
+  headersFront:{p:[2100,520,1000],t:[880,260,80],n:'КОЛЛЕКТОРЫ СПЕРЕДИ'},
+  filler:{p:[1180,880,1080],t:[820,515,290],n:'ЗАЛИВНАЯ ПРОБКА'}
+};
+['engine','rightSide','leftLow','sump','filter','headR','headRclose','headL','headOpen','gapView','wellR','wellX','plugOut','gap','torque','coilsBoth','headersFront'].forEach(k=>{const V=VIEWS[k];V.p=V.p.map((v,i)=>v+ENG[i]);V.t=V.t.map((v,i)=>v+ENG[i]);});
+let fly=null;
+function goView(v,instant){const V=VIEWS[v];if(!V)return;document.getElementById('tag3d').textContent='ВИД: '+V.n;
+  const p=new V3(...V.p).multiplyScalar(S),t=new V3(...V.t).multiplyScalar(S);
+  if(instant||RM){camera.position.copy(p);controls.target.copy(t);fly=null;return;}
+  fly={p0:camera.position.clone(),t0:controls.target.clone(),p,t,s:performance.now(),d:900};}
+
+/* ---------- engine animation state ---------- */
+let theta=0, speed=1, playing=true, gear=0, cutaway=true;
+function bump(ph,a,b){ph=((ph%720)+720)%720;if(ph<a||ph>b)return 0;return Math.sin(Math.PI*(ph-a)/(b-a));}
+const STROKES=['Рабочий ход','Выпуск','Впуск','Сжатие'];
+function strokeOf(ph){ph=((ph%720)+720)%720;return Math.floor(ph/180);}
+function updateEngine(){
+  crankRot.rotation.x=-theta*Math.PI/180;
+  const r=36.5,L=125;
+  ['R','L'].forEach(k=>{const c=cyls[k],s=c.s;
+    const a=theta*Math.PI/180+(k==='L'?Math.PI:0);
+    const py=r*Math.sin(a), pz=r*Math.cos(a);
+    const pinW=new V3(CR.x+pins[k].x,CR.y+py,pz);
+    const wz=pz+s*Math.sqrt(L*L-py*py);
+    const wrist=new V3(CR.x+pins[k].x,CR.y,wz);
+    c.pg.position.set(wrist.x,wrist.y,wrist.z+s*15);
+    const d=wrist.clone().sub(pinW);c.conrod.position.copy(pinW).add(wrist).multiplyScalar(.5);
+    c.conrod.quaternion.setFromUnitVectors(new V3(0,1,0),d.normalize());
+    const ph=theta+(k==='L'?360:0);
+    c.cams.forEach(cm=>cm.g.rotation.y=(theta/2+(k==='L'?180:0))*Math.PI/180*(cm.kind==='in'?1:-1));
+    c.valves.forEach(v=>{const lift=v.kind==='ex'?bump(ph,160,380):bump(ph,340,580);v.g.position.z=-s*lift*7;});
+    const p=((ph%720)+720)%720;const fl=p<25?1-p/25:(p>705?1:0);c.spark.material.opacity=fl*0.9;c.spark.scale.setScalar(.6+fl*.6);
+  });
+  const ratio=gear?RATIOS[gear-1]:0;
+  inShaft.rotation.x=theta*Math.PI/180/1.7;
+  outShaft.rotation.x=gear?-theta*Math.PI/180/1.7/ratio:0;
+
+  gearPairs.forEach((pr,i)=>pr.forEach(m=>m.material.emissive&&m.material.emissive.setRGB(...(i===gear-1?[.75,.55,0]:[0,0,0]))));
+}
+let wheelSpin=0;
+/* wheel rotation: rotate the rear wheel group around its axle */
+const wR=P.wheelR.g;const wPivot=new THREE.Group();wPivot.position.set(0,315,0);root.add(wPivot);
+while(wR.children.length){const c=wR.children[0];c.position.y-=315;wPivot.add(c);}wR.add(wPivot);root.remove(wPivot);wR.add(wPivot);
+const stEls={};
+
+/* ---------- SERVICE DATA ---------- */
+const OPS=[
+ {id:'oilLevel',t:'Проверить уровень масла',when:'Каждую третью заправку',diff:1,time:'10 мин',
+  keys:'масло уровень окошко долить доливать мин макс расход',
+  need:['Масло 15W-50, API SJ или JASO MA2, без молибденовых присадок','Штатный набор: рукоятка отвёртки и крестовая бита'],
+  keep:['crankcase','sightglass','filler','cylL','cylR','headL','headR','coverL','coverR','gearbox','oilfilter','drainplug'],
+  steps:[
+   {h:'Прогрей двигатель',v:'engine',f:['crankcase'],x:'Уровень меряют только на горячем двигателе, после нормальной поездки. На холодном масло ещё не стекло и уровень врёт.'},
+   {h:'Поставь мотоцикл ровно',v:'overall',f:['wheelF','wheelR'],x:'Ровная твёрдая площадка, мотоцикл держишь вертикально, не на боковой подножке. Заглуши и подожди 5 минут, пока масло стечёт в картер.',w:'На боковой подножке окошко покажет неправду: мотоцикл наклонён влево.'},
+   {h:'Смотри в окошко слева',v:'leftLow',f:['sightglass'],x:'Окошко слева внизу картера. Масло должно быть между MIN и MAX. Между метками ровно 0,5 л.',facts:[['Норма','между MIN и MAX'],['MIN → MAX','0,5 л']]},
+   {h:'Если ниже MIN: долей',v:'rightSide',f:['filler'],off:['filler'],x:'Пробка заливной горловины справа сверху. Вставь крестовую биту в рукоятку отвёртки из штатного набора, открути против часовой. Доливай понемногу, за раз не больше 0,5 л.',facts:[['Масло','15W-50'],['Долив макс.','0,5 л']],w:'Выше MAX тоже плохо: лишнее масло выдавливает через сапун. Если перелил, нужно сливать.'},
+   {h:'Закрой и перепроверь',v:'leftLow',f:['filler','sightglass'],x:'Закрути пробку рукой до упора, через минуту снова посмотри в окошко.'}
+  ]},
+ {id:'oilChange',t:'Замена масла и фильтра',when:'Каждые 10 000 км или раз в год',diff:2,time:'45-60 мин',
+  keys:'масло замена фильтр слить сливная пробка то техобслуживание',
+  need:['Масло 15W-50 API SJ / JASO MA2, 4 л (в двигатель входит до 3,8 л)','Фильтр BMW 11 42 7 673 541 или Hiflofiltro HF164','Новое уплотнительное кольцо сливной пробки','Съёмник фильтра (чашка под твой фильтр)','Динамометрический ключ малого диапазона','Поддон на 5 л, перчатки, ветошь'],
+  keep:['crankcase','oilfilter','drainplug','sightglass','filler','gearbox','cylL','cylR','headL','headR','coverL','coverR','beltcover'],
+  steps:[
+   {h:'Прогрей 5 минут',v:'engine',f:['crankcase'],x:'Тёплое масло жидкое и сливается почти полностью. Не перегревай: под двигателем идут выпускные трубы.',w:'Коллекторы под картером горячие. Перчатки обязательно.'},
+   {h:'Мотоцикл ровно, поддон под двигатель',v:'sump',f:['crankcase'],x:'Центральной подножки у Scrambler нет. Лучше всего задний подкат под ось колеса, или держи вертикально с помощником.'},
+   {h:'Открой заливную пробку',v:'filler',f:['filler'],off:['filler'],x:'Чёрная круглая пробка сверху на правой крышке клапанов. Очисти вокруг, вставь биту из бортового набора крестом вперёд в рукоятку отвёртки, поставь на замок пробки, поверни против часовой и сними. Открываешь до слива: масло уйдёт быстрее и без бульканья.',facts:[['Инструмент','бита из бортового набора + рукоятка']]},
+   {h:'Открути сливную пробку',v:'sump',f:['drainplug'],off:['drainplug'],x:'Пробка внизу картера. Последние витки откручивай пальцами и сразу уводи руку в сторону, масло пойдёт струёй. Сливай минут 10.',facts:[['Резьба','M16x1,5']]},
+   {h:'Сними старый фильтр',v:'filter',f:['oilfilter'],off:['oilfilter'],x:'Фильтр спереди внизу картера. Съёмник-чашка, против часовой. Из фильтра тоже течёт, держи поддон под ним.'},
+   {h:'Поставь новый фильтр',v:'filter',f:['oilfilter'],x:'Протри посадочное место. Смажь резиновое кольцо нового фильтра свежим маслом, накрути рукой до касания, затем дотяни ключом.',facts:[['Момент','11 Нм','tq']]},
+   {h:'Закрути сливную пробку',v:'sump',f:['drainplug'],x:'Новое уплотнительное кольцо, протри пробку, закрути рукой и дотяни динамометром.',facts:[['Момент','32 Нм','tq'],['Кольцо','новое']]},
+   {h:'Залей масло',v:'rightSide',f:['filler'],off:['filler'],x:'Залей 3,5 л. Закрой пробку, заведи на минуту, заглуши, подожди 5 минут. Доливай по окошку до середины между MIN и MAX.',facts:[['Объём','до 3,8 л'],['Масло','15W-50']]},
+   {h:'Проверь окошко и течи',v:'leftLow',f:['sightglass','drainplug','oilfilter'],x:'Уровень в окошке между MIN и MAX. Посмотри снизу, что пробка и фильтр сухие. Отработку сдай в пункт приёма.',w:'Индикатор ТО на приборе сбрасывается диагностическим тестером (ISTA или сторонний адаптер). На работу мотоцикла не влияет.'}
+  ]},
+ {id:'spark',t:'Замена свечей',when:'Каждые 20 000 км или если троит',diff:2,time:'30-40 мин',
+  keys:'свеча свечи зажигание катушка троит пропуски не заводится дёргается колодец',
+  need:['2 свечи NGK MAR8B-JDS','Свечная головка 14 мм тонкостенная, с резинкой или магнитом, привод 3/8"','Удлинитель 3/8", 10-15 см','Трещотка 3/8"','Динамометрический ключ 1/4" на 2-25 Нм (нужно выставить 12 Нм)','Плоский щуп 0,8 мм','Сжатый воздух: компрессор с пистолетом или баллончик','Очки, перчатки','По желанию: диэлектрическая силиконовая смазка'],
+  keep:['cylR','headR','coverR','coilR','connR','plugR','wellR','wellL','cylL','headL','coverL','coilL','connL','plugL','crankcase'],
+  steps:[
+   {h:'Только на холодном двигателе',v:'headR',f:['headR','headL'],x:'Мотоцикл простоял минимум 2-3 часа. Резьба свечи в алюминиевой головке: на горячем двигателе её легко сорвать. Зажигание выключено, ключ вынут. Начинаем с правого цилиндра.',facts:[['Двигатель','холодный']],w:'Сорванная резьба в головке = снятие головки и ремонт. Ни одного движения через силу.'},
+   {h:'Сними накладку катушки',v:'headRclose',f:['capR'],off:['capR'],x:'Катушку и её провод закрывает чёрная пластиковая накладка на крышке клапанов. Поддень её за край пластиковой лопаткой и сними на себя. Металлической отвёрткой не лезь: поцарапаешь крышку и сломаешь защёлки.',facts:[['Инструмент','пластиковая лопатка']]},
+   {h:'Сними разъём с катушки',v:'headRclose',f:['connR'],off:['connR'],x:'Под накладкой верхушка катушки, на ней пластиковый разъём. Провод от него идёт вниз по каналу под накладкой, снаружи его не видно. Нажми пальцем на защёлку и сними разъём, держа за пластиковый корпус. За провода не тяни.',facts:[['Инструмент','руки']]},
+   {h:'Вытащи катушку из колодца',v:'headRclose',f:['coilR'],off:['connR','coilR'],x:'Возьмись за верхушку катушки и тяни строго наружу, по оси цилиндра. Она длинная, около 10 см, внизу резиновый наконечник сидит на свече. Если туго, поворачивай вправо-влево на 10-20 градусов и тяни. Вбок не гни.',facts:[['Ход','~10 см'],['Инструмент','руки']]},
+   {h:'Загляни в колодец',v:'wellR',f:['plugR','wellR'],off:['connR','coilR'],show:['dirtR'],x:'Теперь в крышке открытое отверстие: это колодец свечи, глубиной около 12 см. На дне видно шестигранник свечи и белый изолятор. Вокруг на дне песок и грязь, их надо убрать до того, как трогаешь свечу.'},
+   {h:'Продуй колодец',v:'wellX',xray:true,f:['dirtR'],off:['connR','coilR'],show:['dirtR','toolAirR'],anim:'blow',x:'Голова и крышка тут показаны прозрачными, чтобы было видно колодец насквозь. Надень очки. Сопло пистолета или трубочку баллончика к краю колодца, короткими нажатиями 3-4 раза. Мусор вылетает наружу. Посвети фонариком: на дне должно быть чисто.',facts:[['Чем','сжатый воздух'],['Нельзя','WD-40, силикон, очиститель']],w:'Ничего не пшикай в колодец. Жидкость стечёт к свече и в цилиндр.'},
+   {h:'Выкрути старую свечу',v:'wellX',xray:true,f:['plugR','toolSocketR'],off:['connR','coilR'],show:['toolSocketR'],anim:'unscrew',x:'Головку 14 мм на удлинитель, удлинитель на трещотку, трещотка на «откручивание». Опусти головку в колодец до посадки на шестигранник. Первое усилие тугое, потом свеча идёт легко. Резинка в головке вытащит свечу наружу.',facts:[['Головка','14 мм тонкостенная'],['Удлинитель','3/8", 10-15 см'],['Направление','против часовой']],w:'Динамометром не откручивают, только трещоткой. Если свеча тугая на всём ходу, вкрути на пол-оборота обратно и снова выкручивай.'},
+   {h:'Посмотри на старую свечу',v:'plugOut',f:['plugR'],off:['connR','coilR','plugR'],x:'Нагар на свече показывает, как работал цилиндр. Светло-коричневый и сухой: норма. Мокрая, чёрная, пахнет бензином: искры не было. Белая, сухая: бедная смесь или подсос воздуха. Чёрная в масле: кольца или маслосъёмные колпачки, нужен мастер. Трещина на белой керамике: свеча дохлая.'},
+   {h:'Проверь зазор новой свечи',v:'gap',f:['toolGaugeR'],off:['connR','coilR','plugR','toolGaugeR'],show:['toolGaugeR'],x:'У MAR8B-JDS два боковых электрода. Щуп 0,8 мм вставляешь между центральным электродом и каждым боковым: должен проходить с лёгким касанием. Новые свечи приходят с правильным зазором.',facts:[['Свеча','NGK MAR8B-JDS'],['Зазор','0,8 мм']],w:'Если зазор не 0,8, электроды не гни, свечу верни в магазин.'},
+   {h:'Наживи новую свечу пальцами',v:'wellX',xray:true,f:['plugR','toolExtR'],off:['connR','coilR'],show:['toolExtR'],anim:'screwin',x:'Резьбу ничем не мажь. Вставь свечу в головку, опусти в колодец и крути за удлинитель пальцами по часовой. Свеча должна легко пройти 3-4 оборота и сесть до упора.',facts:[['Чем','пальцы на удлинителе'],['Направление','по часовой'],['Смазка резьбы','нет']],w:'Пошла туго с первого оборота: это перекос. Выкрути и начни заново.'},
+   {h:'Затяни динамометром',v:'torque',xray:true,f:['toolTorqueR'],off:['connR','coilR'],show:['toolTorqueR'],anim:'torque',x:'Выставь на ключе 12 Нм. Поставь на удлинитель и тяни за рукоятку плавно, одним движением, до щелчка. После щелчка больше не тянешь.',facts:[['Момент','12 Нм','tq'],['Ключ','1/4", 2-25 Нм'],['Резьба','M10x1']]},
+   {h:'Смажь наконечник и поставь катушку',v:'headRclose',f:['coilR'],off:['connR'],x:'Если есть диэлектрическая силиконовая смазка, нанеси тонкий слой на внутреннюю кромку резинового наконечника внизу катушки. Вставь катушку в колодец до упора: почувствуешь, как она села на свечу.',facts:[['Смазка','диэлектрическая, тонко, по желанию']]},
+   {h:'Надень разъём до щелчка',v:'headRclose',f:['connR'],off:['capR'],x:'Разъём на верхушку катушки до щелчка защёлки. Провод уложи обратно в канал. Подёргай за корпус: не должен сниматься без нажатия на защёлку.'},
+   {h:'Поставь накладку на место',v:'headRclose',f:['capR'],x:'Приложи накладку так, чтобы провод лёг в канал под ней, и прижми ладонью до щелчка защёлок по всему краю.'},
+   {h:'Левый цилиндр и пуск',v:'headL',f:['coilL','connL','plugL'],x:'Слева всё то же самое, в том же порядке. Потом заведи: работа ровная, на холостых не трясёт. Если троит, сначала проверь разъёмы катушек, потом работа «Какой цилиндр не работает».'}
+  ]},
+ {id:'coilSwap',t:'Перекинуть катушки (проверка)',when:'Когда один цилиндр не работает',diff:1,time:'15 мин + остывание',
+  keys:'катушка катушки перекинуть поменять местами проверить троит зажигание',
+  need:['Малярный скотч и маркер','Пирометр или пульверизатор с водой'],
+  keep:['cylR','headR','coverR','coilR','connR','plugR','cylL','headL','coverL','coilL','connL','plugL','crankcase','headers'],
+  steps:[
+   {h:'Сначала найди мёртвый цилиндр',v:'headersFront',f:['headers'],x:'Холодный пуск на 20-30 секунд, заглуши, пирометром по выпускным трубам в 5-10 см от головок. Холодная труба = неработающий цилиндр. Запиши, левый или правый.'},
+   {h:'Сними накладки с обеих',v:'coilsBoth',f:['capL','capR'],off:['capL','capR'],x:'На каждой крышке клапанов чёрная пластиковая накладка закрывает катушку и её провод. Поддень за край пластиковой лопаткой и сними.'},
+   {h:'Подпиши катушки',v:'coilsBoth',f:['coilL','coilR'],x:'Наклей на верхушку каждой катушки кусок малярного скотча и подпиши: Л и П. Без этого тест бессмысленный.',facts:[['Чем','скотч, маркер']]},
+   {h:'Сними разъёмы с обеих',v:'coilsBoth',f:['connL','connR'],off:['connL','connR'],x:'На каждой нажми защёлку и сними разъём за корпус.'},
+   {h:'Вытащи обе катушки',v:'coilsBoth',f:['coilL','coilR'],off:['coilL','coilR'],x:'Каждую тяни строго наружу по оси цилиндра, покачивая на 10-20 градусов. Положи на чистое.'},
+   {h:'Поставь крест-накрест',v:'coilsBoth',f:['coilL','coilR'],off:['capL','capR'],x:'Катушку Л вставь в правый цилиндр, катушку П в левый. До упора, до посадки на свечу.'},
+   {h:'Разъёмы до щелчка',v:'coilsBoth',f:['connL','connR'],off:['capL','capR'],x:'Каждый разъём на свою катушку до щелчка. Разъёмы не перекидываешь, они остаются на своей стороне.'},
+   {h:'Накладки на место',v:'coilsBoth',f:['capL','capR'],x:'Провода в каналы, накладки прижми до щелчка.'},
+   {h:'Повтори проверку',v:'headersFront',f:['headers'],x:'Дай двигателю остыть и снова холодный пуск с замером труб. Мёртвый цилиндр переехал на другую сторону: виновата катушка, покупаешь новую. Остался на месте: катушка жива, меняем свечу.'}
+  ]},
+ {id:'deadCyl',t:'Какой цилиндр не работает',when:'Если троит, дёргается, пропала тяга',diff:2,time:'20 мин',
+  keys:'троит троить пропуски один цилиндр не работает дергается дёргается холодный коллектор бензином воняет трясёт вибрация',
+  need:['Пирометр (бесконтактный термометр), самый удобный вариант','Или пульверизатор с водой','Перчатки','Всё для операции «Замена свечей»'],
+  keep:['headers','collector','silencers','headL','headR','cylL','cylR','coilL','coilR','connL','connR','plugL','plugR','crankcase'],
+  steps:[
+   {h:'По глушителям не определить',v:'exhaustL',f:['collector','silencers'],x:'Обе трубы коллектора сходятся под двигателем в один сборник с катализатором и лямбда-зондом. Дальше смешанный газ идёт в оба глушителя сразу. Поэтому из какого глушителя пахнет бензином, ничего не говорит: пахнуть будут оба.'},
+   {h:'Холодный пуск на 30 секунд',v:'headersFront',f:['headers'],x:'Заведи холодный мотоцикл, дай поработать 20-30 секунд на холостых и заглуши. За это время рабочий цилиндр успеет заметно прогреть свою трубу, а мёртвый нет.'},
+   {h:'Сравни температуру труб у головок',v:'headersFront',f:['headers'],x:'Пирометром меряй каждую трубу в 5-10 см от головки. Рабочая уже горячая, неработающая заметно холоднее. Без пирометра: брызни водой из пульверизатора, на рабочей зашипит.',w:'Руками трубы не трогай: рабочая через 30 секунд уже обжигает.'},
+   {h:'Поменяй катушки местами',v:'engine',f:['coilL','coilR'],x:'Холодный цилиндр нашёл. Переставь катушку с него на другой цилиндр и наоборот, снова сделай пуск и замер. Проблема переехала на другую сторону: виновата катушка. Осталась на месте: свеча, форсунка или компрессия.'},
+   {h:'Посмотри на свечу',v:'headRclose',f:['plugR','plugL'],off:['coilR','coilL'],x:'Выкрути свечу проблемного цилиндра, как в операции «Замена свечей». Мокрая, чёрная, пахнет бензином: искры нет, меняй свечу. Сухая и белая: бедная смесь или подсос воздуха. В масле: к мастеру, это кольца или сальники клапанов.'},
+   {h:'Свеча и катушка живы',v:'engine',f:['throttle'],x:'Дальше проверяют разъём форсунки на дросселе этого цилиндра и читают ошибки блока. Напиши мне, что увидел на свече, разберём следующий шаг.'}
+  ]},
+ {id:'valves',t:'Проверка зазоров клапанов',when:'Каждые 10 000 км',diff:4,time:'1,5-2 часа',
+  keys:'клапан клапана зазор зазоры щуп цокает стучит тикает грм распредвал',
+  need:['Набор плоских щупов 0,05-1,0 мм с шагом 0,01-0,05','2 новые прокладки крышек клапанов','Головка Torx под болты крышки (размер сверь по болту)','Динамометрический ключ 1/4" на 10 Нм','Задний подкат или помощник, чтобы держать мотоцикл ровно','Бумага и ручка для 8 замеров'],
+  flags:['Допуски зазоров взяты по двигателю DOHC 2010-2020. Перед работой сверим с сервисной таблицей BMW по твоему VIN'],
+  keep:['cylR','headR','coverR','coilR','connR','plugR','wellR','camsR','cylL','headL','coverL','coilL','connL','plugL','wellL','camsL','crankcase','wheelR','gearbox','finaldrive','swingarm'],
+  steps:[
+   {h:'Двигатель полностью холодный',v:'engine',f:['headR','headL'],x:'Зазоры меряют только на остывшем двигателе, лучше утром после ночи. На тёплом металл расширен, цифры будут неправильные.'},
+   {h:'Сними катушки и свечи',v:'headR',f:['coilR','plugR','coilL','plugL'],off:['coilR','plugR','coilL','plugL'],x:'Как в работе «Замена свечей»: разъём, катушка, продуть колодец, свеча. Без свечей нет компрессии, и двигатель легко провернуть колесом.'},
+   {h:'Сними правую крышку клапанов',v:'headR',f:['coverR'],off:['coilR','plugR','coilL','plugL','coverR'],x:'Выкрути болты крышки по кругу, по пол-оборота каждый, чтобы её не перекосило. Сними крышку прямо на себя. Прилипла: постучи ладонью по краю, отвёрткой не поддевай, поцарапаешь плоскость. С внутренней стороны резиновая прокладка, её меняешь на новую.',facts:[['Болты','M6, Torx'],['Прокладка','новая']]},
+   {h:'Что внутри головки',v:'headOpen',f:['camsR'],off:['coilR','plugR','coilL','plugL','coverR'],x:'Два распредвала стоят вертикально: сзади впускной, спереди выпускной. На каждом по два кулачка, под каждым кулачком цилиндрический толкатель (стаканчик) с шайбой сверху, под толкателем клапан. Сверху на валах звёздочки, их крутит цепь от коленвала. Поперёк валов лежат крышки подшипников на болтах: их не трогаешь.'},
+   {h:'Поставь цилиндр в ВМТ сжатия',v:'headOpen',f:['camsR','wheelR'],off:['coilR','plugR','coilL','plugL','coverR'],anim:'tdc',x:'Включи 5-ю передачу. Медленно крути заднее колесо рукой по ходу движения: распредвалы поворачиваются. Остановись, когда все четыре кулачка правого цилиндра смотрят носами от толкателей, наружу, к тебе. Тогда все четыре клапана закрыты и между круглой частью кулачка и толкателем есть щель.',w:'Крути только по ходу движения, назад не надо.'},
+   {h:'Меряй щупом каждый клапан',v:'gapView',xray:true,f:['toolFeelerR'],off:['coilR','plugR','coilL','plugL','coverR'],show:['toolFeelerR'],anim:'feel',x:'Щуп заводишь сбоку, плоско, в щель между круглой частью кулачка и шайбой толкателя. Подбирай толщину: щуп входит с лёгким сопротивлением, как лист бумаги под книгой. Болтается: бери толще. Не лезет: тоньше. Запиши, какой лезет, для всех четырёх клапанов: впуск верхний и нижний, выпуск верхний и нижний.',facts:[['Впуск, сзади','0,10-0,17 мм','flag'],['Выпуск, спереди','0,34-0,41 мм','flag']]},
+   {h:'Проверка «проходит / не проходит»',v:'gapView',xray:true,f:['toolFeelerR'],off:['coilR','plugR','coilL','plugL','coverR'],show:['toolFeelerR'],anim:'feel',x:'Самый надёжный способ для первого раза. Впуск: щуп 0,10 должен проходить, щуп 0,17 уже не должен. Выпуск: 0,34 проходит, 0,41 нет. Если так, клапан в допуске.',w:'Если хоть один зазор вне допуска, регулировка идёт заменой шайб со снятием распредвалов. Это следующий уровень: запиши цифры и разберём отдельно.'},
+   {h:'Крышку на место',v:'headR',f:['coverR'],off:['coilR','plugR','coilL','plugL'],x:'Протри плоскости головки и крышки. Новая прокладка, крышка ровно на место. Болты сначала рукой, потом динамометром крест-накрест.',facts:[['Момент','10 Нм','tq'],['Порядок','крест-накрест']]},
+   {h:'Левый цилиндр',v:'headL',f:['coverL','camsL'],off:['coilR','plugR','coilL','plugL','coverL'],x:'Крути колесо дальше, около одного оборота коленвала: теперь носами от толкателей встанут кулачки левого цилиндра. Меряй так же, крышка на 10 Нм.'},
+   {h:'Свечи и катушки на место',v:'engine',f:['plugR','plugL','coilR','coilL'],x:'Свечи 12 Нм, катушки до упора, разъёмы до щелчка. Выключи передачу, убери подкат, заведи и послушай: ровно, без цоканья.'}
+  ]},
+ {id:'fd',t:'Масло в главной передаче',when:'Раз в 2 года или каждые 20 000 км',diff:2,time:'30 мин',
+  keys:'кардан редуктор главная передача задний мост гипоид масло сзади гул шум',
+  need:['Гипоидное масло SAE 70W-80 (рекомендация BMW) или 75W-90 GL-5','Шприц или бутылка с трубкой','2 новых уплотнительных кольца пробок','Динамометрический ключ (20 Нм)'],
+  flags:['Объём около 0,18 л взят из данных для R nineT; заливай до нижнего края заливного отверстия, это надёжнее цифры'],
+  keep:['finaldrive','fdfill','fddrain','swingarm','wheelR','brakeR'],
+  steps:[
+   {h:'Прокатись 10 минут',v:'drive',f:['finaldrive'],x:'Тёплое масло сливается лучше. Мотоцикл потом ставь вертикально.'},
+   {h:'Найди редуктор',v:'fd',f:['finaldrive'],x:'Редуктор в ступице заднего колеса, справа, на конце маятника. Подложи поддон.'},
+   {h:'Открути заливную пробку',v:'fd',f:['fdfill'],off:['fdfill'],x:'Сначала заливную, сверху. Если не откручивается, сливную не трогай: иначе останешься со слитым редуктором и без возможности залить.',facts:[['Резьба','M12x1,5']]},
+   {h:'Открути сливную, слей',v:'fd',f:['fddrain'],off:['fdfill','fddrain'],x:'Сливная пробка внизу корпуса. Посмотри на магнит или на слитое масло: мелкая серая взвесь нормальна, крупная стружка = к мастеру.'},
+   {h:'Закрути сливную',v:'fd',f:['fddrain'],off:['fdfill'],x:'Новое кольцо, затяни динамометром.',facts:[['Момент','20 Нм','tq']]},
+   {h:'Залей и закрой',v:'fd',f:['fdfill'],x:'Заливай шприцем, пока масло не дойдёт до нижнего края заливного отверстия. Пробка с новым кольцом.',facts:[['Масло','70W-80 гипоид'],['Объём','~0,18 л','flag'],['Момент','20 Нм','tq']]}
+  ]},
+ {id:'brakes',t:'Тормоза: колодки и жидкость',when:'Каждую третью заправку',diff:1,time:'10 мин',
+  keys:'тормоз тормоза колодки диск скрип жидкость dot суппорт бачок',
+  need:['Фонарик','Глаза'],
+  keep:['brakeF','brakeR','wheelF','wheelR','fork','bars','resF','resR'],
+  steps:[
+   {h:'Передние колодки',v:'brakeF',f:['brakeF'],x:'Смотри между колесом и вилкой на суппорт, с обеих сторон. На накладке должно остаться не меньше 1 мм, канавки-индикаторы должны быть видны.',facts:[['Минимум','1,0 мм накладки']]},
+   {h:'Задние колодки',v:'brakeR',f:['brakeR'],x:'Между колодками торчит ось с тремя кольцами. 3 кольца видно: колодок больше 75%. 2: больше 50%. 1: больше 25%. Ни одного: предел, меняй.'},
+   {h:'Бачок передних тормозов',v:'barR',f:['resF'],x:'Справа на руле. Руль прямо, мотоцикл вертикально, бачок горизонтально. Уровень не ниже MIN. По мере износа колодок уровень падает, это нормально.',facts:[['Жидкость','DOT 4']]},
+   {h:'Бачок заднего тормоза',v:'resR',f:['resR'],x:'Справа у подножки. Уровень не ниже MIN при вертикальном мотоцикле.',facts:[['Жидкость','DOT 4']],w:'Замена колодок и прокачка на мотоцикле с ABS: в мануале это работа для мастерской. Освоим после базы.'}
+  ]}
+];
+OPS.forEach(o=>{['L','R'].forEach(k=>{if(o.keep.some(x=>x==='coil'+k))o.keep.push('cap'+k);});o.steps.forEach(s=>{if(s.off)['L','R'].forEach(k=>{if(s.off.some(x=>x==='coil'+k||x==='conn'+k)&&s.off.indexOf('cap'+k)<0)s.off.push('cap'+k);});});});
+OPS.forEach(o=>o.keep.concat(o.steps.flatMap(s=>s.f)).forEach(id=>P[id]&&P[id].ops.indexOf(o.id)<0&&P[id].ops.push(o.id)));
+
+/* ---------- CONTOURS: what flows where, end to end ---------- */
+const FP=fpt(560);
+const CONTOURS=[
+ {id:'air',n:'Воздух',c:'#5fb4ff',chain:'Заборник справа → воздуховод под баком → корпус с фильтром → два патрубка → дроссели → впускные клапаны',
+  parts:['intakeDuct','airbox','airfilter','iat','throttle','headL','headR','breather','tank'],
+  paths:[[[1090,716,112],[980,722,110],[860,712,106],[740,690,100],[668,668,92],[600,640,40],[600,560,100],[614,502,166],[660,502,240],[740,502,250],[860,480,250]],
+         [[600,640,-20],[600,560,-100],[614,502,-166],[660,502,-240],[740,502,-250],[860,480,-250]]]},
+ {id:'fuel',n:'Топливо',c:'#ffb020',chain:'Бак → насос с фильтром в баке → напорная трубка → распределитель → форсунки → цилиндры. Пары из бака → адсорбер → клапан продувки → дроссель',
+  parts:['tank','fuelPump','fuelLine','canister','fuelCap','throttle'],
+  paths:[[[820,800,0],[820,736,0],[800,700,-30],[770,660,-40],[742,630,0],[744,622,100],[748,606,190],[748,560,250],[840,480,250]],
+         [[742,630,0],[744,622,-100],[748,606,-190],[748,560,-250],[840,480,-250]],
+         [[530,705,-30],[470,690,-70],[400,600,-60],[404,540,0],[440,560,160],[600,540,220],[700,532,252]]]},
+ {id:'elec',n:'Электрика и зажигание',c:'#ffe34d',chain:'Генератор → регулятор → аккумулятор → предохранители и реле → блок управления → катушки → свечи. Аккумулятор → реле → стартер',
+  parts:['alternator','belt','beltcover','regulator','battery','relays','powerCables','ecu','loom','coilL','coilR','connL','connR','plugL','plugR','starter','sensors','iat','lambda','diag','horn','instrument','light','tail','bars'],
+  paths:[[[1072,644,0],[1075,650,-60],[1080,690,-110],[1000,760,-104],[740,700,-128],[600,680,-126],[450,772,-100],[370,745,0]],
+         [[370,745,0],[280,745,0],[200,740,0]],
+         [[200,740,0],[450,772,100],[600,680,126],[740,700,128],[850,606,300],[890,560,392],[890,508,388],[890,470,330],[890,470,260]],
+         [[200,740,0],[450,772,-100],[600,680,-126],[740,700,-128],[850,606,-300],[890,560,-392],[890,508,-388],[890,470,-330],[890,470,-260]],
+         [[330,749,-26],[330,700,-90],[420,560,-140],[560,450,-160],[632,442,-170]]]},
+ {id:'oil',n:'Смазка и охлаждение',c:'#e2a23b',chain:'Поддон → масляный насос → фильтр → коленвал и головки → радиатор спереди → обратно в поддон',
+  parts:['crankcase','oilpump','oilfilter','oilLines','cooler','sightglass','filler','drainplug','breather','cylL','cylR','headL','headR'],
+  paths:[[[920,290,0],[980,300,0],[1020,330,0],[1060,340,0],[1060,370,-110],[1085,400,-110],[1105,450,-100],[1110,540,-100],[1105,620,-70],[1105,450,-40],[1090,420,-60],[1060,400,-90],[980,470,0],[890,490,0]],
+         [[890,490,0],[890,510,150],[890,520,270]],[[890,490,0],[890,510,-150],[890,520,-270]]]},
+ {id:'exh',n:'Выпуск',c:'#ff6a3d',chain:'Выпускные клапаны → коллекторы → сборник с катализатором и лямбда-зондом → заслонка → два глушителя слева',
+  parts:['headL','headR','headers','collector','lambda','flap','silencers'],
+  paths:[[[900,450,250],[990,440,215],[1080,420,200],[1112,330,170],[1100,230,130],[1040,195,90],[900,190,40],[800,195,0],[650,200,-40],[500,215,-100],[420,240,-125],[335,285,-140],[150,390,-180],[-60,505,-215],[-110,520,-220]],
+         [[425,236,-124],[460,340,-148],[390,421,-160],[210,515,-185],[10,612,-203],[-50,640,-210]],
+         [[950,450,-250],[1040,440,-215],[1110,410,-200],[1114,320,-170],[1100,230,-130],[1040,195,-90],[900,190,-40],[800,195,0]]]},
+ {id:'drive',n:'Трансмиссия',c:'#8fdc5a',chain:'Поршни → коленвал → сухое сцепление → коробка 6 передач → карданный вал → конический редуктор → заднее колесо',
+  parts:['crank','pistonL','pistonR','clutch','gearbox','gears','driveshaft','swingarm','finaldrive','wheelR','clutchSlave','shiftLink','balancer','camchains'],
+  paths:[[[890,470,170],[890,470,40],[820,470,0],[700,450,0],[640,430,0],[560,480,-28],[540,395,30],[470,395,96],[440,388,100],[60,317,105],[8,315,120],[0,315,40],[0,600,0]]]},
+ {id:'brake',n:'Тормоза и ABS',c:'#ff4d6d',chain:'Рычаг и педаль → главные цилиндры → модулятор ABS → суппорты → диски. Датчики колёс → ABS',
+  parts:['bars','resF','rearMaster','resR','abs','brakeLines','brakeF','brakeR','wheelSensors','wheelF','wheelR'],
+  paths:[[[1100,1060,330],[1042,1056,206],[1100,1000,150],[1150,900,120],[1080,780,140],[800,700,150],[440,660,150],[400,672,120],[700,720,110],[1000,780,90],[1180,820,50],[FP.x+20,FP.y,0],[FP.x+10,FP.y-60,90],[1460,470,106],[1430,420,84]],
+         [[FP.x+20,FP.y,0],[FP.x+10,FP.y-60,-90],[1460,470,-106],[1430,420,-84]],
+         [[510,380,186],[450,450,176],[480,560,170],[420,622,150],[380,612,130],[300,500,120],[150,380,100],[-60,250,70],[-92,222,64]]]}
+];
+const SHELL=['tank','crankcase','gearbox','swingarm','finaldrive','airbox','headL','headR','cylL','cylR','coverL','coverR','beltcover','wheelR','wheelF'];
+let activeSys=null,hoverId=null;const flowGroup=new THREE.Group();root.add(flowGroup);const FLOW=[];
+function setFlow(c){while(flowGroup.children.length){const o=flowGroup.children.pop();o.geometry.dispose();}FLOW.length=0;if(!c)return;
+  const mt=new THREE.MeshBasicMaterial({color:c.c,depthTest:false,transparent:true,opacity:1,toneMapped:false});const geo=new THREE.SphereGeometry(10,12,8);
+  c.paths.forEach(p=>{const cv=new THREE.CatmullRomCurve3(p.map(q=>new V3(...q)),false,'centripetal');const L=cv.getLength(),n=Math.max(6,Math.round(L/70));
+    const im=new THREE.InstancedMesh(geo,mt,n);im.renderOrder=20;flowGroup.add(im);FLOW.push({cv,L,n,im});});}
+const _o=new THREE.Object3D();
+function stepFlow(now){if(!FLOW.length)return;const t=RM?0:now/1000;FLOW.forEach(f=>{for(let i=0;i<f.n;i++){const u=((i/f.n)+t*220/f.L)%1;f.cv.getPointAt(u,_o.position);_o.updateMatrix();f.im.setMatrixAt(i,_o.matrix);}f.im.instanceMatrix.needsUpdate=true;});}
+
+/* ---------- UI ---------- */
+const panel=document.getElementById('panel'),hud=document.getElementById('hud');
+let tab='bike',explode=0,autoRot=!RM,picked=null,curOp=null,curStep=0;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const SPECS=[['Двигатель','1170 см³, оппозит, 2 цилиндра'],['Диаметр × ход','101 × 73 мм'],['Мощность','110 л.с. / 7750 об/мин'],['Момент','116 Нм / 6000 об/мин'],['Сжатие','12,0 : 1'],['Охлаждение','воздух + масло'],['Коробка','6 ступеней, сухое сцепление'],['Привод','кардан; первичная 1,737, главная 2,91'],['Выпуск','два глушителя слева'],['Тюнинг','спицованные колёса, два глушителя'],['Колонка','угол 61,5°, вылет 110,6 мм'],['База','1527 мм'],['Бак','~18 л, резерв ~3 л'],['Шины','120/70 R17 · 180/55 R17'],['Давление','2,5 перед · 2,7 зад (2,9 вдвоём)'],['Масло','15W-50, до 3,8 л'],['Свечи','NGK MAR8B-JDS, 0,8 мм'],['Цвет','Monolith matt, чёрный двигатель и рама']];
+const SOURCES=[
+ ['Пресс-кит BMW R nineT Scrambler','https://www.press.bmwgroup.com/india/article/attachment/T0291595EN/425037'],
+ ['Каталог выпуска Scrambler 2017','https://bmwparts.nashvillemotos.com/v-2017-bmw-motorrad-r-ninet-scrambler--base--r/exhaust-system--exhaust-system-parts-with-mounts'],
+ ['Руководство владельца BMW R nineT (официальный PDF)','https://manuals.bmw-motorrad.com/manuals/BA-Extern/IN/BA-INTERNET-COM/PDF/R_0J01_RM_0219_01.pdf'],
+ ['Регламент ТО Scrambler и Urban G/S 2017-2020','https://maintenanceschedule.com/bmw-r-ninet-scrambler-urban-g-s-2017/'],
+ ['Моменты затяжки R nineT (форум bmwmotos.com)','https://www.bmwmotos.com/foro/goto/post?id=8939903'],
+ ['Характеристики Scrambler 2020','https://www.motoplanete.us/used-motorcycle/758913/R-NineT-Scrambler/fiche.html'],
+ ['Передаточные числа R nineT','https://www.motorcycle.com/specs/bmw/standard/2017/r-ninet/base/detail.html']];
+
+function diffBars(n){let h='<span class="diff" aria-label="Сложность '+n+' из 5">';for(let i=1;i<=5;i++)h+='<i class="'+(i<=n?'on':'')+'"></i>';return h+'</span>';}
+
+function renderPanel(){
+  if(tab==='dash'){if(window.DASH)DASH.panel(panel);return;}
+  if(tab==='bike'){
+    panel.innerHTML=`<h2>Твой R nineT Scrambler</h2>
+    <p class="lead">Кузов, рама, двигатель снаружи, вилка, тормоза и руль взяты из подробной 3D-модели R nineT, разбитой на детали. Твоё поверх неё: спицованные колёса и два глушителя слева, как на Scrambler. Тяни, чтобы покрутить. Ползунок внизу разносит мотоцикл на узлы, клик по детали покажет, что это и какие работы с ней связаны.</p>
+    <p class="src" id="bodyNote">3D-модель: «BMW R 90 Pure», автор Nieve5677, <a href="https://sketchfab.com/3d-models/bmw-r-90-pure-01cf4b2bbea447fa978b4f57b3ca1db9" target="_blank" rel="noopener">Sketchfab</a>, лицензия CC BY 4.0. Детали разбиты и перекрашены.</p>
+    <div id="pickbox"></div>
+    <h3>Контуры: как он живёт</h3>
+    <p class="lead">Выбери контур: всё остальное станет прозрачным, а по цепочке побежит поток. Внутренние детали контура тоже покажутся.</p>
+    <ul class="ctr">${CONTOURS.map(c=>`<li><button data-sys="${c.id}" aria-pressed="${activeSys===c.id}"><i style="background:${c.c}"></i><span><b>${c.n}</b><em>${c.chain}</em></span></button></li>`).join('')}</ul>
+    <h3>Ключевые цифры</h3><dl class="specs">${SPECS.map(s=>`<dt>${s[0]}</dt><dd>${s[1]}</dd>`).join('')}</dl>
+    <h3>Что важно знать про модель</h3>
+    <p class="lead">Это схема для обслуживания: где стоит деталь, как снимается, чем крутить. Расположение узлов, размеры и цвета по данным BMW, формы деталей приближены к оригиналу. Колёса 17/17, как у тебя.</p>
+    <h3>Источники</h3><ul class="src">${SOURCES.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join('')}</ul>`;
+    renderPick();
+    panel.querySelectorAll('[data-sys]').forEach(b=>b.onclick=()=>{activeSys=activeSys===b.dataset.sys?null:b.dataset.sys;panel.querySelectorAll('[data-sys]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.sys===activeSys));setFlow(CONTOURS.find(c=>c.id===activeSys));if(activeSys){explode=0;const ex=document.getElementById('ex');if(ex)ex.value=0;}setTargets();});
+    hud.innerHTML=`<label class="slider" for="ex">Разобрать <input id="ex" type="range" min="0" max="100" value="${Math.round(explode*100)}"></label>
+      <button class="chipbtn" id="rot" aria-pressed="${autoRot}">Вращение</button><button class="chipbtn" id="home">Общий вид</button>`;
+    document.getElementById('ex').oninput=e=>{explode=e.target.value/100;setTargets();};
+    document.getElementById('rot').onclick=e=>{autoRot=!autoRot;e.target.setAttribute('aria-pressed',autoRot);};
+    document.getElementById('home').onclick=()=>goView('overall');
+  }
+  else if(tab==='engine'){
+    panel.innerHTML=`<h2>Как это работает</h2>
+    <p class="lead">Цилиндры торчат в стороны, коленвал идёт вдоль мотоцикла. Оба поршня одновременно уходят наружу и возвращаются, но такты у них сдвинуты на один оборот: пока один горит, второй всасывает.</p>
+    <h3>Такты сейчас</h3>
+    <div class="strokes"><span></span><span class="h">Левый</span><span class="h">Правый</span>
+      ${STROKES.map((s,i)=>`<span>${s}</span><span class="cell" id="sl${i}">${i*180}-${i*180+180}°</span><span class="cell" id="sr${i}">${i*180}-${i*180+180}°</span>`).join('')}
+    </div>
+    <div class="legend"><span><i style="background:#ffc83d"></i>искра</span><span>клапаны открываются кулачками</span></div>
+    <h3>Коробка передач</h3>
+    <div class="gears" role="group" aria-label="Передача">${['N',1,2,3,4,5,6].map((g,i)=>`<button data-g="${i}" aria-pressed="${gear===i}">${g}</button>`).join('')}</div>
+    <p class="ratio" id="ratio"></p>
+    <p class="lead">Дальше вращение идёт по карданному валу внутри маятника на конический редуктор в ступице. Цепи нет, смазывать и тянуть нечего, только масло в редукторе раз в 2 года.</p>
+    <h3>Что здесь обслуживаешь ты</h3>
+    <ul class="ops">${['spark','valves','oilChange','fd'].map(id=>{const o=OPS.find(x=>x.id===id);return `<li><button class="op" data-op="${id}"><b>${o.t}</b><span class="sub">${o.when}</span>${diffBars(o.diff)}</button></li>`;}).join('')}</ul>`;
+    for(let i=0;i<4;i++){stEls['l'+i]=document.getElementById('sl'+i);stEls['r'+i]=document.getElementById('sr'+i);}
+    panel.querySelectorAll('.gears button').forEach(b=>b.onclick=()=>{gear=+b.dataset.g;panel.querySelectorAll('.gears button').forEach(x=>x.setAttribute('aria-pressed',x===b));showRatio();});
+    panel.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>openOp(b.dataset.op));
+    showRatio();
+    hud.innerHTML=`<button class="chipbtn" id="play" aria-pressed="${playing}">${playing?'Пауза':'Пуск'}</button>
+      <label class="slider" for="spd">Скорость <input id="spd" type="range" min="5" max="300" value="${Math.round(speed*100)}"></label>
+      <button class="chipbtn" id="cut" aria-pressed="${cutaway}">Разрез</button>`;
+    document.getElementById('play').onclick=e=>{playing=!playing;e.target.textContent=playing?'Пауза':'Пуск';e.target.setAttribute('aria-pressed',playing);};
+    document.getElementById('spd').oninput=e=>speed=e.target.value/100;
+    document.getElementById('cut').onclick=e=>{cutaway=!cutaway;e.target.setAttribute('aria-pressed',cutaway);setTargets();};
+  }
+  else if(tab==='service'){
+    if(!curOp){
+      panel.innerHTML=`<h2>Что делаем?</h2>
+      <p class="lead">Напиши, что нужно сделать или что не так с мотоциклом. Подберу работу и проведу по шагам на модели.</p>
+      <div class="search"><input id="q" placeholder="например: троит, поменять масло, стучит сверху" autocomplete="off" aria-label="Что случилось или что сделать"></div>
+      <p class="found" id="found"></p>
+      <ul class="ops" id="oplist">${OPS.map(o=>`<li><button class="op" data-op="${o.id}"><b>${o.t}</b><span class="sub">${o.when} · ${o.time}</span>${diffBars(o.diff)}</button></li>`).join('')}</ul>
+      <h3>Регламент</h3><dl class="specs">
+       <dt>10 000 км / год</dt><dd>масло + фильтр, зазоры</dd>
+       <dt>20 000 км</dt><dd>свечи, возд. фильтр, редуктор</dd>
+       <dt>2 года</dt><dd>тормозная жидкость, редуктор</dd>
+       <dt>6 лет / 40 000</dt><dd>ремень генератора</dd></dl>`;
+      const q=document.getElementById('q');
+      q.oninput=()=>filterOps(q.value);
+      panel.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>openOp(b.dataset.op));
+    } else renderStep();
+    hud.innerHTML=curOp?`<button class="chipbtn" id="home">Вид шага</button><button class="chipbtn" id="ghost" aria-pressed="true">Остальное прозрачно</button>`:`<button class="chipbtn" id="home">Общий вид</button>`;
+    document.getElementById('home').onclick=()=>goView(curOp?curOp.steps[curStep].v:'overall');
+    const gh=document.getElementById('ghost');if(gh)gh.onclick=e=>{ghost=!ghost;e.target.setAttribute('aria-pressed',ghost);setTargets();};
+  }
+}
+let ghost=true;
+function showRatio(){const el=document.getElementById('ratio');if(!el)return;
+  if(!gear){el.textContent='Нейтраль: вторичный вал стоит, колесо не крутится.';return;}
+  const r=RATIOS[gear-1],tot=PRIMARY*r*FINAL,kmh=3000/tot*Math.PI*0.63*60/1000;
+  el.textContent=`${gear}-я: ${r.toFixed(2).replace('.',',')}. Всего от коленвала до колеса ${tot.toFixed(2).replace('.',',')} : 1. На 3000 об/мин это около ${Math.round(kmh)} км/ч.`;}
+function filterOps(v){const w=v.toLowerCase().split(/[^а-яёa-z0-9]+/).filter(x=>x.length>2);const f=document.getElementById('found');
+  const m=(t,k)=>k.includes(t)||t.includes(k)||(t.length>4&&k.length>4&&t.slice(0,5)===k.slice(0,5));
+  let n=0;document.querySelectorAll('#oplist li').forEach(li=>{const o=OPS.find(x=>x.id===li.firstChild.dataset.op);
+    const hit=!w.length||w.some(t=>o.keys.split(' ').some(k=>k.length>2&&m(t,k)));li.hidden=!hit;if(hit)n++;});
+  f.textContent=!w.length?'':(n?'Подходит: '+n:'Такой работы пока нет в книге. Напиши мне в чат, разберём и добавлю.');}
+function renderPick(){const b=document.getElementById('pickbox');if(!b)return;
+  if(!picked){b.innerHTML='';return;}const p=P[picked];
+  const ops=p.ops.map(id=>OPS.find(o=>o.id===id)).filter(Boolean);
+  b.innerHTML=`<div class="pick"><small>${esc(p.sys)}</small><b>${esc(p.name)}</b><p style="margin:6px 0 0">${esc(p.desc)}</p>
+    ${ops.length?`<p class="lead" style="margin:10px 0 6px">Работы с этой деталью:</p><ul class="ops">${ops.map(o=>`<li><button class="op" data-op="${o.id}"><b>${o.t}</b><span class="sub">${o.when}</span>${diffBars(o.diff)}</button></li>`).join('')}</ul>`:''}</div>`;
+  b.querySelectorAll('[data-op]').forEach(x=>x.onclick=()=>openOp(x.dataset.op));}
+function openOp(id){curOp=OPS.find(o=>o.id===id);curStep=0;setTab('service');}
+function renderStep(){const o=curOp,s=o.steps[curStep];
+  panel.innerHTML=`<div class="step-head"><button class="back" id="back">← Все работы</button></div>
+  <h2>${o.t}</h2><p class="lead">${o.when} · ${o.time} · сложность ${o.diff} из 5</p>
+  ${curStep===0?`<div class="need"><b>Понадобится</b><ul>${o.need.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>
+    ${o.flags?o.flags.map(f=>`<p class="fact flag" style="display:block;margin-top:8px;font-family:var(--f-body)">Сверить: ${esc(f)}</p>`).join(''):''}</div>`:''}
+  <div class="stepbox"><div class="stepno">ШАГ ${curStep+1} ИЗ ${o.steps.length}</div><h4>${esc(s.h)}</h4><p>${esc(s.x)}</p>
+  ${s.facts?`<div class="facts">${s.facts.map(f=>`<span class="fact ${f[2]||''}">${esc(f[0])}: ${esc(f[1])}${f[2]==='flag'?' · сверить':''}</span>`).join('')}</div>`:''}
+  ${s.w?`<div class="warn">${esc(s.w)}</div>`:''}</div>
+  <div class="dots">${o.steps.map((_,i)=>`<i class="${i<=curStep?'on':''}"></i>`).join('')}</div>
+  <div class="nav"><button id="prev" ${curStep?'':'disabled'}>Назад</button><button id="next" class="primary">${curStep<o.steps.length-1?'Дальше':'Готово'}</button></div>`;
+  document.getElementById('back').onclick=()=>{curOp=null;renderPanel();setTargets();goView('overall');};
+  document.getElementById('prev').onclick=()=>{if(curStep){curStep--;renderStep();setTargets();goView(curOp.steps[curStep].v);}};
+  document.getElementById('next').onclick=()=>{if(curStep<o.steps.length-1){curStep++;renderStep();setTargets();goView(curOp.steps[curStep].v);}else{curOp=null;renderPanel();setTargets();goView('overall');}};
+}
+
+function altCoils(){if(!GLB_OK)return;['L','R'].forEach(s=>{let use=false;
+  if(tab==='service'&&curOp){const st=curOp.steps[curStep];const L=[].concat(st.f||[],st.off||[],st.show||[]);use=L.some(x=>x==='coil'+s||x==='conn'+s||x==='plug'+s||x==='well'+s);}
+  if(tab==='engine'&&cutaway)use=true;
+  ['coil','conn'].forEach(b=>{const p=P[b+s];if(!p)return;p.g.traverse(o=>{if(!o.isMesh)return;if(o.userData.dead){o.visible=false;return;}const scan=!!o.userData.scan;o.visible=scan?!use:use;});});});}
+function setTargets(){altCoils();
+  Object.values(P).forEach(p=>{const t=p.tgt;t.hl=0;t.off=0;t.op=1;
+    if(tab==='bike'){t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)?0:1;if(p.hid&&picked===p.id)t.op=1;t.off=explode*1.2;if(picked===p.id)t.hl=1;
+      if(activeSys){const C=CONTOURS.find(c=>c.id===activeSys);const inC=C.parts.indexOf(p.id)>=0;t.op=(p.layer==='tool'||p.layer==='fx')?0:(inC?(SHELL.indexOf(p.id)>=0?0.32:1):0.07);t.off=0;}}
+    else if(tab==='engine'){
+      if(p.layer==='bike'||p.wasBike||p.layer==='tool'||p.layer==='fx'||p.id==='airfilter'||p.id==='belt'){t.op=0;if(p.id==='wheelR')t.op=1;}
+      if(cutaway&&/^(head|cover|cyl)[LR]$|^crankcase$|^gearbox$|^swingarm$|^finaldrive$|^beltcover$|^throttle$/.test(p.id))t.op=0.16;
+      if(/^(coil)[LR]$/.test(p.id)&&cutaway)t.op=0.3;
+    }
+    else if(tab==='service'){
+      if(p.layer==='internal'&&!/^cams|^crank$|^piston/.test(p.id))t.op=0;
+      if(/^piston|^crank$/.test(p.id))t.op=0;
+      if(curOp){const s=curOp.steps[curStep];
+        const keep=curOp.keep.indexOf(p.id)>=0||s.f.indexOf(p.id)>=0;
+        if(p.hid&&keep)t.op=1;
+        if(p.scan&&s.f.indexOf(p.id)<0&&s.f.some(id=>P[id]&&P[id].hid&&!/^(conn|coil|cap)/.test(id)))t.op=Math.min(t.op,0.3);
+        if(ghost&&!keep)t.op=0.1;
+        if(p.id==='loom'&&ghost&&!keep)t.op=0.05;
+        if(s.xray&&(/^(head|cover|cyl)R$/.test(p.id)||p.id==='crankcase'||p.id==='throttle'))t.op=0.2;
+        if(/^(head|cyl)[LR]$/.test(p.id)&&(s.off||[]).indexOf('cover'+p.id.slice(-1))>=0)t.op=Math.min(t.op,0.35);
+        if(/^cams/.test(p.id))t.op=(s.off||[]).indexOf('cover'+p.id.slice(-1))>=0?1:0;
+        const offs=(s.off||[]).concat((s.off||[]).filter(x=>/^coil[LR]$/.test(x)).map(x=>'conn'+x.slice(-1)));
+        if(offs.indexOf(p.id)>=0){t.off=0.45;t.op=Math.min(t.op,0.35);if(/^(plug|tool|filler|drainplug|oilfilter|fdfill|fddrain|cap)/.test(p.id))t.op=1;}
+        if(s.f.indexOf(p.id)>=0)t.hl=1;
+        if(p.layer==='tool'||p.layer==='fx'){t.op=(s.show||[]).indexOf(p.id)>=0?1:0;t.hl=0;}
+      } else if(/^cams/.test(p.id))t.op=0;
+      if(!curOp&&(p.layer==='tool'||p.layer==='fx'))t.op=0;
+    }
+  });
+  P.wheelR.tgt.op=tab==='engine'?1:P.wheelR.tgt.op;
+  if(hoverId&&P[hoverId]&&P[hoverId].tgt.op>0.5)P[hoverId].tgt.hl=Math.max(P[hoverId].tgt.hl,0.75);
+}
+
+function setTab(t){tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}['bike','engine','service','dash'].forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
+  if(t!=='service'&&t!=='bike')picked=null;
+  const dEl=document.getElementById('dash');dEl.hidden=t!=='dash';
+  if(t==='dash'){renderPanel();try{localStorage.setItem('r9t-tab',t);}catch(e){}if(window.DASH)DASH.onShow();return;}
+  renderPanel();setTargets();
+  if(t==='bike')goView('overall');else if(t==='engine')goView('engine');else goView(curOp?curOp.steps[curStep].v:'overall');
+  try{localStorage.setItem('r9t-tab',t);}catch(e){}}
+['bike','engine','service','dash'].forEach(x=>document.getElementById('t-'+x).onclick=()=>{if(x==='service'&&tab!=='service')curOp=curOp;setTab(x);});
+
+/* ---------- picking ---------- */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downXY=null;
+canvas.addEventListener('pointerdown',e=>{downXY=[e.clientX,e.clientY];autoRot=false;const rb=document.getElementById('rot');if(rb)rb.setAttribute('aria-pressed','false');});
+canvas.addEventListener('pointerup',e=>{if(!downXY||Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>5)return;
+  const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(pickables.filter(m=>{let o=m;while(o){if(o.visible===false)return false;o=o.parent;}return P[m.userData.part]&&P[m.userData.part].cur.op>0.5;}),false);
+  if(tab!=='bike')return;
+  picked=hits.length?hits[0].object.userData.part:null;renderPick();setTargets();});
+
+/* ---------- hover: highlight + what it is ---------- */
+const tipEl=document.getElementById('tip');let lastHover=0;
+function hitPart(e){const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(pickables.filter(m=>{let o=m;while(o){if(o.visible===false)return false;o=o.parent;}const p=P[m.userData.part];return p&&p.cur.op>0.5;}),false);
+  return hits.length?hits[0].object.userData.part:null;}
+canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons)return;const now=performance.now();if(now-lastHover<60)return;lastHover=now;
+  const id=hitPart(e);if(id!==hoverId){hoverId=id;setTargets();}
+  if(id){const p=P[id];tipEl.innerHTML=`<small>${esc(p.sys||'')}</small><b>${esc(p.name)}</b>${esc(p.desc.length>210?p.desc.slice(0,207)+'...':p.desc)}`;tipEl.hidden=false;
+    const r=canvas.getBoundingClientRect();let x=e.clientX-r.left+16,y=e.clientY-r.top+16;if(x+300>r.width)x=e.clientX-r.left-316;if(y+140>r.height)y=e.clientY-r.top-150;tipEl.style.left=Math.max(8,x)+'px';tipEl.style.top=Math.max(8,y)+'px';}
+  else tipEl.hidden=true;});
+canvas.addEventListener('pointerleave',()=>{tipEl.hidden=true;if(hoverId){hoverId=null;setTargets();}});
+
+/* ---------- resize + loop ---------- */
+function resize(){const r=canvas.parentElement.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.fov=camera.aspect<1.1?Math.min(68,34*1.1/camera.aspect):34;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas.parentElement);
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+let last=performance.now();
+let FADEDT=0;const SVC={cam:Math.PI};
+function loop(now){FADEDT=Math.min(.5,(now-last)/1000);const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(fly){const k=Math.min(1,(now-fly.s)/fly.d),e=ease(k);camera.position.lerpVectors(fly.p0,fly.p,e);controls.target.lerpVectors(fly.t0,fly.t,e);if(k>=1)fly=null;}
+  controls.autoRotate=tab==='bike'&&autoRot&&!fly;
+  if(tab==='engine'&&playing){theta+=dt*360*speed*(RM?0.3:1);}
+  updateEngine();
+  if(tab!=='engine'){['R','L'].forEach(k=>{const c=cyls[k];c.cams.forEach(cm=>cm.g.rotation.y=SVC.cam);c.valves.forEach(v=>v.g.position.z=0);c.spark.material.opacity=0;});}
+  if(tab==='engine'&&gear&&playing){wPivot.rotation.z-=dt*2*Math.PI*speed*(RM?0.3:1)/(PRIMARY*RATIOS[gear-1]*FINAL);}
+  if(tab==='engine'){const ph=[((theta+360)%720+720)%720,((theta%720)+720)%720];
+    for(let i=0;i<4;i++){if(stEls['l'+i]){stEls['l'+i].classList.toggle('on',strokeOf(ph[0])===i);stEls['r'+i].classList.toggle('on',strokeOf(ph[1])===i);}}}
+  const stp=(tab==='service'&&curOp)?curOp.steps[curStep]:null,A=stp&&stp.anim;
+  SVC.cam=Math.PI;
+  if(A==='tdc'){const T=RM?4:now/1000,ph=Math.min(1,(T%5)/3.5);SVC.cam=Math.PI*(0.15+0.85*ph);wPivot.rotation.z=-ph*Math.PI*1.4;}
+  if(A==='feel'){const T=RM?0:now/1000,i=Math.floor(T/2.2)%4,V=[[-50,-32],[-50,32],[50,-32],[50,32]][i];TOOL.feel.position.set(770+V[0],430+V[1],0);feelLbl[0].visible=V[0]<0;feelLbl[1].visible=V[0]>0;}
+  if(A){const T=RM?0:now/1000,ph=(T%4)/4,set=(id,v)=>{P[id].tgt.off=v;P[id].cur.off=v;};
+    if(A==='blow'){set('dirtR',ph*1.1);P.dirtR.tgt.op=P.dirtR.cur.op=Math.max(0,1-ph*1.4);}
+    if(A==='unscrew'){const o=Math.max(0,ph-.15)/.85*0.3;set('plugR',o);set('toolSocketR',o);TOOL.socket.rotation.z=-ph*Math.PI*8;}
+    if(A==='screwin'){const o=(1-Math.min(1,ph/.8))*0.14;set('plugR',o);set('toolExtR',o);TOOL.ext.rotation.z=ph*Math.PI*6;}
+    if(A==='torque'){TOOL.torque.rotation.z=-Math.min(1,ph/.6)*0.5;tql.visible=true;}
+  }
+  stepFlow(now);
+  Object.values(P).forEach(p=>applyPartState(p,dt));
+  controls.update();{const under=camera.position.y<0.02;turntable.visible=!under;ticks.visible=!under;if(window.__floorSh)window.__floorSh.visible=!under;}
+  renderer.render(scene,camera);requestAnimationFrame(loop);}
+
+/* ---------- start ---------- */
+applyTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+let startTab='bike';try{const s=localStorage.getItem('r9t-tab');if(s==='engine'||s==='service'||s==='dash')startTab=s;}catch(e){}
+const hash=(location.hash||'').slice(1);if(['bike','engine','service'].indexOf(hash)>=0)startTab=hash;
+resize();setTab(startTab);goView(startTab==='engine'?'engine':'overall',true);
+Object.values(P).forEach(p=>{p.cur.op=p.tgt.op;p.cur.off=p.tgt.off;});
+
+/* ---------- scanned body: detailed 3D model (CC-BY 4.0, Nieve5677 on Sketchfab), split into our parts ---------- */
+const GLBMAT={'black.069':'black','chrome.069':'chrome','mattemetal.030':'brushed','clearglass.068':'lensG','white.048':'alu','gray.003':'headcov','blue.048':'blue','carpaint.068':'paint','redglass.068':'lensR','orangeglass.052':'lensA','red.014':'red','rim_second.005':'rimblk','brakedisk.049':'disc','mirror.062':'chrome','tire.068':'rubber','LicPlate_black.021':'black','LicPlate_white.021':'black','LicPlate_blue.021':'black','LicPlate_yellow.021':'black'};
+const PARTMAT={crankcase:{'black.069':'case'},cylL:{'black.069':'fin'},cylR:{'black.069':'fin'},headL:{'black.069':'case'},headR:{'black.069':'case'},frame:{'black.069':'frame'},seat:{'black.069':'seat'},headers:{'chrome.069':'pipe'},collector:{'chrome.069':'blast'},wheelF:{'black.069':'rubber'},wheelR:{'black.069':'rubber'},coilL:{'black.069':'coil'},coilR:{'black.069':'coil'}};
+function glbMaterial(id,mn){const k=(PARTMAT[id]&&PARTMAT[id][mn])||GLBMAT[mn]||'black';
+  if(k==='lensG')return new THREE.MeshStandardMaterial({color:0xdfe8ee,roughness:.05,metalness:0,transparent:true,opacity:.35,envMapIntensity:1.2});
+  if(k==='lensR')return new THREE.MeshStandardMaterial({color:0xb01212,roughness:.15,metalness:0,emissive:0x300000});
+  if(k==='lensA')return new THREE.MeshStandardMaterial({color:0xe07b00,roughness:.15,metalness:0});
+  return mat(k,true);}
+var GLB_OK=false;
+async function loadBody(){
+  let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;buf=await r.arrayBuffer();const u=new Uint8Array(buf,0,2);
+    if(u[0]===0x1f&&u[1]===0x8b){if(typeof DecompressionStream==='undefined')throw 0;buf=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}}catch(e){console.warn('body',e);return;}
+  const dv=new DataView(buf),hl=dv.getUint32(0,true),H=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl))),base=4+hl;
+  const got=new Set(H.map(c=>c.l));
+  [['capR','справа',1],['capL','слева',-1]].forEach(([id,nm,s])=>{if(P[id])return;part(id,{name:'Накладка катушки, '+nm,desc:'Чёрная пластиковая накладка на крышке клапанов. Под ней верхушка катушки с разъёмом, а провод от разъёма идёт вниз по каналу под этой же накладкой и уходит к жгуту под цилиндром. Снаружи провода не видно.',sys:'Зажигание',layer:'drive',ex:[0,90,s*260]});P[id].home=new V3();});
+  ['R','L'].forEach(s=>{if(P['conn'+s])P['conn'+s].ex=new V3(0,20,(s==='R'?1:-1)*110);});
+  /* hide our hand-built geometry where the scan has the real part */
+  got.forEach(id=>{const p=P[id];if(!p)return;p.scan=true;if(/^(coil|conn)[LR]$/.test(id))return;
+    p.g.traverse(o=>{if(o.isMesh&&o!==p.g&&(id!=='wheelF'&&id!=='wheelR'||o.userData.tyre))o.visible=false;});});
+  H.forEach(c=>{const p=P[c.l];if(!p)return;
+    const qp=new Uint16Array(buf,base+c.p,c.nv*3),qn=new Int8Array(buf,base+c.n,c.nv*3),qi=c.i32?new Uint32Array(buf,base+c.i,c.nt*3):new Uint16Array(buf,base+c.i,c.nt*3);
+    const P3=new Float32Array(c.nv*3);for(let i=0;i<c.nv*3;i++){const a=i%3;P3[i]=c.lo[a]+qp[i]/65535*c.sc[a];}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P3,3));g.setAttribute('normal',new THREE.BufferAttribute(qn,3,true));g.setIndex(new THREE.BufferAttribute(qi,1));g.computeBoundingSphere();
+    const m=new THREE.Mesh(g,glbMaterial(c.l,c.m));m.position.copy(p.home).multiplyScalar(-1);
+    m.userData.part=c.l;m.userData.scan=true;m.userData.baseOpacity=m.material.opacity;m.material.transparent=true;m.castShadow=false;p.g.add(m);pickables.push(m);
+    if(c.l==='silencers'){const m2=new THREE.Mesh(g,m.material);m2.position.copy(m.position).add(new V3(63,124,-12));m2.userData=Object.assign({},m.userData);p.g.add(m2);pickables.push(m2);}});
+  /* second silencer feed: from the collector outlet up into the upper can */
+  {const p=P.silencers,o=p.home;const pts=[[425,236,-124],[452,282,-136],[460,340,-148],[440,394,-155],[390,421,-160]].map(q=>[q[0]-o.x,q[1]-o.y,q[2]-o.z]);
+   const t=tube(p.g,pts,27,'pipe',40);t.userData.scan=true;t.material.transparent=true;t.userData.baseOpacity=1;}
+  /* coil connector sits under the black cover, its lead runs down the cover channel */
+  [['R',1,[885,455],[868,372]],['L',-1,[937,455],[920,372]]].forEach(([s,k,top,bot])=>{const p=P['conn'+s];if(!p)return;
+    p.g.traverse(o=>{if(o.isMesh)o.userData.dead=true;});const o=p.home,L=(x,y,z)=>[x-o.x,y-o.y,z-o.z];
+    const b=box(p.g,[34,26,22],L(top[0],top[1],k*312),'coil');b.userData.alt=true;
+    const lt=box(p.g,[10,6,6],L(top[0],top[1]+15,k*322),'red');lt.userData.alt=true;
+    const w=tube(p.g,[L(top[0],top[1]-12,k*312),L(top[0]-6,top[1]-45,k*316),L(bot[0],bot[1],k*314),L(bot[0]-10,bot[1]-25,k*292),L(bot[0]-30,bot[1]-35,k*250)],5,'black',30);w.userData.alt=true;});
+  ['crashbars','rack'].forEach(id=>{if(P[id]){P[id].g.visible=false;P[id].gone=true;}});
+  /* hand-built parts with no scanned twin stay inside: shown in contours and service steps */
+  const KEEP=new Set(['wheelF','wheelR','capR','capL']);
+  Object.values(P).forEach(p=>{if(got.has(p.id)||KEEP.has(p.id))return;if(p.layer==='bike'||p.layer==='drive'){p.hid=true;if(p.layer==='bike'){p.wasBike=true;p.layer='internal';}}});
+  GLB_OK=true;setTargets();if(window.__onBody)window.__onBody();}
+loadBody();
+requestAnimationFrame(loop);
+window.__r9t={setTab,openOp,P,goView,setStep:(i)=>{curStep=i;renderStep();setTargets();goView(curOp.steps[i].v);},goViewRaw:(V)=>{camera.position.set(...V.p).multiplyScalar(S);controls.target.set(...V.t).multiplyScalar(S);fly=null;}};
+})();
+</script>
