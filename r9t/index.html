@@ -841,13 +841,13 @@ mirrorZ(s=>{
   /* intermediate shaft: chain sprocket + spur gear */
   const ig=new THREE.Group();ig.position.set(0,430,s*ZC);gCam.add(ig);
   add(ig,new THREE.CylinderGeometry(9,9,Math.abs(xg-xEnd)+30,16).rotateZ(Math.PI/2),'steel',[(xEnd+xg)/2,0,0]);
-  {const g=gearGeo0(40,30);g.rotateY(Math.PI/2);add(ig,g,'satin',[xEnd,0,0]);const q=gearGeo0(27.5,20);q.rotateY(Math.PI/2);add(ig,q,'brass',[xg,0,0]);}
+  {const g=gearGeo0(40,30);g.rotateZ(Math.PI/2);add(ig,g,'satin',[xEnd,0,0]);const q=gearGeo0(27.5,20);q.rotateZ(Math.PI/2);add(ig,q,'brass',[xg,0,0]);}
   tag(ig);
   /* two camshafts, upper and lower, each with an intake lobe (rear) and exhaust lobe (front) */
   const PK={in:460,ex:270};
   [[1,485],[-1,375]].forEach(([u,cy])=>{const cg=new THREE.Group();cg.position.set(0,cy,s*ZC);gCam.add(cg);
     add(cg,new THREE.CylinderGeometry(10,10,Math.abs(850-xg)+20,16).rotateZ(Math.PI/2),'steel',[(850+xg)/2,0,0]);
-    {const q=gearGeo0(27.5,20);q.rotateY(Math.PI/2);add(cg,q,'brass',[xg,0,0]);}
+    {const q=gearGeo0(27.5,20);q.rotateZ(Math.PI/2);add(cg,q,'brass',[xg,0,0]);}
     [[720,'in'],[820,'ex']].forEach(([x,kind])=>{const lobe=new THREE.Shape();lobe.absarc(0,0,16,Math.PI*.2,Math.PI*.8,true);lobe.quadraticCurveTo(-10,24,0,26);lobe.quadraticCurveTo(10,24,16*Math.cos(Math.PI*.2),16*Math.sin(Math.PI*.2));
       const lg=new THREE.ExtrudeGeometry(lobe,{depth:16,bevelEnabled:true,bevelThickness:1,bevelSize:1,bevelSegments:1});lg.translate(0,0,-8);lg.rotateY(Math.PI/2);
       const lgp=new THREE.Group();lgp.position.x=x;lgp.rotation.x=-s*Math.PI/2*u-s*PK[kind]/2*Math.PI/180;cg.add(lgp);add(lgp,lg,'steel');});
@@ -1082,7 +1082,7 @@ const CHAINS=[];
   const len=curve.getLength(),pitch=8,n=Math.floor(len/pitch);
   const lk=new THREE.InstancedMesh(new THREE.BoxGeometry(4,4,7.6),mat('steel'),n);lk.userData.part='camchains';gChain.add(lk);pickables.push(lk);
   const pn=new THREE.InstancedMesh(new THREE.CylinderGeometry(1.6,1.6,10,6).rotateZ(Math.PI/2),mat('satin'),n);pn.userData.part='camchains';gChain.add(pn);
-  const lowS=new THREE.Group();lowS.position.set(x,A.y,A.z);gChain.add(lowS);{const g=gearGeo0(A.r-2,16);g.rotateY(Math.PI/2);add(lowS,g,'satin');}
+  const lowS=new THREE.Group();lowS.position.set(x,A.y,A.z);gChain.add(lowS);{const g=gearGeo0(A.r-2,16);g.rotateZ(Math.PI/2);add(lowS,g,'satin');}
   /* hydraulic tensioner rail on one run, fixed guide on the other */
   const mid=(A.z+B.z)/2,len2=Math.abs(B.z-A.z)*.58;
   const ang1=Math.atan2((B.y+B.r)-(A.y+A.r),B.z-A.z),ang2=Math.atan2((B.y-B.r)-(A.y-A.r),B.z-A.z);
