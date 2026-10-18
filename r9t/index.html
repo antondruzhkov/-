@@ -127,6 +127,12 @@ aside p{margin:0 0 10px;max-width:62ch}
 .pick.sig{border-top:3px solid var(--hazard);margin:0 0 6px}.sigdet{list-style:none}
 .mus{display:inline-flex;align-items:center;gap:6px}.mus[aria-pressed="true"]{background:var(--hazard);color:var(--hazard-ink);border-color:var(--hazard)}
 @media (prefers-reduced-motion: reduce){.lamp.b1,.lamp.b2,.lamp.b3,#lsym.b1{animation-duration:2s}}
+table.cat{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0}
+table.cat th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line);padding:4px 6px}
+table.cat td{border-bottom:1px solid var(--line);padding:5px 6px;vertical-align:top}
+table.cat td.pn{font-family:var(--f-mono);white-space:nowrap;font-size:12px}
+table.cat small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.catbody{padding:8px 2px 4px}.catbody .chipbtn{display:inline-block;text-decoration:none;margin:0 4px 4px 0}
 @media (max-width:860px){
   .tabs{max-width:100%;overflow-x:auto;scrollbar-width:none}.tab{padding:7px 9px;font-size:13px;white-space:nowrap}
   .clock{width:min(100%,50vh)}
@@ -149,6 +155,7 @@ aside p{margin:0 0 10px;max-width:62ch}
     <button class="tab" role="tab" id="t-engine" aria-selected="false">Двигатель</button>
     <button class="tab" role="tab" id="t-service" aria-selected="false">Обслуживание</button>
     <button class="tab" role="tab" id="t-dash" aria-selected="false">Приборка</button>
+    <button class="tab" role="tab" id="t-cat" aria-selected="false">Каталог</button>
   </nav>
   <button class="chipbtn mus" id="music" aria-pressed="false" title="Включить или выключить музыку"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>Музыка</span></button>
 </header>
@@ -1215,10 +1222,10 @@ OFFS.drainplug=ENG.map((v,i)=>v+[0,-72,0][i]);
    Each camshaft: one intake + one exhaust lobe; lobe -> finger rocker (own shaft) -> semi-sphere shim -> valve. */
 const E2=(function(){
 const AX={R:{x:891,s:1},L:{x:943,s:-1}}, CY=454, STROKE=73, CR_R=STROKE/2, ROD=125, CH=30;
-const PITCH=8, VL=10.8, Z_VFACE=193.5, Z_TIP=281.5, Z_PIV=291, RB=14, CAM_Z=309.85, CAM_DY=42, PIV_DY=62, TIP_DY=22;
+const PITCH=8, VL=10.8, Z_VFACE=193.5, Z_TIP=267.5, Z_PIV=277, RB=14, CAM_Z=295.85, CAM_DY=29, PIV_DY=56, TIP_DY=20;
 const VALVES=[['in',-24,19.5],['ex',25,16.5]]; // kind, dx from bore axis, head radius
 const PK={in:460,ex:270}, WIN=220; // crank degrees: lift peak and duration
-const IY=329, X_PRIM=1035, chX=s=>s>0?961:1013;
+const IY=350, X_PRIM=1035, chX=s=>s>0?961:1013;
 const REBUILT=['crank','pistonR','pistonL','camsR','camsL','camchains','oilpump','balancer'];
 const NEW=[];
 
@@ -1309,7 +1316,7 @@ const heads={};
     const xs=chX(s);
     cg.add(M('steel',new THREE.CylinderGeometry(10,10,xs-(cx-60),20).rotateZ(Math.PI/2),[(xs+cx-60)/2,0,0]));
     [cx-48,cx,cx+38].forEach(xj=>cg.add(M('chrome',new THREE.CylinderGeometry(12,12,10,24).rotateZ(Math.PI/2),[xj,0,0])));
-    cg.add(M('brass',gearGeo2(CAM_DY,40,8),[xs-18,0,0]));
+    cg.add(M('brass',gearGeo2(CAM_DY,28,8),[xs-18,0,0]));
     if(u<0){const sp=sprocketGeo(22,7);cg.add(M('steel',sp.g,[xs,0,0]));
       const rr=prismYZ(circ(0,0,24,40).filter(([y,z])=>y>-4),null,3);cg.add(M('black',rr,[xs+7,0,0]));}  // camshaft sensor reluctor
     VALVES.forEach(([kind,dx])=>{const pts=[];for(let i=0;i<120;i++){const th=i/120*Math.PI*2;let d=th*180/Math.PI;if(d>180)d-=360;const cd=d;
@@ -1327,13 +1334,13 @@ const heads={};
     const vgeo=new THREE.LatheGeometry(vp,28);vgeo.rotateX(Math.PI/2);if(s<0)vgeo.scale(1,1,-1);const vm=M('steel',vgeo,[0,0,s*Z_VFACE]);vg.add(vm);
     vg.add(M('steel',new THREE.CylinderGeometry(11,8,4,20).rotateX(Math.PI/2),[0,0,s*(Z_TIP-8)]));               // upper spring plate + collets
     const shim=new THREE.Mesh(new THREE.SphereGeometry(5,16,8,0,Math.PI*2,0,Math.PI/2),mat('brass',true));shim.rotation.x=s*Math.PI/2;shim.position.z=s*Z_TIP;vg.add(shim);
-    const spr=new THREE.Group();spr.position.set(vx,vy,s*238);g.add(spr);
-    {const pts=[];const turns=6.5,L=Z_TIP-8-238;for(let i=0;i<=200;i++){const t=i/200,a=t*turns*Math.PI*2;pts.push(new V3(10.5*Math.cos(a),10.5*Math.sin(a),s*t*L));}
+    const spr=new THREE.Group();spr.position.set(vx,vy,s*226);g.add(spr);
+    {const pts=[];const turns=6.5,L=Z_TIP-8-226;for(let i=0;i<=200;i++){const t=i/200,a=t*turns*Math.PI*2;pts.push(new V3(10.5*Math.cos(a),10.5*Math.sin(a),s*t*L));}
       const sp=M('spring',new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),220,1.7,6,false));spr.add(sp);spr.userData.L=L;}
-    g.add(M('satin',new THREE.CylinderGeometry(12,12,2,20).rotateX(Math.PI/2),[vx,vy,s*237]));                     // lower spring plate
+    g.add(M('satin',new THREE.CylinderGeometry(12,12,2,20).rotateX(Math.PI/2),[vx,vy,s*225]));                     // lower spring plate
     const piv=new THREE.Group();piv.position.set(vx,CY+u*PIV_DY,s*Z_PIV);g.add(piv);
     const rk=[[7,0],[5.5,4.5],[0,7],[-10,6],[-20,4.6],[-30,4],[-38,2.4],[-43,0],[-44,-3],[-41,-4.6],[-36,-4.4],[-26,-3.4],[-14,-4.5],[-4,-6.8],[4,-5.6]];
-    const rmesh=new THREE.Mesh(prismYZ(rk,[circ(0,0,4.6,20,true)],12),mat('satin',true));rmesh.scale.set(1,u,s);piv.add(rmesh);
+    const rmesh=new THREE.Mesh(prismYZ(rk,[circ(0,0,4.6,20,true)],12),mat('satin',true));rmesh.scale.set(1,u*0.9,s);piv.add(rmesh);
     g.add(M('steel',new THREE.CylinderGeometry(4.4,4.4,22,12).rotateZ(Math.PI/2),[vx,CY+u*PIV_DY,s*Z_PIV]));       // rocker shaft
     [vg,spr,piv].forEach(o=>o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}}));
     pickables.push(...g.children.filter(m=>m.isMesh&&!pickables.includes(m)).map(m=>(m.userData.part=id,m)));
@@ -1673,6 +1680,7 @@ function diffBars(n){let h='<span class="diff" aria-label="Сложность '+
 
 function renderPanel(){
   if(tab==='dash'){if(window.DASH)DASH.panel(panel);return;}
+  if(tab==='cat'){CAT.render(panel);return;}
   if(tab==='bike'){
     panel.innerHTML=`<h2>Твой R nineT Scrambler</h2>
     <p class="lead">Кузов, рама, двигатель снаружи, вилка, тормоза и руль взяты из подробной 3D-модели R nineT, разбитой на детали. Твоё поверх неё: спицованные колёса и два глушителя слева, как на Scrambler. Тяни, чтобы покрутить. Ползунок внизу разносит мотоцикл на узлы, клик по детали покажет, что это и какие работы с ней связаны.</p>
@@ -1754,7 +1762,9 @@ function renderPick(){const b=document.getElementById('pickbox');if(!b)return;
   const ops=p.ops.map(id=>OPS.find(o=>o.id===id)).filter(Boolean);
   b.innerHTML=`<div class="pick"><small>${esc(p.sys)}</small><b>${esc(p.name)}</b><p style="margin:6px 0 0">${esc(p.desc)}</p>
     ${ops.length?`<p class="lead" style="margin:10px 0 6px">Работы с этой деталью:</p><ul class="ops">${ops.map(o=>`<li><button class="op" data-op="${o.id}"><b>${o.t}</b><span class="sub">${o.when}</span>${diffBars(o.diff)}</button></li>`).join('')}</ul>`:''}</div>`;
-  b.querySelectorAll('[data-op]').forEach(x=>x.onclick=()=>openOp(x.dataset.op));}
+  b.querySelectorAll('[data-op]').forEach(x=>x.onclick=()=>openOp(x.dataset.op));
+  const cats=CAT.partFor(picked);if(cats.length){const d=document.createElement('div');d.innerHTML=`<p class="lead" style="margin:10px 0 6px">Детали BMW по каталогу:</p><ul class="ops">${cats.map(c=>`<li><button class="op" data-cat="${c.id}"><b>${esc(c.t)}</b><span class="sub">${c.id} · ${c.r.length} поз.</span></button></li>`).join('')}</ul>`;b.firstChild.appendChild(d);
+    d.querySelectorAll('[data-cat]').forEach(x=>x.onclick=()=>CAT.openDiag(x.dataset.cat));}}
 function openOp(id){curOp=OPS.find(o=>o.id===id);curStep=0;setTab('service');}
 function renderStep(){const o=curOp,s=o.steps[curStep];
   panel.innerHTML=`<div class="step-head"><button class="back" id="back">← Все работы</button></div>
@@ -1777,7 +1787,7 @@ function altCoils(){if(!GLB_OK)return;['L','R'].forEach(s=>{let use=false;
   ['coil','conn'].forEach(b=>{const p=P[b+s];if(!p)return;p.g.traverse(o=>{if(!o.isMesh)return;if(o.userData.dead){o.visible=false;return;}const scan=!!o.userData.scan;o.visible=scan?!use:use;});});});}
 function setTargets(){altCoils();
   Object.values(P).forEach(p=>{const t=p.tgt;t.hl=0;t.off=0;t.op=1;
-    if(tab==='bike'){t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)?0:1;if(p.hid&&picked===p.id)t.op=1;t.off=explode*1.2;if(picked===p.id)t.hl=1;
+    if(tab==='bike'||tab==='cat'){t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)?0:1;if(p.hid&&picked===p.id)t.op=1;t.off=explode*1.2;if(picked===p.id)t.hl=1;
       if(activeSys){const C=CONTOURS.find(c=>c.id===activeSys);const inC=C.parts.indexOf(p.id)>=0;t.op=(p.layer==='tool'||p.layer==='fx')?0:(inC?(SHELL.indexOf(p.id)>=0?0.32:1):0.07);t.off=0;}}
     else if(tab==='engine'){
       if(p.layer==='bike'||p.wasBike||p.layer==='tool'||p.layer==='fx'||p.id==='airfilter'||p.id==='belt'){t.op=0;if(p.id==='wheelR')t.op=1;}
@@ -1808,14 +1818,14 @@ function setTargets(){altCoils();
   if(hoverId&&P[hoverId]&&P[hoverId].tgt.op>0.5)P[hoverId].tgt.hl=Math.max(P[hoverId].tgt.hl,0.75);
 }
 
-function setTab(t){tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}['bike','engine','service','dash'].forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
-  if(t!=='service'&&t!=='bike')picked=null;
+function setTab(t){tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}['bike','engine','service','dash','cat'].forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
+  if(t!=='service'&&t!=='bike'&&t!=='cat')picked=null;
   const dEl=document.getElementById('dash');dEl.hidden=t!=='dash';
   if(t==='dash'){renderPanel();try{localStorage.setItem('r9t-tab',t);}catch(e){}if(window.DASH)DASH.onShow();return;}
   renderPanel();setTargets();
-  if(t==='bike')goView('overall');else if(t==='engine')goView('engine');else goView(curOp?curOp.steps[curStep].v:'overall');
+  if(t==='bike'||t==='cat')goView('overall');else if(t==='engine')goView('engine');else goView(curOp?curOp.steps[curStep].v:'overall');
   try{localStorage.setItem('r9t-tab',t);}catch(e){}}
-['bike','engine','service','dash'].forEach(x=>document.getElementById('t-'+x).onclick=()=>{if(x==='service'&&tab!=='service')curOp=curOp;setTab(x);});
+['bike','engine','service','dash','cat'].forEach(x=>document.getElementById('t-'+x).onclick=()=>{if(x==='service'&&tab!=='service')curOp=curOp;setTab(x);});
 
 /* ---------- picking ---------- */
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downXY=null;
@@ -1873,7 +1883,7 @@ function loop(now){FADEDT=Math.min(.5,(now-last)/1000);const dt=Math.min(.05,(no
 applyTheme();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
 new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-let startTab='bike';try{const s=localStorage.getItem('r9t-tab');if(s==='engine'||s==='service'||s==='dash')startTab=s;}catch(e){}
+let startTab='bike';try{const s=localStorage.getItem('r9t-tab');if(s==='engine'||s==='service'||s==='dash'||s==='cat')startTab=s;}catch(e){}
 const hash=(location.hash||'').slice(1);if(['bike','engine','service'].indexOf(hash)>=0)startTab=hash;
 resize();setTab(startTab);goView(startTab==='engine'?'engine':'overall',true);
 Object.values(P).forEach(p=>{p.cur.op=p.tgt.op;p.cur.off=p.tgt.off;});
@@ -1921,6 +1931,41 @@ async function loadBody(){
   GLB_OK=true;setTargets();if(window.__onBody)window.__onBody();}
 loadBody();
 requestAnimationFrame(loop);
+/* ===== Каталог BMW: все разделы K23 с номерами деталей, связаны с 3D ===== */
+const CAT=(function(){
+const GROUPS={'02':'Сервис и жидкости','11':'Двигатель','12':'Электрика двигателя','13':'Впуск и впрыск','16':'Топливо','17':'Маслорадиатор','18':'Выпуск',
+ '21':'Сцепление','23':'Коробка передач','31':'Вилка','32':'Руль и органы управления','33':'Маятник, кардан, редуктор','34':'Тормоза и ABS','35':'Педали',
+ '36':'Колёса и шины','46':'Рама и кузов','51':'Замки, зеркала, окраска','52':'Сиденье','61':'Электрика и жгуты','62':'Приборная панель','63':'Свет','65':'Сигнализация','71':'Наклейки','77':'Аксессуары BMW'};
+/* diagram -> 3D part (by title keywords, group-scoped) */
+const MAP=[[/^11.*CRANKSHAFT/,'crank'],[/^11.*CONNECTING ROD|^11.*PISTON/,'pistonR'],[/^11.*CYLINDER HEAD COVER/,'coverR'],[/^11.*CYLINDER HEAD\/|^11.*CONTROL SUPPORT/,'headR'],
+ [/^11.*CYLINDER$/,'cylR'],[/^11.*TIMING GEAR|^11.*CAMSHAFT/,'camsR'],[/^11.*TIMING.*CHAIN/,'camchains'],[/^11.*TIMING CHAIN COVER/,'beltcover'],[/^11.*OIL PUMP/,'oilpump'],
+ [/^11.*OIL FILTER/,'oilfilter'],[/^11.*COMPENSATING/,'balancer'],[/^11.*(ENGINE HOUSING|CRANKCASE|SHORT ENGINE|^11_\d+ ENGINE$)/,'crankcase'],[/^11.*VENTILATION/,'breather'],
+ [/^12.*IGNITION/,'coilR'],[/^12.*STARTER/,'starter'],[/^12.*ALTERNATOR/,'alternator'],[/^12.*WIRING/,'loom'],[/^12.*SENSOR/,'sensors'],
+ [/^13.*(SILENCER|FILTER)/,'airbox'],[/^13.*THROTTLE/,'throttle'],[/^13.*INJECTOR/,'fuelLine'],[/^13.*CONTROL UNIT/,'ecu'],[/^13.*MANIFOLD/,'intakeDuct'],
+ [/^16.*PUMP/,'fuelPump'],[/^16.*CHARCOAL/,'canister'],[/^16.*LID/,'fuelCap'],[/^16/,'tank'],[/^17/,'cooler'],[/^18.*FLAP/,'flap'],[/^18.*MUFFLER/,'silencers'],[/^18/,'headers'],
+ [/^21.*CONTROL/,'clutchSlave'],[/^21/,'clutch'],[/^23.*(SHAFTS|SHIFT COMPONENTS|SELECTOR)/,'gears'],[/^23.*EXTERNAL/,'shiftLink'],[/^23/,'gearbox'],
+ [/^31.*(BOTTOM|TOP)/,'triple'],[/^31/,'fork'],[/^32/,'bars'],[/^33.*DRIVE SHAFT/,'driveshaft'],[/^33.*(GEARBOX|PINION|RING GEAR|BEARING)/,'finaldrive'],[/^33.*STRUT/,'shock'],[/^33/,'swingarm'],
+ [/^34.*(REAR WHEEL BRAKE|REAR BRAKE)/,'brakeR'],[/^34.*ABS/,'abs'],[/^34.*SPEED/,'wheelSensors'],[/^34/,'brakeF'],[/^35/,'rearMaster'],
+ [/^36.*FRONT/,'wheelF'],[/^36/,'wheelR'],[/^46.*(SADDLE|REAR)/,'tail'],[/^46/,'frame'],[/^52/,'seat'],[/^61.*BATTERY/,'battery'],[/^61.*HORN/,'horn'],[/^61/,'loom'],
+ [/^62/,'instrument'],[/^63.*TAIL/,'tail'],[/^63/,'light']];
+let DATA=null,cur=null,q='',open=null;setTimeout(()=>load(),3000);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const partOf=d=>{const k=d.id+' '+d.t;for(const [re,id] of MAP)if(re.test(k)&&P[id])return id;return null;};
+async function load(){if(DATA)return DATA;try{DATA=await (await fetch('catalog.json')).json();}catch(e){DATA=[];}return DATA;}
+function rowsHTML(d){return `<table class="cat"><thead><tr><th>№</th><th>Номер BMW</th><th>Деталь</th><th>Шт</th></tr></thead><tbody>${d.r.map(r=>`<tr><td>${esc(r[0])}</td><td class="pn">${esc(r[1])}</td><td>${esc(r[2])}${r[4]?`<small>${esc(r[4])}</small>`:''}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table>${d.n&&d.n.length?`<p class="src">${d.n.map(esc).join('<br>')}</p>`:''}`;}
+function list(){const ql=q.trim().toLowerCase().replace(/\s+/g,'');
+  const hits=DATA.filter(d=>!ql||(d.id+d.t).toLowerCase().replace(/\s+/g,'').includes(ql)||d.r.some(r=>(r[1]+r[2]).toLowerCase().replace(/\s+/g,'').includes(ql)));
+  const by={};hits.forEach(d=>{(by[d.id.slice(0,2)]=by[d.id.slice(0,2)]||[]).push(d);});
+  return Object.keys(by).sort().map(g=>`<h3>${g} · ${esc(GROUPS[g]||'')}</h3><ul class="ops">${by[g].map(d=>{const pid=partOf(d);return `<li><button class="op catd" data-id="${d.id}"><b>${esc(d.t)}</b><span class="sub">${d.id} · ${d.r.length} поз.${pid?' · есть в 3D':''}</span></button>${open===d.id?`<div class="catbody">${pid?`<button class="chipbtn" data-show="${pid}">Показать на модели</button> `:''}<a class="chipbtn" target="_blank" rel="noopener" href="https://shop.maxbmw.com/fiche/DiagramsMain.aspx?vid=58482#${d.id}">Схема BMW</a>${rowsHTML(d)}</div>`:''}</li>`;}).join('')}</ul>`).join('')||'<p class="lead">Ничего не нашлось.</p>';}
+function render(el){if(!DATA){el.innerHTML='<p class="lead">Загружаю каталог...</p>';load().then(()=>render(el));return;}
+  el.innerHTML=`<h2>Каталог деталей BMW</h2><p class="lead">Все ${DATA.length} разделов официального каталога для R nineT Scrambler K23 (2015-2020): номер каждой детали, количество, замены номеров и оговорки «только для». Ищи по названию по-английски или по номеру.</p>
+   <div class="search"><input id="catq" type="search" placeholder="например 11 12 или SPARK PLUG" value="${esc(q)}" aria-label="Поиск по каталогу"></div><div id="catl">${list()}</div>`;
+  const inp=el.querySelector('#catq');inp.oninput=()=>{q=inp.value;el.querySelector('#catl').innerHTML=list();bind(el);};bind(el);}
+function bind(el){el.querySelectorAll('.catd').forEach(b=>b.onclick=()=>{open=open===b.dataset.id?null:b.dataset.id;el.querySelector('#catl').innerHTML=list();bind(el);
+    const d=DATA.find(x=>x.id===open);const pid=d&&partOf(d);if(pid){picked=pid;setTargets();}});
+  el.querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{picked=b.dataset.show;setTargets();});}
+return {render,openDiag:(id)=>{open=id;q='';setTab('cat');},partFor:(id)=>DATA?DATA.filter(d=>partOf(d)===id):[]};})();
+
 window.THREE=THREE;window.__r9t={setTab,openOp,P,goView,setStep:(i)=>{curStep=i;renderStep();setTargets();goView(curOp.steps[i].v);},goViewRaw:(V)=>{camera.position.set(...V.p).multiplyScalar(S);controls.target.set(...V.t).multiplyScalar(S);fly=null;}};
 })();
 </script>
