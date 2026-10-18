@@ -834,7 +834,7 @@ mirrorZ(s=>{
   cyl(gPl,1.3,8,'z',[770,430,s*210],'steel',8);
   [-1,1].forEach(k=>box(gPl,[3,1.6,10],[770,430+k*3.4,s*209],'steel'));
   /* internals */
-  const gCam=part('cams'+side,{name:'Газораспределительный механизм, '+nm,desc:'Два распредвала лежат вдоль мотоцикла, один над другим. Верхний открывает верхние впускной и выпускной клапаны, нижний нижние. Между ними промежуточный вал: его крутит цепь от коленвала, а он через шестерни крутит оба распредвала в два раза медленнее коленвала. Кулачок давит на рокер (качающийся рычаг на оси), рокер давит на клапан. Зазор меряют щупом между кулачком и рокером на холодном двигателе.',sys:'ГРМ',layer:'internal',ex:[0,0,s*120]});
+  const gCam=part('cams'+side,{name:'Газораспределительный механизм, '+nm,desc:'Как у BMW в этом DOHC-моторе: два распредвала на цилиндр лежат вдоль мотоцикла, один над другим, и каждый открывает один впускной и один выпускной клапан. Кулачки давят на лёгкие рычаги (Schlepphebel, «рокеры»): с одной стороны рычаг на оси, с другой давит на клапан через полусферическую шайбу. Зазор регулируют подбором этих шайб. Ход клапана 10,8 мм. Цепь от коленвала крутит промежуточный вал между распредвалами, а он шестернями крутит оба распредвала в два раза медленнее коленвала.',sys:'ГРМ',layer:'internal',ex:[0,0,s*120]});
   const cams=[],valves=[],ZC=309;
   const xEnd=s>0?656:884, xg=s>0?676:864;          // chain sprocket and spur gear planes (cam frame)
   const tag=o=>{o.traverse(q=>{if(q.isMesh)q.userData.part='cams'+side;});return o;};
@@ -850,7 +850,7 @@ mirrorZ(s=>{
     {const q=gearGeo0(27.5,20);q.rotateZ(Math.PI/2);add(cg,q,'brass',[xg,0,0]);}
     [[720,'in'],[820,'ex']].forEach(([x,kind])=>{const lobe=new THREE.Shape();lobe.absarc(0,0,16,Math.PI*.2,Math.PI*.8,true);lobe.quadraticCurveTo(-10,24,0,26);lobe.quadraticCurveTo(10,24,16*Math.cos(Math.PI*.2),16*Math.sin(Math.PI*.2));
       const lg=new THREE.ExtrudeGeometry(lobe,{depth:16,bevelEnabled:true,bevelThickness:1,bevelSize:1,bevelSegments:1});lg.translate(0,0,-8);lg.rotateY(Math.PI/2);
-      const lgp=new THREE.Group();lgp.position.x=x;lgp.rotation.x=-s*Math.PI/2*u-s*PK[kind]/2*Math.PI/180;cg.add(lgp);add(lgp,lg,'steel');});
+      const lgp=new THREE.Group();lgp.position.x=x;lgp.rotation.x=-s*Math.PI/2-PK[kind]/2*Math.PI/180;cg.add(lgp);add(lgp,lg,'steel');});
     tag(cg);cams.push({g:cg,u});
     /* bearing caps across the shaft */
     [700,770,840].forEach(x=>{const b=box(gCam,[14,34,24],[x,cy,s*(ZC+4)],'case');b.userData.part='cams'+side;});
@@ -863,7 +863,8 @@ mirrorZ(s=>{
     add(vg,new THREE.CylinderGeometry(10,10,4,16).rotateX(Math.PI/2),'alu',[x,vy,s*278]);
     tag(vg);
     const piv=new THREE.Group();piv.position.set(x,vy+u*47,s*296);gCam.add(piv);
-    const arm=box(piv,[14,52,7],[0,-u*24,-s*3],'satin');const pad=box(piv,[12,10,3],[0,-u*24,s*1],'brass');
+    const arm=box(piv,[14,52,7],[0,-u*24,-s*3],'satin');const pad=box(piv,[12,10,3],[0,-u*24,s*1],'steel');
+    const sh=new THREE.Mesh(new THREE.SphereGeometry(6,14,8,0,Math.PI*2,0,Math.PI/2),mat('brass'));sh.rotation.x=-s*Math.PI/2;sh.position.set(0,-u*47,-s*8);piv.add(sh);sh.userData.part='cams'+side;
     tag(piv);valves.push({g:vg,kind,piv,u});}));
   const gPi=part('piston'+side,{name:'Поршень, '+nm,desc:'Поршень 101 мм. В боксере оба поршня одновременно уходят наружу и возвращаются к коленвалу.',sys:'Двигатель',layer:'internal',ex:[0,0,0]});
   const pg=new THREE.Group();gPi.add(pg);
@@ -1091,7 +1092,7 @@ const CHAINS=[];
   cyl(gChain,7,30,'y',[x,(A.y+A.r+B.y+B.r)/2+24,mid],'satin',12);
   CHAINS.push({curve,len,n,lk,pn,lowS,pitch});});
 const _co=new THREE.Object3D();
-function updateChains(th){CHAINS.forEach(c=>{const off=((th*Math.PI/180*20)%c.len+c.len)%c.len;
+function updateChains(th){CHAINS.forEach(c=>{const off=((-th*Math.PI/180*20)%c.len+c.len)%c.len;
   for(let i=0;i<c.n;i++){const t=((i*c.pitch+off)%c.len)/c.len,p=c.curve.getPointAt(t),tg=c.curve.getTangentAt(t);
     _co.position.copy(p);_co.quaternion.setFromUnitVectors(new V3(0,0,1),tg);_co.updateMatrix();c.lk.setMatrixAt(i,_co.matrix);c.pn.setMatrixAt(i,_co.matrix);}
   c.lk.instanceMatrix.needsUpdate=true;c.pn.instanceMatrix.needsUpdate=true;c.lowS.rotation.x=-th*Math.PI/180;});}
@@ -1261,9 +1262,11 @@ let theta=0, speed=1, playing=true, gear=0, cutaway=true;
 function bump(ph,a,b){ph=((ph%720)+720)%720;if(ph<a||ph>b)return 0;return Math.sin(Math.PI*(ph-a)/(b-a));}
 const STROKES=['Рабочий ход','Выпуск','Впуск','Сжатие'];
 function strokeOf(ph){ph=((ph%720)+720)%720;return Math.floor(ph/180);}
-function setValvetrain(c,ph){const s=c.s,cr=s*(ph/2)*Math.PI/180;
+/* cams turn at half crank speed; the chain turns the intermediate shaft the same way as the crank, its spur gear turns both cams the other way.
+   Valve lift 10,8 mm (BMW data for this DOHC head). */
+function setValvetrain(c,ph){const s=c.s,cr=(ph/2)*Math.PI/180;
   c.cams.forEach(cm=>cm.g.rotation.x=cr);if(c.ig)c.ig.rotation.x=-cr;
-  c.valves.forEach(v=>{const lift=v.kind==='ex'?bump(ph,160,380):bump(ph,340,580);v.g.position.z=-s*lift*7;v.piv.rotation.x=v.u*s*lift*7/47;});}
+  c.valves.forEach(v=>{const lift=(v.kind==='ex'?bump(ph,160,380):bump(ph,340,580))*10.8;v.g.position.z=-s*lift;v.piv.rotation.x=v.u*s*lift/47;});}
 function updateEngine(){
   crankRot.rotation.x=-theta*Math.PI/180;updateChains(theta);
   const r=36.5,L=125;
