@@ -834,27 +834,24 @@ mirrorZ(s=>{
   cyl(gPl,1.3,8,'z',[770,430,s*210],'steel',8);
   [-1,1].forEach(k=>box(gPl,[3,1.6,10],[770,430+k*3.4,s*209],'steel'));
   /* internals */
-  const gCam=part('cams'+side,{name:'Газораспределительный механизм, '+nm,desc:'Как у BMW в этом DOHC-моторе: два распредвала на цилиндр лежат вдоль мотоцикла, один над другим, и каждый открывает один впускной и один выпускной клапан. Кулачки давят на лёгкие рычаги (Schlepphebel, «рокеры»): с одной стороны рычаг на оси, с другой давит на клапан через полусферическую шайбу. Зазор регулируют подбором этих шайб. Ход клапана 10,8 мм. Цепь от коленвала крутит промежуточный вал между распредвалами, а он шестернями крутит оба распредвала в два раза медленнее коленвала.',sys:'ГРМ',layer:'internal',ex:[0,0,s*120]});
+  const gCam=part('cams'+side,{name:'Газораспределительный механизм, '+nm,desc:'Как у BMW в этом DOHC-моторе: два распредвала на цилиндр лежат вдоль мотоцикла, один над другим, и каждый открывает один впускной и один выпускной клапан. Кулачки давят на лёгкие рычаги (Schlepphebel, «рокеры»): с одной стороны рычаг на оси, с другой давит на клапан через полусферическую шайбу. Зазор регулируют подбором этих шайб. Ход клапана 10,8 мм. Цепь крутит звёздочку на нижнем распредвале, верхний крутится от него через шестерню, оба в два раза медленнее коленвала.',sys:'ГРМ',layer:'internal',ex:[0,0,s*120]});
   const cams=[],valves=[],ZC=309;
-  const xEnd=s>0?656:884, xg=s>0?676:864;          // chain sprocket and spur gear planes (cam frame)
+  const xEnd=s>0?656:884, xg=s>0?680:860;          // chain sprocket and cam-gear planes (cam frame)
   const tag=o=>{o.traverse(q=>{if(q.isMesh)q.userData.part='cams'+side;});return o;};
-  /* intermediate shaft: chain sprocket + spur gear */
-  const ig=new THREE.Group();ig.position.set(0,430,s*ZC);gCam.add(ig);
-  add(ig,new THREE.CylinderGeometry(9,9,Math.abs(xg-xEnd)+30,16).rotateZ(Math.PI/2),'steel',[(xEnd+xg)/2,0,0]);
-  {const g=gearGeo0(40,30);g.rotateZ(Math.PI/2);add(ig,g,'satin',[xEnd,0,0]);const q=gearGeo0(27.5,20);q.rotateZ(Math.PI/2);add(ig,q,'brass',[xg,0,0]);}
-  tag(ig);
-  /* two camshafts, upper and lower, each with an intake lobe (rear) and exhaust lobe (front) */
+  const ig=null;
+  /* two camshafts (BMW parts list: camshaft I and II, one sprocket per head). The chain drives the sprocket on the lower camshaft;
+     both camshafts carry spur gears that mesh, so the upper one turns the other way at the same speed. */
   const PK={in:460,ex:270};
   [[1,485],[-1,375]].forEach(([u,cy])=>{const cg=new THREE.Group();cg.position.set(0,cy,s*ZC);gCam.add(cg);
-    add(cg,new THREE.CylinderGeometry(10,10,Math.abs(850-xg)+20,16).rotateZ(Math.PI/2),'steel',[(850+xg)/2,0,0]);
-    {const q=gearGeo0(27.5,20);q.rotateZ(Math.PI/2);add(cg,q,'brass',[xg,0,0]);}
+    const x0=u<0?xEnd:xg;add(cg,new THREE.CylinderGeometry(10,10,Math.abs(850-x0)+20,16).rotateZ(Math.PI/2),'steel',[(850+x0)/2,0,0]);
+    {const q=gearGeo0(55,40);q.rotateZ(Math.PI/2);q.scale(.75,1,1);add(cg,q,'brass',[xg,0,0]);}
+    if(u<0){const g=gearGeo0(40,30);g.rotateZ(Math.PI/2);add(cg,g,'satin',[xEnd,0,0]);}
     [[720,'in'],[820,'ex']].forEach(([x,kind])=>{const lobe=new THREE.Shape();lobe.absarc(0,0,16,Math.PI*.2,Math.PI*.8,true);lobe.quadraticCurveTo(-10,24,0,26);lobe.quadraticCurveTo(10,24,16*Math.cos(Math.PI*.2),16*Math.sin(Math.PI*.2));
       const lg=new THREE.ExtrudeGeometry(lobe,{depth:16,bevelEnabled:true,bevelThickness:1,bevelSize:1,bevelSegments:1});lg.translate(0,0,-8);lg.rotateY(Math.PI/2);
-      const lgp=new THREE.Group();lgp.position.x=x;lgp.rotation.x=-s*Math.PI/2-PK[kind]/2*Math.PI/180;cg.add(lgp);add(lgp,lg,'steel');});
+      const lgp=new THREE.Group();lgp.position.x=x;lgp.rotation.x=-s*Math.PI/2-u*PK[kind]/2*Math.PI/180;cg.add(lgp);add(lgp,lg,'steel');});
     tag(cg);cams.push({g:cg,u});
-    /* bearing caps across the shaft */
+    /* camshaft supporting bracket across both shafts */
     [700,770,840].forEach(x=>{const b=box(gCam,[14,34,24],[x,cy,s*(ZC+4)],'case');b.userData.part='cams'+side;});
-    /* rocker shaft outboard of the cam */
     const ry=cy+u*24;add(gCam,new THREE.CylinderGeometry(5,5,170,10).rotateZ(Math.PI/2),'steel',[770,ry,s*296]).userData.part='cams'+side;});
   /* valves with finger rockers: pivot on the rocker shaft, pad under the lobe, tip on the valve */
   [[720,'in'],[820,'ex']].forEach(([x,kind])=>[[1,462],[-1,398]].forEach(([u,vy])=>{const vg=new THREE.Group();gCam.add(vg);
@@ -1070,11 +1067,16 @@ const gClutch=part('clutch',{name:'Сухое сцепление',desc:'Одно
 lathe(gClutch,[[40,0],[110,0],[110,12],[40,12]],'x',[650,430,0],'steel',48);lathe(gClutch,[[30,0],[96,0],[96,8],[30,8]],'x',[636,430,0],'gold',48);lathe(gClutch,[[30,0],[104,0],[104,8],[30,8]],'x',[626,430,0],'steel',48);
 const gBal=part('balancer',{name:'Балансирный вал',desc:'Вал с противовесом под коленвалом гасит вибрации оппозита. Крутится от коленвала.',sys:SYS.drive,layer:'internal',ex:[0,-60,0]});
 cyl(gBal,12,240,'x',[790,340,0],'steel',16);box(gBal,[50,36,30],[790,322,0],'steel');
-const gChain=part('camchains',{name:'Цепи привода ГРМ',desc:'По одной цепи на цилиндр, внутри блока и головки, снаружи не видно. Цепь левого цилиндра крутится от коленвала, правого от балансирного вала. Цепь поднимается в головку к звёздочке промежуточного вала, а он шестернями крутит оба распредвала в два раза медленнее коленвала. Натяжитель гидравлический, от давления масла: подтягивать вручную ничего не надо.',sys:SYS.drive,layer:'internal',ex:[0,0,0]});
-/* timing chains: left cylinder from the crankshaft, right from the balancer shaft (BMW layout). Each chain climbs to the
-   sprocket on the intermediate shaft in the head; spur gears there turn both camshafts at half crank speed. */
-const CHAINS=[];
-[[1,656,{y:340,z:0,r:20},{y:414,z:233,r:40}],[-1,938,{y:430,z:0,r:20},{y:414,z:-231,r:40}]].forEach(([s,x,A,B])=>{
+const gChain=part('camchains',{name:'Цепи привода ГРМ',desc:'Привод ГРМ по каталогу деталей BMW для этого мотора: спереди короткая цепь от коленвала на промежуточный вал под ним. От промежуточного вала к каждой головке своя втулочная цепь: правая сзади, левая спереди. Цепь крутит звёздочку на нижнем распредвале, а он через шестерню крутит верхний. Распредвалы вращаются в два раза медленнее коленвала. На каждой цепи гидравлический натяжитель и направляющая шина: подтягивать вручную ничего не надо.',sys:SYS.drive,layer:'internal',ex:[0,0,0]});
+/* timing drive (BMW parts lists for this engine): a single chain from the crankshaft to the intermediate shaft under it (front),
+   then one sleeve chain per cylinder from the intermediate shaft up to the sprocket on the lower camshaft:
+   right cylinder chain at the rear, left cylinder chain at the front. Each chain has a hydraulic tensioner rail and a guide rail. */
+const CHAINS=[];const IY=292;
+{const g=new THREE.Group();g.name='ishaft';g.position.set(0,IY,0);gChain.add(g);add(g,new THREE.CylinderGeometry(9,9,360,14).rotateZ(Math.PI/2),'steel',[800,0,0]);
+ [[970,20],[656,20],[938,20]].forEach(([x,r])=>{const q=gearGeo0(r-2,16);q.rotateZ(Math.PI/2);add(g,q,'satin',[x,0,0]);});
+ cyl(gChain,9,60,'x',[950,430,0],'steel',14);
+ window.__ishaft=g;}
+[[0,970,{y:430,z:0,r:20},{y:IY,z:0,r:20},true],[1,656,{y:IY,z:0,r:20},{y:359,z:233,r:40}],[-1,938,{y:IY,z:0,r:20},{y:359,z:-231,r:40}]].forEach(([s,x,A,B,prim])=>{
   const pts=[];for(let i=0;i<90;i++){const a=i/90*Math.PI*2;pts.push([A.y+Math.cos(a)*A.r,A.z+Math.sin(a)*A.r]);pts.push([B.y+Math.cos(a)*B.r,B.z+Math.sin(a)*B.r]);}
   pts.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];
   pts.forEach(p=>{while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);});
@@ -1083,19 +1085,19 @@ const CHAINS=[];
   const len=curve.getLength(),pitch=8,n=Math.floor(len/pitch);
   const lk=new THREE.InstancedMesh(new THREE.BoxGeometry(4,4,7.6),mat('steel'),n);lk.userData.part='camchains';gChain.add(lk);pickables.push(lk);
   const pn=new THREE.InstancedMesh(new THREE.CylinderGeometry(1.6,1.6,10,6).rotateZ(Math.PI/2),mat('satin'),n);pn.userData.part='camchains';gChain.add(pn);
-  const lowS=new THREE.Group();lowS.position.set(x,A.y,A.z);gChain.add(lowS);{const g=gearGeo0(A.r-2,16);g.rotateZ(Math.PI/2);add(lowS,g,'satin');}
-  /* hydraulic tensioner rail on one run, fixed guide on the other */
-  const mid=(A.z+B.z)/2,len2=Math.abs(B.z-A.z)*.58;
-  const ang1=Math.atan2((B.y+B.r)-(A.y+A.r),B.z-A.z),ang2=Math.atan2((B.y-B.r)-(A.y-A.r),B.z-A.z);
-  const r1=box(gChain,[12,7,len2],[x,(A.y+A.r+B.y+B.r)/2+7,mid],'black');r1.rotation.x=-ang1;
-  const r2=box(gChain,[12,7,len2],[x,(A.y-A.r+B.y-B.r)/2-7,mid],'black');r2.rotation.x=-ang2;
-  cyl(gChain,7,30,'y',[x,(A.y+A.r+B.y+B.r)/2+24,mid],'satin',12);
+  let lowS=null;if(prim){lowS=new THREE.Group();lowS.position.set(x,A.y,A.z);gChain.add(lowS);const g=gearGeo0(A.r-2,16);g.rotateZ(Math.PI/2);add(lowS,g,'satin');}
+  if(!prim){const mid=(A.z+B.z)/2,len2=Math.abs(B.z-A.z)*.58;
+    const ang1=Math.atan2((B.y+B.r)-(A.y+A.r),B.z-A.z),ang2=Math.atan2((B.y-B.r)-(A.y-A.r),B.z-A.z);
+    const r1=box(gChain,[12,7,len2],[x,(A.y+A.r+B.y+B.r)/2+7,mid],'black');r1.rotation.x=-ang1;
+    const r2=box(gChain,[12,7,len2],[x,(A.y-A.r+B.y-B.r)/2-7,mid],'black');r2.rotation.x=-ang2;
+    cyl(gChain,7,30,'y',[x,(A.y+A.r+B.y+B.r)/2+24,mid],'satin',12);}
   CHAINS.push({curve,len,n,lk,pn,lowS,pitch});});
 const _co=new THREE.Object3D();
 function updateChains(th){CHAINS.forEach(c=>{const off=((-th*Math.PI/180*20)%c.len+c.len)%c.len;
   for(let i=0;i<c.n;i++){const t=((i*c.pitch+off)%c.len)/c.len,p=c.curve.getPointAt(t),tg=c.curve.getTangentAt(t);
     _co.position.copy(p);_co.quaternion.setFromUnitVectors(new V3(0,0,1),tg);_co.updateMatrix();c.lk.setMatrixAt(i,_co.matrix);c.pn.setMatrixAt(i,_co.matrix);}
-  c.lk.instanceMatrix.needsUpdate=true;c.pn.instanceMatrix.needsUpdate=true;c.lowS.rotation.x=-th*Math.PI/180;});}
+  c.lk.instanceMatrix.needsUpdate=true;c.pn.instanceMatrix.needsUpdate=true;if(c.lowS)c.lowS.rotation.x=-th*Math.PI/180;});
+  if(window.__ishaft)window.__ishaft.rotation.x=-th*Math.PI/180;}
 updateChains(0);
 /* drive-side controls: clutch slave, shift linkage */
 const gSlave=part('clutchSlave',{name:'Рабочий цилиндр сцепления',desc:'Сзади на коробке слева. Гидравлика от рычага давит шток, тот выжимает сухое сцепление. Тормозная жидкость DOT 4 в бачке на левой рукоятке.',sys:SYS.drive,ex:[-120,0,-80]});
@@ -1262,10 +1264,10 @@ let theta=0, speed=1, playing=true, gear=0, cutaway=true;
 function bump(ph,a,b){ph=((ph%720)+720)%720;if(ph<a||ph>b)return 0;return Math.sin(Math.PI*(ph-a)/(b-a));}
 const STROKES=['Рабочий ход','Выпуск','Впуск','Сжатие'];
 function strokeOf(ph){ph=((ph%720)+720)%720;return Math.floor(ph/180);}
-/* cams turn at half crank speed; the chain turns the intermediate shaft the same way as the crank, its spur gear turns both cams the other way.
+/* cams turn at half crank speed: the chain turns the lower camshaft the same way as the crank, its spur gear turns the upper one the other way.
    Valve lift 10,8 mm (BMW data for this DOHC head). */
 function setValvetrain(c,ph){const s=c.s,cr=(ph/2)*Math.PI/180;
-  c.cams.forEach(cm=>cm.g.rotation.x=cr);if(c.ig)c.ig.rotation.x=-cr;
+  c.cams.forEach(cm=>cm.g.rotation.x=cm.u*cr);
   c.valves.forEach(v=>{const lift=(v.kind==='ex'?bump(ph,160,380):bump(ph,340,580))*10.8;v.g.position.z=-s*lift;v.piv.rotation.x=v.u*s*lift/47;});}
 function updateEngine(){
   crankRot.rotation.x=-theta*Math.PI/180;updateChains(theta);
@@ -1380,7 +1382,7 @@ const OPS=[
    {h:'Двигатель полностью холодный',v:'engine',f:['headR','headL'],x:'Зазоры меряют только на остывшем двигателе, лучше утром после ночи. На тёплом металл расширен, цифры будут неправильные.'},
    {h:'Сними катушки и свечи',v:'headR',f:['coilR','plugR','coilL','plugL'],off:['coilR','plugR','coilL','plugL'],x:'Как в работе «Замена свечей»: разъём, катушка, продуть колодец, свеча. Без свечей нет компрессии, и двигатель легко провернуть колесом.'},
    {h:'Сними правую крышку клапанов',v:'headR',f:['coverR'],off:['coilR','plugR','coilL','plugL','coverR'],x:'Выкрути болты крышки по кругу, по пол-оборота каждый, чтобы её не перекосило. Сними крышку прямо на себя. Прилипла: постучи ладонью по краю, отвёрткой не поддевай, поцарапаешь плоскость. С внутренней стороны резиновая прокладка, её меняешь на новую.',facts:[['Болты','M6, Torx'],['Прокладка','новая']]},
-   {h:'Что внутри головки',v:'headOpen',f:['camsR'],off:['coilR','plugR','coilL','plugL','coverR'],x:'Два распредвала лежат вдоль мотоцикла, один над другим. Верхний открывает два верхних клапана, нижний два нижних. На каждом валу два кулачка: задний для впуска, передний для выпуска. Кулачок давит на рокер (рычаг на оси), рокер давит на клапан. Между валами промежуточный вал со звёздочкой: его крутит цепь от коленвала, а он шестернями крутит оба распредвала. Крышки подшипников на болтах не трогаешь.'},
+   {h:'Что внутри головки',v:'headOpen',f:['camsR'],off:['coilR','plugR','coilL','plugL','coverR'],x:'Два распредвала лежат вдоль мотоцикла, один над другим. Верхний открывает два верхних клапана, нижний два нижних. На каждом валу два кулачка: задний для впуска, передний для выпуска. Кулачок давит на рокер (рычаг на оси), рокер давит на клапан. На нижнем валу звёздочка цепи, верхний крутится от нижнего через шестерню. Крышки подшипников на болтах не трогаешь.'},
    {h:'Поставь цилиндр в ВМТ сжатия',v:'headOpen',f:['camsR','wheelR'],off:['coilR','plugR','coilL','plugL','coverR'],anim:'tdc',x:'Включи 5-ю передачу. Медленно крути заднее колесо рукой по ходу движения: распредвалы поворачиваются. Остановись, когда все четыре кулачка правого цилиндра смотрят носами от рокеров. Тогда все четыре клапана закрыты и между круглой частью кулачка и рокером есть щель.',w:'Крути только по ходу движения, назад не надо.'},
    {h:'Меряй щупом каждый клапан',v:'gapView',xray:true,f:['toolFeelerR'],off:['coilR','plugR','coilL','plugL','coverR'],show:['toolFeelerR'],anim:'feel',x:'Щуп заводишь сбоку, плоско, в щель между круглой частью кулачка и площадкой рокера. Подбирай толщину: щуп входит с лёгким сопротивлением, как лист бумаги под книгой. Болтается: бери толще. Не лезет: тоньше. Запиши, какой лезет, для всех четырёх клапанов: впуск верхний и нижний, выпуск верхний и нижний.',facts:[['Впуск, сзади','0,10-0,17 мм','flag'],['Выпуск, спереди','0,34-0,41 мм','flag']]},
    {h:'Проверка «проходит / не проходит»',v:'gapView',xray:true,f:['toolFeelerR'],off:['coilR','plugR','coilL','plugL','coverR'],show:['toolFeelerR'],anim:'feel',x:'Самый надёжный способ для первого раза. Впуск: щуп 0,10 должен проходить, щуп 0,17 уже не должен. Выпуск: 0,34 проходит, 0,41 нет. Если так, клапан в допуске.',w:'Если хоть один зазор вне допуска, регулировка идёт заменой регулировочных шайб со снятием распредвалов. Это следующий уровень: запиши цифры и разберём отдельно.'},
