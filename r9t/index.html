@@ -1056,9 +1056,24 @@ const gClutch=part('clutch',{name:'Сухое сцепление',desc:'Одно
 lathe(gClutch,[[40,0],[110,0],[110,12],[40,12]],'x',[650,430,0],'steel',48);lathe(gClutch,[[30,0],[96,0],[96,8],[30,8]],'x',[636,430,0],'gold',48);lathe(gClutch,[[30,0],[104,0],[104,8],[30,8]],'x',[626,430,0],'steel',48);
 const gBal=part('balancer',{name:'Балансирный вал',desc:'Вал с противовесом под коленвалом гасит вибрации оппозита. Крутится от коленвала.',sys:SYS.drive,layer:'internal',ex:[0,-60,0]});
 cyl(gBal,12,240,'x',[790,340,0],'steel',16);box(gBal,[50,36,30],[790,322,0],'steel');
-const gChain=part('camchains',{name:'Цепи привода ГРМ',desc:'По одной цепи на цилиндр: от коленвала к звёздочкам распредвалов. Натяжитель гидравлический, от давления масла.',sys:SYS.drive,layer:'internal',ex:[0,0,0]});
-mirrorZ(s=>{const c=new THREE.CatmullRomCurve3([[862,452,s*120],[836,578,s*296],[812,520,s*300],[850,408,s*120]].map(p=>new V3(...p)),true);
-  add(gChain,new THREE.TubeGeometry(c,100,4,6,true),'steel');slab(gChain,rr(14,150,6),8,2,'black',[860,500,s*210],'z').rotation.x=-s*.9;});
+const gChain=part('camchains',{name:'Цепи привода ГРМ',desc:'По одной цепи на цилиндр, они идут внутри блока и головки, снаружи их не видно. Цепь от звёздочки на коленвале поднимается в головку к промежуточному валу, а он через шестерни крутит оба распредвала. Правая цепь сзади правого цилиндра, левая спереди левого. Натяжитель гидравлический, от давления масла: подтягивать вручную ничего не надо.',sys:SYS.drive,layer:'internal',ex:[0,0,0]});
+/* chain per cylinder, in the plane across the crank: crank sprocket -> idler sprocket in the head, which drives both cams.
+   Right chain runs behind the right cylinder, left chain in front of the left one (the left cylinder sits 54 mm ahead). */
+[[1,656,225],[-1,938,-231]].forEach(([s,x,zt])=>{
+  const A={y:430,z:0,r:24},B={y:458,z:zt,r:30},pts=[];
+  for(let i=0;i<72;i++){const a=i/72*Math.PI*2;pts.push([A.y+Math.cos(a)*A.r,A.z+Math.sin(a)*A.r]);pts.push([B.y+Math.cos(a)*B.r,B.z+Math.sin(a)*B.r]);}
+  pts.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];
+  pts.forEach(p=>{while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);});
+  pts.slice().reverse().forEach(p=>{while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);});
+  const hull=lo.slice(0,-1).concat(up.slice(0,-1));
+  const c=new THREE.CatmullRomCurve3(hull.map(q=>new V3(x,q[0],q[1])),true);
+  add(gChain,new THREE.TubeGeometry(c,220,3.2,6,true),'steel');
+  [[A,'satin'],[B,'satin']].forEach(([C,k],j)=>{const g=gearGeo0(C.r-1,j?24:18);g.rotateY(Math.PI/2);add(gChain,g,k,[x,C.y,C.z]);});
+  /* tensioner rail on the slack side and a fixed guide on the drive side */
+  const mid=(A.z+B.z)/2,len=Math.abs(B.z-A.z)*.62;
+  box(gChain,[10,8,len],[x,A.y+A.r+8,mid],'black').rotation.x=-s*.04;
+  box(gChain,[10,8,len],[x,A.y-A.r-6,mid+s*10],'black').rotation.x=s*.08;
+});
 /* drive-side controls: clutch slave, shift linkage */
 const gSlave=part('clutchSlave',{name:'Рабочий цилиндр сцепления',desc:'Сзади на коробке слева. Гидравлика от рычага давит шток, тот выжимает сухое сцепление. Тормозная жидкость DOT 4 в бачке на левой рукоятке.',sys:SYS.drive,ex:[-120,0,-80]});
 lathe(gSlave,[[0.1,0],[20,0],[22,4],[22,50],[0.1,52]],'-x',[516,520,-92],'satin',24);
@@ -1678,7 +1693,7 @@ async function loadBody(){
     const b=box(p.g,[34,26,22],L(top[0],top[1],k*312),'coil');b.userData.alt=true;
     const lt=box(p.g,[10,6,6],L(top[0],top[1]+15,k*322),'red');lt.userData.alt=true;
     const w=tube(p.g,[L(top[0],top[1]-12,k*312),L(top[0]-6,top[1]-45,k*316),L(bot[0],bot[1],k*314),L(bot[0]-10,bot[1]-25,k*292),L(bot[0]-30,bot[1]-35,k*250)],5,'black',30);w.userData.alt=true;});
-  ['crashbars','rack','camchains'].forEach(id=>{if(P[id]){P[id].g.visible=false;P[id].gone=true;}});
+  ['crashbars','rack'].forEach(id=>{if(P[id]){P[id].g.visible=false;P[id].gone=true;}});
   for(let i=pickables.length-1;i>=0;i--){const q=P[pickables[i].userData.part];if(q&&q.gone)pickables.splice(i,1);}
   /* hand-built parts with no scanned twin stay inside: shown in contours and service steps */
   const KEEP=new Set(['wheelF','wheelR','capR','capL']);
