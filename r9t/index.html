@@ -1206,6 +1206,211 @@ OFFS.wheelF=[-35,0,0];
 ['coil','conn'].forEach(b=>{OFFS[b+'R'][2]-=40;OFFS[b+'L'][2]+=40;});
 OFFS.camsR[2]-=40;OFFS.camsL[2]+=40;OFFS.toolFeelerR=OFFS.toolFeelerR.slice();OFFS.toolFeelerR[2]-=40;
 OFFS.drainplug=ENG.map((v,i)=>v+[0,-72,0][i]);
+/* ===================== ENGINE INTERNALS v2 =====================
+   Built from BMW parts diagrams for K23 (11_3669 crankshaft, 11_2806 conrod, 11_4202 piston, 11_4277 primary chain,
+   11_4216 oil pump / intermediate shaft, 11_4267 cam chains, 11_6541 camshaft, 11_4294 rockers/valves) and fitted to the
+   scanned engine (cylinder axes from the scanned valve covers). World coordinates, mm.
+   Kinematic chain: crankshaft (Z24) -> primary chain -> intermediate shaft (Z48, half speed, drives oil pump)
+   -> two cam chains (Z22/Z22) -> lower camshaft of each head -> spur gears 1:1 -> upper camshaft.
+   Each camshaft: one intake + one exhaust lobe; lobe -> finger rocker (own shaft) -> semi-sphere shim -> valve. */
+const E2=(function(){
+const AX={R:{x:891,s:1},L:{x:943,s:-1}}, CY=454, STROKE=73, CR_R=STROKE/2, ROD=125, CH=30;
+const PITCH=8, VL=10.8, Z_VFACE=193.5, Z_TIP=281.5, Z_PIV=291, RB=14, CAM_Z=309.85, CAM_DY=42, PIV_DY=62, TIP_DY=22;
+const VALVES=[['in',-24,19.5],['ex',25,16.5]]; // kind, dx from bore axis, head radius
+const PK={in:460,ex:270}, WIN=220; // crank degrees: lift peak and duration
+const IY=329, X_PRIM=1035, chX=s=>s>0?961:1013;
+const REBUILT=['crank','pistonR','pistonL','camsR','camsL','camchains','oilpump','balancer'];
+const NEW=[];
+
+/* ---- helpers ---- */
+// 2D outline given in (y,z) coordinates, extruded along X, centred on x=0
+function prismYZ(pts,holes,t){const sh=new THREE.Shape(pts.map(([y,z])=>new THREE.Vector2(-z,y)));
+  (holes||[]).forEach(h=>{const p=new THREE.Path(h.map(([y,z])=>new THREE.Vector2(-z,y)));sh.holes.push(p);});
+  const g=new THREE.ExtrudeGeometry(sh,{depth:t,bevelEnabled:true,bevelThickness:.6,bevelSize:.6,bevelSegments:1,curveSegments:24});
+  g.translate(0,0,-t/2);g.rotateY(Math.PI/2);g.computeVertexNormals();return g;}
+const circ=(cy,cz,r,n,rev)=>{const a=[];n=n||40;for(let i=0;i<n;i++){const t=(rev?-1:1)*i/n*Math.PI*2;a.push([cy+r*Math.cos(t),cz+r*Math.sin(t)]);}return a;};
+function hull(pts){pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];
+  pts.forEach(p=>{while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);});
+  pts.slice().reverse().forEach(p=>{while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);});return lo.slice(0,-1).concat(up.slice(0,-1));}
+// sprocket: Z teeth on pitch radius for an 8 mm chain; optional spokes
+function sprocketGeo(Z,t,spokes){const rp=Z*PITCH/(2*Math.PI),pts=[];const N=Z*12;
+  for(let i=0;i<N;i++){const th=i/N*Math.PI*2,r=rp+0.4-3.2*Math.cos(Z*th);pts.push([r*Math.cos(th),r*Math.sin(th)]);}
+  const holes=[];if(spokes){const ri=rp*0.32,ro=rp-9;for(let k=0;k<spokes;k++){const a0=k/spokes*Math.PI*2+0.32,a1=(k+1)/spokes*Math.PI*2-0.32,h=[];
+      for(let i=0;i<=10;i++){const a=a0+(a1-a0)*i/10;h.push([ro*Math.cos(a),ro*Math.sin(a)]);}for(let i=10;i>=0;i--){const a=a0+(a1-a0)*i/10;h.push([ri*Math.cos(a),ri*Math.sin(a)]);}holes.push(h.reverse());}}
+  holes.push(circ(0,0,spokes?rp*.14:Math.min(9,rp*.3),24,true));
+  return {g:prismYZ(pts,holes,t),rp};}
+function gearGeo2(rp,Z,t){const pts=[],N=Z*10;for(let i=0;i<N;i++){const th=i/N*Math.PI*2,c=Math.cos(Z*th);const r=rp+(c>0?2.2:-2.6)*Math.pow(Math.abs(c),.5);pts.push([r*Math.cos(th),r*Math.sin(th)]);}
+  return prismYZ(pts,[circ(0,0,rp*.35,24,true)],t);}
+function reg(g,id,o){o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}});g.add(o);return o;}
+function M(k,geo,pos){const m=new THREE.Mesh(geo,mat(k,true));if(pos)m.position.set(...pos);return m;}
+
+/* ---- clear the old hand-built internals ---- */
+REBUILT.forEach(id=>{const p=P[id];if(!p)return;delete OFFS[id];
+  for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.part===id)pickables.splice(i,1);
+  while(p.g.children.length)p.g.remove(p.g.children[0]);p.g.position.set(0,0,0);});
+if(P.balancer)P.balancer.g.visible=false;
+/* plug and spark-plug tools sit 28 mm further out: plug tip now in the combustion chamber, not inside the bore */
+['plugR','toolSocketR','toolExtR','toolTorqueR','toolAirR','toolGaugeR','dirtR'].forEach(id=>{if(OFFS[id]){OFFS[id]=OFFS[id].slice();OFFS[id][2]+=28;}});
+if(OFFS.plugL){OFFS.plugL=OFFS.plugL.slice();OFFS.plugL[2]-=28;}
+
+/* ================= crankshaft ================= */
+const gC=P.crank.g,crank=new THREE.Group();crank.position.set(0,CY,0);gC.add(crank);
+P.crank.desc='Коленвал (BMW 11 21 7 702 660): два шатунных шейки развёрнуты на 180°, между ними центральная щека, по краям щёки с противовесами. Сзади фланец на маховик и сухое сцепление, спереди конус со звёздочкой цепи Z24 и шкивом ремня генератора. Ход 73 мм.';
+{const R=AX.R.x,L=AX.L.x,PW=26;const sh=(x0,x1,r,k)=>{const m=M(k||'steel',new THREE.CylinderGeometry(r,r,x1-x0,32).rotateZ(Math.PI/2),[(x0+x1)/2,0,0]);crank.add(m);return m;};
+  sh(662,830,24,'satin');sh(652,664,62,'satin');                      // rear end + flange to clutch housing
+  sh(830,862,28);                                                      // rear main journal
+  const webCW=(x0,x1,pz)=>{const pts=hull(circ(0,0,34,48).concat(circ(0,pz,27,32)).concat(circ(0,0,70,64).filter(([y,z])=>z*Math.sign(pz)<-10)));
+    const m=new THREE.Mesh(prismYZ(pts,null,x1-x0),mat('steel',true));m.position.x=(x0+x1)/2;crank.add(m);};
+  webCW(862,R-PW/2,CR_R);                                              // rear web, counterweight opposite right pin
+  {const pts=hull(circ(0,CR_R,27,32).concat(circ(0,-CR_R,27,32)));const m=new THREE.Mesh(prismYZ(pts,null,(L-PW/2)-(R+PW/2)),mat('steel',true));m.position.x=(R+L)/2;crank.add(m);}
+  webCW(L+PW/2,L+PW/2+16,-CR_R);                                       // front web, counterweight opposite left pin
+  [[R,CR_R],[L,-CR_R]].forEach(([x,z])=>{const m=M('chrome',new THREE.CylinderGeometry(23,23,PW,32).rotateZ(Math.PI/2),[x,0,z]);crank.add(m);});
+  sh(L+PW/2+16,1010,28);                                               // front main journal
+  sh(1010,1110,19,'satin');                                            // tapered nose
+  const sp=sprocketGeo(24,8);crank.add(M('steel',sp.g,[X_PRIM,0,0]));crank.userData.rp=sp.rp;
+  const pul=new THREE.LatheGeometry([[0.1,-8],[42,-8],[44,-5],[42,-3],[44,-1],[42,1],[44,3],[42,5],[44,7],[0.1,8]].map(p=>new THREE.Vector2(p[0],p[1])),40);pul.rotateZ(Math.PI/2);
+  crank.add(M('satin',pul,[1100,0,0]));}
+reg(gC,'crank',crank);
+
+/* ================= pistons + conrods ================= */
+const rodShape=(()=>{const pts=[];const B=34,S=17;
+  for(let i=0;i<=32;i++){const t=Math.PI*0.70+i/32*Math.PI*0.60;pts.push([B*Math.cos(t),B*Math.sin(t)]);}  // cap arc around y<0
+  pts.push([14,-28]);pts.push([ROD-22,-9]);
+  for(let i=0;i<=24;i++){const t=-Math.PI*0.55+i/24*Math.PI*1.10;pts.push([ROD+S*Math.cos(t),S*Math.sin(t)]);}
+  pts.push([ROD-22,9]);pts.push([14,28]);
+  return pts.map(([a,c])=>[a,c]);})();
+const pistons={};
+['R','L'].forEach(k=>{const {x,s}=AX[k];const id='piston'+k,g=P[id].g;
+  P[id].desc='Поршень 101 мм (BMW 11 25), три кольца: два компрессионных и маслосъёмное. На днище четыре выборки под клапаны. Палец вдоль мотоцикла, стопорится кольцами. Шатун 125 мм между осями, нижняя головка разъёмная на двух болтах с вкладышем.';
+  const pg=new THREE.Group();g.add(pg);
+  const prof=[[0.1,CH],[44,CH],[48,CH-1],[50.5,CH-3],[50.5,12],[49.5,11],[49.5,8],[0.1,8]].map(p=>new THREE.Vector2(p[0],p[1]));
+  const crown=new THREE.LatheGeometry(prof,48);crown.rotateX(Math.PI/2);if(s<0)crown.scale(1,1,-1);pg.add(M('alu',crown));
+  [CH-6,CH-10.5,CH-15].forEach((h,i)=>{const r=new THREE.TorusGeometry(50.4,i<2?0.9:1.2,6,48);pg.add(M(i<2?'steel':'satin',r,[0,0,s*h]));});
+  [[0,Math.PI*0.55],[Math.PI,Math.PI*0.55]].forEach(([a0,len])=>{const sk=new THREE.LatheGeometry([[50.2,-22],[50.5,10],[48.5,10],[48.2,-22]].map(p=>new THREE.Vector2(p[0],p[1])),20,a0-len/2,len);sk.rotateX(Math.PI/2);if(s<0)sk.scale(1,1,-1);pg.add(M('alu',sk));});
+  [-1,1].forEach(q=>pg.add(M('alu',new THREE.BoxGeometry(14,30,26),[q*20,0,s*4])));                          // pin bosses
+  pg.add(M('steel',new THREE.CylinderGeometry(11,11,62,20).rotateZ(Math.PI/2)));                               // wrist pin
+  [-31,31].forEach(q=>pg.add(M('black',new THREE.TorusGeometry(9,1,6,20).rotateY(Math.PI/2),[q,0,0])));       // circlips
+  VALVES.forEach(([kind,dx,rv])=>[1,-1].forEach(u=>pg.add(M('case',new THREE.CylinderGeometry(rv+1,rv+1,.8,28).rotateX(Math.PI/2),[dx,u*22,s*(CH+.2)]))));
+  const rod=new THREE.Group();g.add(rod);
+  rod.add(M('satin',prismYZ(rodShape,[circ(0,0,23.5,40,true),circ(ROD,0,11.5,28,true)],22)));
+  [-26,26].forEach(c=>{rod.add(M('steel',new THREE.CylinderGeometry(5.5,5.5,12,6),[0,-30,c]));});         // big-end bolts (heads on the cap)
+  rod.add(M('brass',new THREE.CylinderGeometry(23.5,23.5,20,32,1,true).rotateZ(Math.PI/2)));                   // bearing shell
+  const spark=new THREE.Mesh(new THREE.SphereGeometry(16,14,10),new THREE.MeshBasicMaterial({color:0xffc83d,transparent:true,opacity:0}));
+  spark.position.set(x,CY,s*197);spark.userData.own=true;g.add(spark);
+  [pg,rod].forEach(o=>o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}}));
+  pistons[k]={pg,rod,spark,x,s};});
+
+/* ================= cylinder-head valvetrain ================= */
+const heads={};
+['R','L'].forEach(k=>{const {x:cx,s}=AX[k];const id='cams'+k,g=P[id].g;
+  P[id].desc='Газораспределение по каталогу BMW: два распредвала (вал I и вал II) лежат вдоль мотоцикла, один над другим, каждый открывает один впускной (сзади) и один выпускной (спереди) клапан. На нижнем валу звёздочка цепи и кольцо датчика распредвала, верхний крутится от нижнего через шестерни 1:1, в два раза медленнее коленвала. Кулачок давит на рокер (у каждого клапана свой рокер на своей оси в корпусе распредвалов), рокер через полусферическую шайбу давит на клапан. Зазор меряют щупом между кулачком и рокером. Ход клапана 10,8 мм.';
+  const H={s,cx,cams:[],valves:[]};
+  [1,-1].forEach(u=>{const cg=new THREE.Group();cg.position.set(0,CY+u*CAM_DY,s*CAM_Z);g.add(cg);
+    const xs=chX(s);
+    cg.add(M('steel',new THREE.CylinderGeometry(10,10,xs-(cx-60),20).rotateZ(Math.PI/2),[(xs+cx-60)/2,0,0]));
+    [cx-48,cx,cx+38].forEach(xj=>cg.add(M('chrome',new THREE.CylinderGeometry(12,12,10,24).rotateZ(Math.PI/2),[xj,0,0])));
+    cg.add(M('brass',gearGeo2(CAM_DY,40,8),[xs-18,0,0]));
+    if(u<0){const sp=sprocketGeo(22,7);cg.add(M('steel',sp.g,[xs,0,0]));
+      const rr=prismYZ(circ(0,0,24,40).filter(([y,z])=>y>-4),null,3);cg.add(M('black',rr,[xs+7,0,0]));}  // camshaft sensor reluctor
+    VALVES.forEach(([kind,dx])=>{const pts=[];for(let i=0;i<120;i++){const th=i/120*Math.PI*2;let d=th*180/Math.PI;if(d>180)d-=360;const cd=d;
+        const r=RB+(Math.abs(cd)<WIN/4?(VL/2)*Math.cos(Math.PI*cd/(WIN/2)):0);pts.push([r*Math.cos(th),r*Math.sin(th)]);}
+      const lob=new THREE.Group();lob.position.x=cx+dx;lob.rotation.x=-s*Math.PI/2-u*PK[kind]/2*Math.PI/180;cg.add(lob);
+      lob.add(M('steel',prismYZ(pts,null,12)));});
+    reg(g,id,cg);H.cams.push({g:cg,u});});
+  /* camshaft supporting bracket (carrier): bridges across both shafts */
+  [cx-48,cx+38].forEach(xb=>{const pts=hull(circ(CY+CAM_DY,s*CAM_Z,17,24).concat(circ(CY-CAM_DY,s*CAM_Z,17,24)).concat(circ(CY+PIV_DY,s*Z_PIV,9,16)).concat(circ(CY-PIV_DY,s*Z_PIV,9,16)));
+    const m=new THREE.Mesh(prismYZ(pts,[circ(CY+CAM_DY,s*CAM_Z,12.5,24,true),circ(CY-CAM_DY,s*CAM_Z,12.5,24,true)],8),mat('case',true));m.position.x=xb;reg(g,id,m);});
+  /* valves, springs, shims, rockers */
+  VALVES.forEach(([kind,dx,rv])=>[1,-1].forEach(u=>{const vx=cx+dx,vy=CY+u*TIP_DY;
+    const vg=new THREE.Group();vg.position.set(vx,vy,0);g.add(vg);
+    const vp=[[0.1,0],[rv,0],[rv,1.4],[rv-3,2.6],[3.6,9],[2.75,14],[2.75,Z_TIP-Z_VFACE-1],[2.4,Z_TIP-Z_VFACE]].map(p=>new THREE.Vector2(p[0],p[1]));
+    const vgeo=new THREE.LatheGeometry(vp,28);vgeo.rotateX(Math.PI/2);if(s<0)vgeo.scale(1,1,-1);const vm=M('steel',vgeo,[0,0,s*Z_VFACE]);vg.add(vm);
+    vg.add(M('steel',new THREE.CylinderGeometry(11,8,4,20).rotateX(Math.PI/2),[0,0,s*(Z_TIP-8)]));               // upper spring plate + collets
+    const shim=new THREE.Mesh(new THREE.SphereGeometry(5,16,8,0,Math.PI*2,0,Math.PI/2),mat('brass',true));shim.rotation.x=s*Math.PI/2;shim.position.z=s*Z_TIP;vg.add(shim);
+    const spr=new THREE.Group();spr.position.set(vx,vy,s*238);g.add(spr);
+    {const pts=[];const turns=6.5,L=Z_TIP-8-238;for(let i=0;i<=200;i++){const t=i/200,a=t*turns*Math.PI*2;pts.push(new V3(10.5*Math.cos(a),10.5*Math.sin(a),s*t*L));}
+      const sp=M('spring',new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),220,1.7,6,false));spr.add(sp);spr.userData.L=L;}
+    g.add(M('satin',new THREE.CylinderGeometry(12,12,2,20).rotateX(Math.PI/2),[vx,vy,s*237]));                     // lower spring plate
+    const piv=new THREE.Group();piv.position.set(vx,CY+u*PIV_DY,s*Z_PIV);g.add(piv);
+    const rk=[[7,0],[5.5,4.5],[0,7],[-10,6],[-20,4.6],[-30,4],[-38,2.4],[-43,0],[-44,-3],[-41,-4.6],[-36,-4.4],[-26,-3.4],[-14,-4.5],[-4,-6.8],[4,-5.6]];
+    const rmesh=new THREE.Mesh(prismYZ(rk,[circ(0,0,4.6,20,true)],12),mat('satin',true));rmesh.scale.set(1,u,s);piv.add(rmesh);
+    g.add(M('steel',new THREE.CylinderGeometry(4.4,4.4,22,12).rotateZ(Math.PI/2),[vx,CY+u*PIV_DY,s*Z_PIV]));       // rocker shaft
+    [vg,spr,piv].forEach(o=>o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}}));
+    pickables.push(...g.children.filter(m=>m.isMesh&&!pickables.includes(m)).map(m=>(m.userData.part=id,m)));
+    H.valves.push({kind,u,vg,spr,piv});}));
+  heads[k]=H;});
+
+/* ================= timing chains ================= */
+const gT=P.camchains.g;
+P.camchains.desc='Привод ГРМ спереди мотора под крышкой цепей (BMW 11_4277, 11_4267): звёздочка коленвала Z24 через короткую цепь крутит большую звёздочку Z48 на промежуточном валу под коленвалом, поэтому он вращается в два раза медленнее. От промежуточного вала две цепи идут вверх к головкам и крутят нижние распредвалы (звёздочки Z22 и Z22). На каждой цепи гидравлический натяжитель с подвижным башмаком и неподвижная направляющая. Натягивать вручную ничего не нужно.';
+function beltPath(c1,r1,c2,r2){const dy=c2[0]-c1[0],dz=c2[1]-c1[1],d=Math.hypot(dy,dz),ph=Math.atan2(dz,dy),b=Math.asin((r1-r2)/d);
+  const e=a=>[Math.cos(a),Math.sin(a)],P=(c,r,a)=>[c[0]+r*Math.cos(a),c[1]+r*Math.sin(a)];
+  const a1=ph+Math.PI/2+b,a2=ph-Math.PI/2-b,seg=[];
+  seg.push({t:'L',p:P(c1,r1,a1),q:P(c2,r2,a1)});
+  seg.push({t:'A',c:c2,r:r2,a0:a1,a1:a2});
+  seg.push({t:'L',p:P(c2,r2,a2),q:P(c1,r1,a2)});
+  seg.push({t:'A',c:c1,r:r1,a0:a2,a1:a1-2*Math.PI});
+  seg.forEach(sg=>{sg.len=sg.t==='L'?Math.hypot(sg.q[0]-sg.p[0],sg.q[1]-sg.p[1]):Math.abs(sg.a1-sg.a0)*sg.r;});
+  const len=seg.reduce((a,b)=>a+b.len,0);
+  const at=(s)=>{s=((s%len)+len)%len;for(const sg of seg){if(s<=sg.len){const f=s/sg.len;
+      if(sg.t==='L'){const ty=(sg.q[0]-sg.p[0])/sg.len,tz=(sg.q[1]-sg.p[1])/sg.len;return [sg.p[0]+ty*s,sg.p[1]+tz*s,ty,tz];}
+      const a=sg.a0+(sg.a1-sg.a0)*f;return [sg.c[0]+sg.r*Math.cos(a),sg.c[1]+sg.r*Math.sin(a),Math.sin(a),-Math.cos(a)];}s-=sg.len;}return at(0);};
+  return {len,at,seg,n1:e(a1),n2:e(a2)};}
+const CHAINS=[];
+function chain(x,c1,Z1,c2,Z2,speed,tens){const r1=Z1*PITCH/(2*Math.PI),r2=Z2*PITCH/(2*Math.PI);const bp=beltPath(c1,r1,c2,r2);
+  const n=Math.round(bp.len/PITCH),pitch=bp.len/n;
+  const plate=new THREE.InstancedMesh(new THREE.BoxGeometry(11,5.2,pitch*1.08),mat('steel'),n),roll=new THREE.InstancedMesh(new THREE.CylinderGeometry(2.6,2.6,8,8).rotateZ(Math.PI/2),mat('satin'),n);
+  [plate,roll].forEach(m=>{m.userData.part='camchains';gT.add(m);pickables.push(m);});
+  /* rails along both straight runs: tensioner shoe on run A, guide on run B */
+  [[bp.seg[0],bp.n1,tens],[bp.seg[2],bp.n2,!tens]].forEach(([sg,nrm,isT])=>{const L=sg.len*.78,my=(sg.p[0]+sg.q[0])/2,mz=(sg.p[1]+sg.q[1])/2;
+    const dy=(sg.q[0]-sg.p[0])/sg.len,dz=(sg.q[1]-sg.p[1])/sg.len;
+    const rail=M(isT?'black':'case',new THREE.BoxGeometry(14,7,L),[x,my+nrm[0]*7.5,mz+nrm[1]*7.5]);rail.rotation.x=Math.atan2(-dy,dz);rail.userData.part='camchains';gT.add(rail);pickables.push(rail);
+    if(isT){const tp=M('satin',new THREE.CylinderGeometry(7,7,26,14),[x,my+nrm[0]*27,mz+nrm[1]*27]);tp.quaternion.setFromUnitVectors(new V3(0,1,0),new V3(0,nrm[0],nrm[1]));tp.userData.part='camchains';gT.add(tp);pickables.push(tp);}});
+  const c={x,bp,n,pitch,plate,roll,speed,r1};CHAINS.push(c);return c;}
+/* intermediate shaft (oil-pump shaft with the cam-chain sprockets) */
+const ish=new THREE.Group();ish.position.set(0,IY,0);gT.add(ish);
+{ish.add(M('steel',new THREE.CylinderGeometry(10,10,1045-760,16).rotateZ(Math.PI/2),[(1045+760)/2,0,0]));
+  const big=sprocketGeo(48,6,4);ish.add(M('satin',big.g,[X_PRIM,0,0]));
+  [chX(1),chX(-1)].forEach(xx=>{const s22=sprocketGeo(22,7);ish.add(M('steel',s22.g,[xx,0,0]));});
+  ish.traverse(m=>{if(m.isMesh){m.userData.part='camchains';pickables.push(m);}});}
+const PRIM=chain(X_PRIM,[CY,0],24,[IY,0],48,1,true);
+const CAMCH={R:chain(chX(1),[IY,0],22,[CY-CAM_DY,CAM_Z],22,.5,false),L:chain(chX(-1),[IY,0],22,[CY-CAM_DY,-CAM_Z],22,.5,true)};
+/* oil pump: twin gerotor at the rear end of the intermediate shaft (BMW 11_4216) */
+const gP=P.oilpump.g;P.oilpump.desc='Масляный насос: два героторных насоса (внутренний ротор и наружное кольцо) на заднем конце промежуточного вала, вращаются вдвое медленнее коленвала. Один качает масло под давлением к подшипникам и головкам, второй откачивает. Заборник из поддона снизу.';
+const rotors=[];
+[778,800].forEach((xx,i)=>{const inner=[];for(let j=0;j<160;j++){const th=j/160*Math.PI*2,r=17+3.2*Math.cos(4*th);inner.push([r*Math.cos(th),r*Math.sin(th)]);}
+  const outer=[];for(let j=0;j<160;j++){const th=j/160*Math.PI*2,r=24+3.2*Math.cos(5*th+Math.PI);outer.push([r*Math.cos(th),r*Math.sin(th)]);}
+  const gi=new THREE.Group();gi.position.set(xx,IY,0);gP.add(gi);gi.add(M('chrome',prismYZ(inner,[circ(0,0,6,16,true)],14)));
+  const go=new THREE.Group();go.position.set(xx,IY+2.4,0);gP.add(go);go.add(M('satin',prismYZ(circ(0,0,33,48),[outer.slice().reverse()],14)));
+  rotors.push({gi,go});});
+gP.add(M('case',new THREE.CylinderGeometry(40,40,6,32).rotateZ(Math.PI/2),[766,IY,0]));
+{const pk=new THREE.CatmullRomCurve3([new V3(790,IY-38,0),new V3(800,IY-80,10),new V3(840,IY-118,20),new V3(900,IY-122,20)]);gP.add(M('steel',new THREE.TubeGeometry(pk,30,6,8,false)));}
+gP.traverse(m=>{if(m.isMesh){m.userData.part='oilpump';pickables.push(m);}});
+
+/* ================= kinematics ================= */
+const _o=new THREE.Object3D(),DEG=Math.PI/180;
+function bump(ph,a,b){ph=((ph%720)+720)%720;if(ph<a||ph>b)return 0;return Math.sin(Math.PI*(ph-a)/(b-a));}
+function lift(kind,ph){const pk=PK[kind];return bump(ph,pk-WIN/2,pk+WIN/2)*VL;}
+function setChains(th){CHAINS.forEach(c=>{const off=th*DEG*c.speed*(c===PRIM?c.r1:c.r1*1);
+    for(let i=0;i<c.n;i++){const [y,z,ty,tz]=c.bp.at(i*c.pitch+off*(c===PRIM?1:1));_o.position.set(c.x,y,z);_o.quaternion.setFromUnitVectors(new V3(0,0,1),new V3(0,ty,tz));_o.updateMatrix();
+      c.plate.setMatrixAt(i,_o.matrix);c.roll.setMatrixAt(i,_o.matrix);}
+    c.plate.instanceMatrix.needsUpdate=true;c.roll.instanceMatrix.needsUpdate=true;});}
+function set(theta,fire){crank.rotation.x=-theta*DEG;ish.rotation.x=-theta*DEG/2;
+  rotors.forEach(r=>{r.gi.rotation.x=-theta*DEG/2;r.go.rotation.x=-theta*DEG/2*4/5;});
+  setChains(theta);
+  ['R','L'].forEach(k=>{const p=pistons[k],s=p.s,a=theta*DEG+(k==='L'?Math.PI:0);
+    const py=CR_R*Math.sin(a),pz=CR_R*Math.cos(a),wz=pz+s*Math.sqrt(ROD*ROD-py*py);
+    p.pg.position.set(p.x,CY,wz);p.rod.position.set(p.x,CY+py,pz);
+    const d=new V3(0,-py,wz-pz).normalize();p.rod.quaternion.setFromUnitVectors(new V3(0,1,0),d);
+    const ph=theta+(k==='L'?360:0),H=heads[k];
+    H.cams.forEach(c=>c.g.rotation.x=c.u*ph/2*DEG);
+    H.valves.forEach(v=>{const L=lift(v.kind,ph);v.vg.position.z=-s*L;v.piv.rotation.x=v.u*s*L/(PIV_DY-TIP_DY);v.spr.scale.z=(v.spr.userData.L-L)/v.spr.userData.L;});
+    const q=((ph%720)+720)%720,fl=fire?(q<25?1-q/25:(q>705?1:0)):0;p.spark.material.opacity=fl*.9;p.spark.scale.setScalar(.6+fl*.8);});}
+set(0,false);
+/* feeler gauge target for valve k (right cylinder): gap between cam base circle and rocker pad */
+function gapPoint(i){const [kind,dx]=VALVES[i%2],u=i<2?1:-1;return new V3(AX.R.x+dx,CY+u*CAM_DY,Z_PIV+4.6+0.12);}
+return {set,gapPoint,heads,pistons};})();
+
 Object.values(P).forEach(p=>{p.home.copy(p.g.position);if(OFFS[p.id])p.home.add(new V3(...OFFS[p.id]));
   p.g.traverse(o=>{if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];o.userData.baseOpacity=ms[0].opacity;ms.forEach(q=>q.transparent=true);}});});
 
@@ -1239,8 +1444,8 @@ const VIEWS={
   barR:{p:[1500,1500,950],t:[1050,1050,190],n:'РУЛЬ СПРАВА'},
   resR:{p:[900,900,1250],t:[380,590,165],n:'БАЧОК ЗАДНЕГО ТОРМОЗА'},
   drive:{p:[350,1000,2200],t:[480,400,40],n:'ПРИВОД НА КОЛЕСО'},
-  headOpen:{p:[1180,780,820],t:[770,440,300],n:'ГОЛОВКА ОТКРЫТА'},
-  gapView:{p:[1080,480,480],t:[790,430,292],n:'ЗАЗОР КЛАПАНА'},
+  headOpen:{p:[520,760,800],t:[760,420,290],n:'ГОЛОВКА ОТКРЫТА'},
+  gapView:{p:[470,560,560],t:[640,416,296],n:'ЗАЗОР КЛАПАНА'},
   wheelTurn:{p:[-700,700,1300],t:[200,380,150],n:'ЗАДНЕЕ КОЛЕСО'},
   wellR:{p:[812,476,700],t:[770,430,250],n:'КОЛОДЕЦ СВЕЧИ СПРАВА'},
   wellX:{p:[1300,760,880],t:[770,430,300],n:'КОЛОДЕЦ В РАЗРЕЗЕ'},
@@ -1270,21 +1475,7 @@ function setValvetrain(c,ph){const s=c.s,cr=(ph/2)*Math.PI/180;
   c.cams.forEach(cm=>cm.g.rotation.x=cm.u*cr);
   c.valves.forEach(v=>{const lift=(v.kind==='ex'?bump(ph,160,380):bump(ph,340,580))*10.8;v.g.position.z=-s*lift;v.piv.rotation.x=v.u*s*lift/47;});}
 function updateEngine(){
-  crankRot.rotation.x=-theta*Math.PI/180;updateChains(theta);
-  const r=36.5,L=125;
-  ['R','L'].forEach(k=>{const c=cyls[k],s=c.s;
-    const a=theta*Math.PI/180+(k==='L'?Math.PI:0);
-    const py=r*Math.sin(a), pz=r*Math.cos(a);
-    const pinW=new V3(CR.x+pins[k].x,CR.y+py,pz);
-    const wz=pz+s*Math.sqrt(L*L-py*py);
-    const wrist=new V3(CR.x+pins[k].x,CR.y,wz);
-    c.pg.position.set(wrist.x,wrist.y,wrist.z+s*15);
-    const d=wrist.clone().sub(pinW);c.conrod.position.copy(pinW).add(wrist).multiplyScalar(.5);
-    c.conrod.quaternion.setFromUnitVectors(new V3(0,1,0),d.normalize());
-    const ph=theta+(k==='L'?360:0);
-    setValvetrain(c,ph);
-    const p=((ph%720)+720)%720;const fl=p<25?1-p/25:(p>705?1:0);c.spark.material.opacity=fl*0.9;c.spark.scale.setScalar(.6+fl*.6);
-  });
+  E2.set(theta,true);
   const ratio=gear?RATIOS[gear-1]:0;
   inShaft.rotation.x=theta*Math.PI/180/1.7;
   outShaft.rotation.x=gear?-theta*Math.PI/180/1.7/ratio:0;
@@ -1659,14 +1850,14 @@ function loop(now){FADEDT=Math.min(.5,(now-last)/1000);const dt=Math.min(.05,(no
   controls.autoRotate=tab==='bike'&&autoRot&&!fly;
   if(tab==='engine'&&playing){theta+=dt*360*speed*(RM?0.3:1);}
   updateEngine();
-  if(tab!=='engine'){['R','L'].forEach(k=>{const c=cyls[k];setValvetrain(c,(SVC.cam-Math.PI)*2*180/Math.PI);c.valves.forEach(v=>{v.g.position.z=0;v.piv.rotation.x=0;});c.spark.material.opacity=0;});}
+  if(tab!=='engine'){E2.set((SVC.cam-Math.PI)*2*180/Math.PI,false);}
   if(tab==='engine'&&gear&&playing){wPivot.rotation.z-=dt*2*Math.PI*speed*(RM?0.3:1)/(PRIMARY*RATIOS[gear-1]*FINAL);}
   if(tab==='engine'){const ph=[((theta+360)%720+720)%720,((theta%720)+720)%720];
     for(let i=0;i<4;i++){if(stEls['l'+i]){stEls['l'+i].classList.toggle('on',strokeOf(ph[0])===i);stEls['r'+i].classList.toggle('on',strokeOf(ph[1])===i);}}}
   const stp=(tab==='service'&&curOp)?curOp.steps[curStep]:null,A=stp&&stp.anim;
   SVC.cam=Math.PI;
   if(A==='tdc'){const T=RM?4:now/1000,ph=Math.min(1,(T%5)/3.5);SVC.cam=Math.PI*(0.15+0.85*ph);wPivot.rotation.z=-ph*Math.PI*1.4;}
-  if(A==='feel'){const T=RM?0:now/1000,i=Math.floor(T/2.2)%4,V=[[-50,45],[50,45],[-50,-45],[50,-45]][i];TOOL.feel.position.set(770+V[0],430+V[1],0);feelLbl[0].visible=V[0]<0;feelLbl[1].visible=V[0]>0;}
+  if(A==='feel'){const T=RM?0:now/1000,i=Math.floor(T/2.2)%4,tp=E2.gapPoint(i);TOOL.feel.position.copy(tp).sub(P.toolFeelerR.g.position).sub(new V3(30,0,291.5));feelLbl[0].visible=i%2===0;feelLbl[1].visible=i%2===1;}
   if(A){const T=RM?0:now/1000,ph=(T%4)/4,set=(id,v)=>{P[id].tgt.off=v;P[id].cur.off=v;};
     if(A==='blow'){set('dirtR',ph*1.1);P.dirtR.tgt.op=P.dirtR.cur.op=Math.max(0,1-ph*1.4);}
     if(A==='unscrew'){const o=Math.max(0,ph-.15)/.85*0.3;set('plugR',o);set('toolSocketR',o);TOOL.socket.rotation.z=-ph*Math.PI*8;}
@@ -1730,6 +1921,6 @@ async function loadBody(){
   GLB_OK=true;setTargets();if(window.__onBody)window.__onBody();}
 loadBody();
 requestAnimationFrame(loop);
-window.__r9t={setTab,openOp,P,goView,setStep:(i)=>{curStep=i;renderStep();setTargets();goView(curOp.steps[i].v);},goViewRaw:(V)=>{camera.position.set(...V.p).multiplyScalar(S);controls.target.set(...V.t).multiplyScalar(S);fly=null;}};
+window.THREE=THREE;window.__r9t={setTab,openOp,P,goView,setStep:(i)=>{curStep=i;renderStep();setTargets();goView(curOp.steps[i].v);},goViewRaw:(V)=>{camera.position.set(...V.p).multiplyScalar(S);controls.target.set(...V.t).multiplyScalar(S);fly=null;}};
 })();
 </script>
