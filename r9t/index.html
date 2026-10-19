@@ -906,7 +906,7 @@ const gSA=part('swingarm',{name:'Маятник Paralever и кардан',desc:
 const gShaft=part('driveshaft',{name:'Карданный вал',desc:'Передаёт вращение от коробки на главную передачу. Смазки и регулировки не требует.',sys:'Трансмиссия',layer:'internal',ex:[0,0,0]});
 rod(gShaft,[460,392,100],[60,317,105],15,'steel');
 lathe(gShaft,[[18,0],[24,8],[24,22],[18,30]],'x',[430,388,100],'steel',16);lathe(gShaft,[[18,0],[24,8],[24,22],[18,30]],'x',[90,322,104],'steel',16);
-const gFD=part('finaldrive',{name:'Главная передача (редуктор)',desc:'Конический редуктор в ступице заднего колеса, отношение 2,91. Масло гипоидное SAE 70W-80, замена раз в 2 года.',sys:'Трансмиссия',layer:'drive',ex:[-240,0,220]});
+const gFD=part('finaldrive',{name:'Главная передача (редуктор)',desc:'Корпус редуктора на конце маятника справа (BMW 33 11 8 405 267, с сапуном). Качается на оси маятника, от проворачивания его держит реактивная тяга Paralever. Внутри пара шестерён 11/32 (отношение 2,91), фланец под колесо на 5 болтов. Масло Hypoid Axle Oil G3, замена раз в 2 года. Заливная пробка M12x1,5 с медной шайбой A12x16, сливная M12x1 с кольцом 11,2x1,8.',sys:'Трансмиссия',layer:'drive',ex:[-240,0,220]});
 lathe(gFD,[[0.1,40],[60,40],[92,30],[104,8],[104,-8],[96,-20],[70,-30]],'z',[8,315,120],'case',56);
 lathe(gFD,[[0.1,41],[56,41],[60,44],[0.1,46]],'z',[8,315,120],'brushed',48);
 for(let i=0;i<5;i++){const a=i/5*Math.PI*2;cyl(gFD,6,8,'z',[8+Math.cos(a)*76,315+Math.sin(a)*76,166],'steel',6);}
@@ -1554,6 +1554,75 @@ ub([22,26,20],[230,735,40],W.conn);                                             
 ub([24,8,40],[305,766,80],W.pos);ub([10,12,10],[305,775,80],mk(0xc9c9c9,.3,.9));       // B+ base + terminal
 return {};})();
 
+/* ===================== SHAFT DRIVE + FINAL DRIVE (BMW 33_1651, 33_1622, 33_1626, 33_1627, 33_1226, 33_1873) =====================
+   Gearbox output -> front universal joint (at the swingarm pivot) -> drive shaft with sliding spline (length change as the arm swings)
+   -> rear universal joint (at the final-drive pivot) -> pinion (Z11) in tapered/needle bearings, preload by threaded ring + nut M24x1,5, shims
+   -> hypoid crown gear (Z32, 32/11 = 2,91) on a grooved ball bearing + needle sleeve -> output flange with 5 lugs -> rear wheel.
+   Paralever: final-drive housing pivots on the swingarm end; a torque strut (black rod L=380 mm) links it to the gearbox, so the
+   housing does not rotate with drive/brake torque and the bike does not jack up. */
+const DRV=(function(){
+const DEG=Math.PI/180;
+const M=(k,geo,pos)=>{const m=new THREE.Mesh(geo,mat(k,true));if(pos)m.position.set(...pos);return m;};
+const reg=(g,id,o)=>{o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}});g.add(o);return o;};
+['driveshaft'].forEach(id=>{const p=P[id];if(!p)return;delete OFFS[id];for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.part===id)pickables.splice(i,1);
+  while(p.g.children.length)p.g.remove(p.g.children[0]);p.g.position.set(0,0,0);});
+const FJ=new V3(455,369,58), RJ=new V3(168,318,128), PIN=new V3(84,312,138), AX=new V3(0,315,0);
+function gpart(id,name,desc){const g=new THREE.Group();g.name=id;root.add(g);P[id]={id,g,name,desc,sys:'Трансмиссия',layer:'drive',ex:new V3(0,0,0),cur:{off:0,op:1,hl:0},tgt:{off:0,op:1,hl:0},ops:['fd'],home:new V3()};return g;}
+/* universal joint: two yokes + cross */
+function ujoint(){const g=new THREE.Group();
+  [[-1,0],[1,Math.PI/2]].forEach(([s,rot])=>{const y=new THREE.Group();y.rotation.x=rot;g.add(y);
+    y.add(M('steel',new THREE.CylinderGeometry(15,15,14,20).rotateZ(Math.PI/2),[s*20,0,0]));
+    [-1,1].forEach(q=>y.add(M('steel',new THREE.BoxGeometry(18,6,10),[s*9,q*14,0])));});
+  g.add(M('chrome',new THREE.CylinderGeometry(4.5,4.5,30,10),[0,0,0]));g.add(M('chrome',new THREE.CylinderGeometry(4.5,4.5,30,10).rotateX(Math.PI/2),[0,0,0]));
+  return g;}
+function along(a,b){const g=new THREE.Group();g.position.copy(a);g.quaternion.setFromUnitVectors(new V3(1,0,0),b.clone().sub(a).normalize());return g;}
+/* ---- drive shaft ---- */
+const gS=P.driveshaft.g;P.driveshaft.layer='drive';
+P.driveshaft.name='Карданный вал';
+P.driveshaft.desc='BMW 33 73 9 898 679, внутри правой трубы маятника. Два карданных шарнира: передний стоит на оси качания маятника у коробки, задний на оси качания редуктора. Между ними шлицевое скользящее соединение (толстая труба и тонкий вал), оно меняет длину, когда маятник ходит вверх-вниз. На концах шлицы со стопорными кольцами 22x2,5. Шлицы при сборке смазывают Klüber LFT 71-402. Отдельно не обслуживается, но если стучит или есть люфт в шарнирах, это в сервис.';
+const spin=along(FJ,RJ),L=FJ.distanceTo(RJ);gS.add(spin);
+const rot=new THREE.Group();spin.add(rot);
+rot.add(ujoint());
+rot.add(M('steel',new THREE.CylinderGeometry(18,18,L*.55,24).rotateZ(Math.PI/2),[L*.3,0,0]));      // outer tube
+rot.add(M('satin',new THREE.CylinderGeometry(11,11,L*.42,20).rotateZ(Math.PI/2),[L*.7,0,0]));       // inner sliding shaft
+{const j=ujoint();j.position.x=L;rot.add(j);}
+reg(gS,'driveshaft',spin);
+/* gearbox output stub to the front joint */
+{const o=along(new V3(470,369,58),FJ);o.add(M('steel',new THREE.CylinderGeometry(12,12,15,16).rotateZ(Math.PI/2),[7,0,0]));reg(gS,'driveshaft',o);}
+/* ---- final drive internals ---- */
+const gF=gpart('fdgear','Шестерни главной передачи','Внутри корпуса редуктора (BMW 33_1622, 33_1626, 33_1627): ведущая шестерня (пинион, 11 зубьев) приходит от заднего шарнира кардана и сидит в двух подшипниках: большом коническом роликовом и игольчатом 32x16. Её поджимает резьбовое кольцо и гайка M24x1,5, а положение в корпусе задают шайбы 1,50-2,50 мм. Пинион крутит гипоидную ведомую шестерню (32 зуба, 32 : 11 = 2,91), она сидит на большом шариковом подшипнике и игольчатой втулке. Ведомая шестерня отдаёт вращение фланцу с пятью приливами, на него пятью болтами крепится колесо (60 Нм, крест-накрест). Зазор в зацеплении задают регулировочные шайбы 0,70-1,25 мм. Масло: Hypoid Axle Oil G3, заливная пробка M12x1,5 с медной шайбой, сливная M12x1 с кольцом. Датчик скорости колеса ABS стоит в корпусе. Сапун наверху выпускает воздух при нагреве.');
+// pinion: shaft along X from the rear joint to the crown
+const pin=along(RJ,PIN);gF.add(pin);const pinR=new THREE.Group();pin.add(pinR);const PL=RJ.distanceTo(PIN);
+pinR.add(M('steel',new THREE.CylinderGeometry(10,10,PL,16).rotateZ(Math.PI/2),[PL/2,0,0]));
+{const t=[];const Z=11;for(let i=0;i<=Z*8;i++){}                                                            // spiral bevel pinion (cone)
+  const pg=new THREE.CylinderGeometry(15,26,30,Z*2,1);pg.rotateZ(Math.PI/2);
+  const pa=pg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i),z=pa.getZ(i),a=Math.atan2(z,y),r=Math.hypot(y,z);const k=1+0.09*Math.sign(Math.cos(Z*a+pa.getX(i)*0.06));pa.setY(i,y*k);pa.setZ(i,z*k);}
+  pg.computeVertexNormals();pinR.add(M('steel',pg,[PL-14,0,0]));}
+pinR.add(M('satin',new THREE.CylinderGeometry(24,24,22,24).rotateZ(Math.PI/2),[PL-50,0,0]));                // taper roller bearing
+pinR.add(M('satin',new THREE.CylinderGeometry(14,14,12,20).rotateZ(Math.PI/2),[PL+4,0,0]));                 // needle bearing 32x16
+pinR.add(M('steel',new THREE.CylinderGeometry(15,15,10,6).rotateZ(Math.PI/2),[PL-72,0,0]));                 // nut M24x1,5
+reg(gF,'fdgear',pin);
+// crown gear on the wheel axis (Z), teeth facing the pinion
+const crown=new THREE.Group();crown.position.set(AX.x,AX.y,0);gF.add(crown);
+{const Z=32,pts=[];for(let i=0;i<96;i++){const t=i/96*Math.PI*2;pts.push(new THREE.Vector2(72*Math.cos(t),72*Math.sin(t)));}
+  for(let i=0;i<Z;i++){const t=i/Z*Math.PI*2,tb=new THREE.Mesh(new THREE.BoxGeometry(22,6,7),mat('steel',true));tb.position.set(61*Math.cos(t),61*Math.sin(t),139);tb.rotation.z=t+0.35;crown.add(tb);}
+  const sh=new THREE.Shape(pts);const h=new THREE.Path();h.absarc(0,0,36,0,Math.PI*2,true);sh.holes.push(h);
+  const g=new THREE.ExtrudeGeometry(sh,{depth:16,bevelEnabled:true,bevelThickness:2,bevelSize:2,bevelSegments:1});g.translate(0,0,150-8);crown.add(M('steel',g));
+  const hub=new THREE.CylinderGeometry(36,36,62,32).rotateX(Math.PI/2);crown.add(M('satin',hub,[0,0,118]));
+  crown.add(M('chrome',new THREE.TorusGeometry(46,7,10,40),[0,0,132]));                                   // grooved ball bearing
+  // output flange with 5 lugs + wheel bolts
+  const f=new THREE.Shape();const lugs=5;for(let i=0;i<lugs*20;i++){const t=i/(lugs*20)*Math.PI*2,r=52+16*Math.max(0,Math.cos(lugs*t))**3;i?f.lineTo(r*Math.cos(t),r*Math.sin(t)):f.moveTo(r*Math.cos(t),r*Math.sin(t));}
+  const fh=new THREE.Path();fh.absarc(0,0,26,0,Math.PI*2,true);f.holes.push(fh);
+  const fg=new THREE.ExtrudeGeometry(f,{depth:10,bevelEnabled:false});fg.translate(0,0,82);crown.add(M('satin',fg));
+  for(let i=0;i<lugs;i++){const t=i/lugs*Math.PI*2;crown.add(M('chrome',new THREE.CylinderGeometry(7,7,22,6).rotateX(Math.PI/2),[60*Math.cos(t),60*Math.sin(t),80]));}}
+reg(gF,'fdgear',crown);
+/* ---- Paralever torque strut (black rod L=380, rubber mounting at the final drive) ---- */
+const gR=gpart('strut','Реактивная тяга Paralever','BMW 33 17 7 685 093, чёрная тяга 380 мм под маятником. Передний конец крепится к коробке болтом M10x55, задний к корпусу редуктора болтом M10x60 через резиновую опору. Вместе с маятником и шарниром редуктора образует параллелограмм: при газе и торможении корпус редуктора не проворачивается, и мотоцикл не приседает и не подпрыгивает на кардане.');
+{const a=new V3(430,262,112),b=new V3(56,250,112);const o=along(a,b),Ls=a.distanceTo(b);o.add(M('black',new THREE.CylinderGeometry(9,9,Ls-40,16).rotateZ(Math.PI/2),[Ls/2,0,0]));
+  [0,Ls].forEach(x=>o.add(M('rubber',new THREE.CylinderGeometry(17,17,26,20).rotateX(Math.PI/2),[x,0,0])));reg(gR,'strut',o);}
+function set(w){crown.rotation.z=w;rot.rotation.x=-w*2.909;pinR.rotation.x=-w*2.909;}
+return {set};})();
+
 Object.values(P).forEach(p=>{p.home.copy(p.g.position);if(OFFS[p.id])p.home.add(new V3(...OFFS[p.id]));
   p.g.traverse(o=>{if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];o.userData.baseOpacity=ms[0].opacity;ms.forEach(q=>q.transparent=true);}});});
 
@@ -1729,11 +1798,12 @@ const OPS=[
   ]},
  {id:'fd',t:'Масло в главной передаче',when:'Раз в 2 года или каждые 20 000 км',diff:2,time:'30 мин',
   keys:'кардан редуктор главная передача задний мост гипоид масло сзади гул шум',
-  need:['Гипоидное масло SAE 70W-80 (рекомендация BMW) или 75W-90 GL-5','Шприц или бутылка с трубкой','2 новых уплотнительных кольца пробок','Динамометрический ключ (20 Нм)'],
+  need:['Hypoid Axle Oil G3 (по каталогу BMW, 83 22 2 460 128, 0,5 л)','Шприц или бутылка с трубкой','2 новых уплотнительных кольца пробок','Динамометрический ключ (20 Нм)'],
   flags:['Объём около 0,18 л взят из данных для R nineT; заливай до нижнего края заливного отверстия, это надёжнее цифры'],
-  keep:['finaldrive','fdfill','fddrain','swingarm','wheelR','brakeR'],
+  keep:['finaldrive','fdfill','fddrain','swingarm','wheelR','brakeR','fdgear','driveshaft','strut'],
   steps:[
    {h:'Прокатись 10 минут',v:'drive',f:['finaldrive'],x:'Тёплое масло сливается лучше. Мотоцикл потом ставь вертикально.'},
+   {h:'Как устроен привод',v:'fd',xray:true,f:['fdgear','driveshaft','strut'],x:'Коробка крутит карданный вал внутри правой трубы маятника. У вала два карданных шарнира и шлицевое соединение, оно меняет длину, когда маятник ходит. Задний шарнир крутит пинион (11 зубьев), пинион крутит большую гипоидную шестерню (32 зуба), она через фланец с пятью болтами крутит колесо. Масло, которое ты меняешь, смазывает именно эту пару шестерён и её подшипники. Снизу реактивная тяга держит корпус от проворачивания.'},
    {h:'Найди редуктор',v:'fd',f:['finaldrive'],x:'Редуктор в ступице заднего колеса, справа, на конце маятника. Подложи поддон.'},
    {h:'Открути заливную пробку',v:'fd',f:['fdfill'],off:['fdfill'],x:'Сначала заливную, сверху. Если не откручивается, сливную не трогай: иначе останешься со слитым редуктором и без возможности залить.',facts:[['Резьба','M12x1,5']]},
    {h:'Открути сливную, слей',v:'fd',f:['fddrain'],off:['fdfill','fddrain'],x:'Сливная пробка внизу корпуса. Посмотри на магнит или на слитое масло: мелкая серая взвесь нормальна, крупная стружка = к мастеру.'},
@@ -1950,7 +2020,7 @@ function setTargets(){altCoils();
       if(seatOff){if(p.id==='seat')t.op=0;if(USEAT.has(p.id))t.op=Math.max(t.op,p.id==='harness'?0.9:1);}
       if(activeSys){const C=CONTOURS.find(c=>c.id===activeSys);const inC=C.parts.indexOf(p.id)>=0;t.op=(p.layer==='tool'||p.layer==='fx')?0:(inC?(SHELL.indexOf(p.id)>=0?0.32:1):0.07);t.off=0;}}
     else if(tab==='engine'){
-      if(p.layer==='bike'||p.wasBike||p.layer==='tool'||p.layer==='fx'||p.id==='airfilter'||p.id==='belt'){t.op=0;if(p.id==='wheelR')t.op=1;}
+      if(p.layer==='bike'||p.wasBike||p.layer==='tool'||p.layer==='fx'||p.id==='airfilter'||p.id==='belt'||p.id==='harness'||p.id==='underseat'){t.op=0;if(p.id==='wheelR')t.op=1;}
       if(cutaway&&/^(head|cover|cyl)[LR]$|^crankcase$|^gearbox$|^swingarm$|^finaldrive$|^beltcover$|^throttle$/.test(p.id))t.op=0.16;
       if(/^(coil)[LR]$/.test(p.id)&&cutaway)t.op=0.3;
     }
@@ -1964,6 +2034,7 @@ function setTargets(){altCoils();
         if(ghost&&!keep)t.op=0.1;
         if(p.id==='loom'&&ghost&&!keep)t.op=0.05;
         if(s.xray&&(/^(head|cover|cyl)R$/.test(p.id)||p.id==='crankcase'||p.id==='throttle'))t.op=0.2;
+        if(s.xray&&s.f.indexOf('fdgear')>=0&&/^(finaldrive|swingarm|wheelR|brakeR|fdfill|fddrain)$/.test(p.id))t.op=0.2;
         if(/^(head|cyl)[LR]$/.test(p.id)&&(s.off||[]).indexOf('cover'+p.id.slice(-1))>=0)t.op=Math.min(t.op,0.35);
         if(/^cams/.test(p.id))t.op=(s.off||[]).indexOf('cover'+p.id.slice(-1))>=0?1:0;
         const offs=(s.off||[]).concat((s.off||[]).filter(x=>/^coil[LR]$/.test(x)).map(x=>'conn'+x.slice(-1)));
@@ -2022,6 +2093,7 @@ function loop(now){FADEDT=Math.min(.5,(now-last)/1000);const dt=Math.min(.05,(no
   updateEngine();
   if(tab!=='engine'){E2.set((SVC.cam-Math.PI)*2*180/Math.PI,false);}
   if(tab==='engine'&&gear&&playing&&CLU.amt<0.5){wPivot.rotation.z-=dt*2*Math.PI*speed*(RM?0.3:1)/(PRIMARY*RATIOS[gear-1]*FINAL);}
+  DRV.set(wPivot.rotation.z);
   if(tab==='engine'){const ph=[((theta+360)%720+720)%720,((theta%720)+720)%720];
     for(let i=0;i<4;i++){if(stEls['l'+i]){stEls['l'+i].classList.toggle('on',strokeOf(ph[0])===i);stEls['r'+i].classList.toggle('on',strokeOf(ph[1])===i);}}}
   const stp=(tab==='service'&&curOp)?curOp.steps[curStep]:null,A=stp&&stp.anim;
