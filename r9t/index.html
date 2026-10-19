@@ -30,8 +30,9 @@ header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10p
 .brand{display:flex;flex-direction:column;line-height:1.1;margin-right:auto;min-width:0}
 .brand b{font:700 16px/1.1 var(--f-disp);letter-spacing:.02em}
 .brand span{font:12px var(--f-mono);color:var(--muted)}
-.tabs{display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:10px}
-.tab{border:0;background:transparent;padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+.tabs{display:flex;gap:2px;background:var(--sunk);padding:4px;border-radius:10px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.plist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px;padding:0;list-style:none}.plist .chipbtn[aria-pressed="true"]{background:var(--hazard);color:var(--hazard-ink);border-color:var(--hazard)}
+.tab{border:0;background:transparent;padding:8px 11px;white-space:nowrap;border-radius:7px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
 .tab[aria-selected="true"]{background:var(--hazard);color:var(--hazard-ink)}
 .tab:hover:not([aria-selected="true"]){color:var(--ink)}
 
@@ -153,8 +154,11 @@ table.cat small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px
   <nav class="tabs" role="tablist" aria-label="Разделы">
     <button class="tab" role="tab" id="t-bike" aria-selected="true">Мотоцикл</button>
     <button class="tab" role="tab" id="t-engine" aria-selected="false">Двигатель</button>
-    <button class="tab" role="tab" id="t-service" aria-selected="false">Обслуживание</button>
+    <button class="tab" role="tab" id="t-drive" aria-selected="false">Привод</button>
+    <button class="tab" role="tab" id="t-brakes" aria-selected="false">Тормоза</button>
+    <button class="tab" role="tab" id="t-elec" aria-selected="false">Электрика</button>
     <button class="tab" role="tab" id="t-dash" aria-selected="false">Приборка</button>
+    <button class="tab" role="tab" id="t-service" aria-selected="false">Обслуживание</button>
     <button class="tab" role="tab" id="t-cat" aria-selected="false">Каталог</button>
   </nav>
   <button class="chipbtn mus" id="music" aria-pressed="false" title="Включить или выключить музыку"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>Музыка</span></button>
@@ -773,7 +777,7 @@ for(let i=0;i<18;i++)box(gOC,[36,2,118],[1100,560+i*9.5,-70],'satin');
 
 
 /* --- engine (black coating, brushed alu covers) --- */
-const gCase=part('crankcase',{name:'Картер двигателя',desc:'Оппозитный двухцилиндровый «боксер» 1170 см³, 101 на 73 мм, сжатие 12:1. Внизу сливная пробка, спереди масляный фильтр, слева окошко уровня масла.',sys:'Двигатель',layer:'drive',ex:[0,-160,0]});
+const gCase=part('crankcase',{name:'Картер двигателя',desc:'Оппозитный двухцилиндровый «боксер» 1170 см³, 101 на 73 мм, сжатие 12:1. Внизу сливная пробка, снизу спереди масляный фильтр, слева окошко уровня масла.',sys:'Двигатель',layer:'drive',ex:[0,-160,0]});
 slab(gCase,smooth([[640,300],[700,268],[860,262],[930,300],[950,380],[948,520],[905,572],[760,580],[650,560],[628,470]],80),246,18,'case',[0,0,0]);
 lathe(gCase,[[0.1,-125],[108,-125],[122,-112],[124,0],[122,112],[108,125],[0.1,125]],'x',[778,452,0],'case',56);
 for(let i=0;i<6;i++)box(gCase,[300-i*20,5,250],[795,270+i*12,0],'fin');
@@ -927,8 +931,9 @@ const gSh=part('shock',{name:'Задний амортизатор',desc:'Цен�
   cyl(gSh,14,28,'z',A,'alu',16);cyl(gSh,14,28,'z',B,'alu',16);})();
 
 /* oil service points */
-const gF1=part('oilfilter',{name:'Масляный фильтр',desc:'Спереди внизу картера, за передней крышкой: чтобы до него добраться, снимают переднюю крышку. BMW/Mahle 11 42 7 673 541 или Hiflofiltro HF164. Момент 11 Нм, кольцо смазать маслом.',sys:'Смазка',layer:'drive',ex:[360,-60,0]});
-lathe(gF1,[[30,0],[38,4],[38,64],[34,70],[0.1,72]],'x',[880,300,0],'satin',36);
+const gF1=part('oilfilter',{name:'Масляный фильтр',desc:'Снизу спереди картера: по схеме BMW 11_4215 вкручивается вертикально снизу, рядом со сливной пробкой. Сам фильтр сидит под цепью привода промежуточного вала и её не касается. BMW/Mahle 11 42 7 673 541 или Hiflofiltro HF164. Момент 11 Нм, кольцо смазать маслом.',sys:'Смазка',layer:'drive',ex:[0,-260,0]});
+/* BMW 11_4215: the filter screws in vertically from below at the front of the crankcase, under the primary chain */
+lathe(gF1,[[0.1,0],[30,1],[36,5],[36,56],[31,60]],'y',[895,167,0],'satin',36);
 const gDr=part('drainplug',{name:'Сливная пробка масла',desc:'Внизу картера. Резьба M16x1,5, момент 32 Нм, новое уплотнительное кольцо.',sys:'Смазка',layer:'drive',ex:[0,-260,0]});
 cyl(gDr,13,14,'y',[800,226,0],'steel',6);cyl(gDr,15,2,'y',[800,234,0],'copper',24);
 const gSG=part('sightglass',{name:'Окошко уровня масла',desc:'Слева внизу картера. Уровень между MIN и MAX на прогретом двигателе, мотоцикл ровно, через 5 минут после остановки.',sys:'Смазка',layer:'drive',ex:[0,0,-260]});
@@ -1659,8 +1664,9 @@ Object.values(P).forEach(p=>{p.home.copy(p.g.position);if(OFFS[p.id])p.home.add(
 const HL=new THREE.Color(0xf2b705);
 function applyPartState(p,dt){
   const c=p.cur,t=p.tgt,k=Math.min(1,FADEDT*(RM?60:6));
-  c.off+=(t.off-c.off)*k;c.op+=(t.op-c.op)*k;c.hl+=(t.hl-c.hl)*k;
-  p.g.position.copy(p.home).addScaledVector(p.ex,c.off);
+  c.off+=(t.off-c.off)*k;c.op+=(t.op-c.op)*k;c.hl+=(t.hl-c.hl)*k;c.sub=(c.sub||0)+((t.sub||0)-(c.sub||0))*k;
+  if(!p.exNow)p.exNow=p.ex.clone();p.exNow.lerp(t.exT||p.ex,k);
+  p.g.position.copy(p.home).addScaledVector(p.exNow,c.off);applySub(p);
   const pulse=c.hl>0.01?(0.55+0.45*Math.sin(performance.now()/220)):0;
   p.g.visible=c.op>0.02;
   p.g.traverse(o=>{if(!o.material||o.userData.own)return;const ms=Array.isArray(o.material)?o.material:[o.material];
@@ -1675,7 +1681,7 @@ const VIEWS={
   rightSide:{p:[1000,650,1800],t:[770,420,150],n:'ДВИГАТЕЛЬ СПРАВА'},
   leftLow:{p:[800,450,-1600],t:[760,350,-100],n:'ДВИГАТЕЛЬ СЛЕВА'},
   sump:{p:[1600,200,1050],t:[830,280,0],n:'КАРТЕР СНИЗУ'},
-  filter:{p:[1850,420,650],t:[950,300,0],n:'МАСЛЯНЫЙ ФИЛЬТР'},
+  filter:{p:[1650,40,620],t:[1030,250,0],n:'МАСЛЯНЫЙ ФИЛЬТР'},
   headR:{p:[1350,850,1450],t:[770,430,330],n:'ГОЛОВКА СПРАВА'},
   headRclose:{p:[1150,700,1100],t:[770,430,300],n:'ГОЛОВКА СПРАВА, БЛИЗКО'},
   headL:{p:[1350,850,-1450],t:[770,430,-330],n:'ГОЛОВКА СЛЕВА'},
@@ -1703,13 +1709,15 @@ const VIEWS={
 };
 ['engine','rightSide','leftLow','sump','filter','headR','headRclose','headL','headOpen','gapView','wellR','wellX','plugOut','gap','torque','coilsBoth','headersFront'].forEach(k=>{const V=VIEWS[k];V.p=V.p.map((v,i)=>v+ENG[i]);V.t=V.t.map((v,i)=>v+ENG[i]);});
 let fly=null;
+function dolly(r){if(Math.abs(r-1)<1e-4)return;const t=fly?fly.t:controls.target,q=fly?fly.p:camera.position;q.sub(t).multiplyScalar(r).add(t);}
 function goView(v,instant){const V=VIEWS[v];if(!V)return;document.getElementById('tag3d').textContent='ВИД: '+V.n;
   const p=new V3(...V.p).multiplyScalar(S),t=new V3(...V.t).multiplyScalar(S);
+  if(explode>0&&(tab==='bike'||tab==='cat'||SYSDEF[tab]))p.sub(t).multiplyScalar(1+0.9*explode).add(t);
   if(instant||RM){camera.position.copy(p);controls.target.copy(t);fly=null;return;}
   fly={p0:camera.position.clone(),t0:controls.target.clone(),p,t,s:performance.now(),d:900};}
 
 /* ---------- engine animation state ---------- */
-let theta=0, speed=1, playing=true, gear=0, cutaway=false;
+let theta=0, speed=1, playing=true, gear=0, cutaway=false, xray=false, cutPlane=false;
 function bump(ph,a,b){ph=((ph%720)+720)%720;if(ph<a||ph>b)return 0;return Math.sin(Math.PI*(ph-a)/(b-a));}
 const STROKES=['Рабочий ход','Выпуск','Впуск','Сжатие'];
 function strokeOf(ph){ph=((ph%720)+720)%720;return Math.floor(ph/180);}
@@ -1731,6 +1739,52 @@ let wheelSpin=0;
 const wR=P.wheelR.g;const wPivot=new THREE.Group();wPivot.position.set(0,315,0);root.add(wPivot);
 while(wR.children.length){const c=wR.children[0];c.position.y-=315;wPivot.add(c);}wR.add(wPivot);root.remove(wPivot);wR.add(wPivot);
 const stEls={};
+/* ===== Узлы: что входит в каждый, разлёт на детали, разрез ===== */
+const SYSDEF={
+ engine:{n:'Двигатель',dir:[1,.5,.95],ids:['crankcase','beltcover','throttle','cylL','cylR','headL','headR','coverL','coverR','capL','capR','coilL','coilR','connL','connR','plugL','plugR','camsL','camsR','pistonL','pistonR','crank','camchains','balancer','oilpump','oilfilter','drainplug','sightglass','filler','alternator','belt','starter','sensors','clutch','breather'],ctx:[],always:[]},
+ drive:{n:'Привод',dir:[.25,.4,1],ids:['clutch','clutchSlave','gearbox','gears','shiftLink','driveshaft','pivots','swingarm','strut','finaldrive','fdgear','fdfill','fddrain','wheelR'],ctx:[],always:[]},
+ brakes:{n:'Тормоза',dir:[.75,.55,1],ids:['brakeF','brakeR','resF','resR','abs','brakeLines','rearMaster','wheelSensors'],ctx:['wheelF','wheelR','fork','bars','frame'],always:['resR']},
+ elec:{n:'Электрика',dir:[-.55,.75,-1],ids:['harness','underseat','battery','ecu','relays','diag','powerCables','regulator','alternator','starter','coilL','coilR','connL','connR','plugL','plugR','sensors','lambda','flap','abs','wheelSensors','instrument','light','horn','tail','standSwitch','fuelPump','iat','loom'],
+   ctx:['frame','tank','seat','crankcase','cylL','cylR','headL','headR','coverL','coverR','gearbox','bars','fork','wheelF','wheelR'],open:true}};
+Object.values(SYSDEF).forEach(S=>{S.set=new Set(S.ids);S.ctxSet=new Set(S.ctx);S.always=S.always||[];});
+const SUBK=0.7;                               /* how far the pieces inside one part fly apart, relative to their distance from the part centre */
+/* every procedural part: put each child into its own wrapper, so the wrapper can move the child away without touching its animation */
+function objBox(o){const b=new THREE.Box3();o.updateMatrixWorld(true);
+  o.traverse(m=>{if(!(m.isMesh||m.isLine)||!m.geometry)return;if(!m.geometry.boundingBox)m.geometry.computeBoundingBox();const gb=m.geometry.boundingBox;
+    if(m.isInstancedMesh){const q=new THREE.Matrix4(),w=new THREE.Matrix4();for(let i=0;i<m.count;i++){m.getMatrixAt(i,q);w.multiplyMatrices(m.matrixWorld,q);b.union(gb.clone().applyMatrix4(w));}}
+    else b.union(gb.clone().applyMatrix4(m.matrixWorld));});return b;}
+function wrapPart(p){const out=[];
+  const rec=g=>{const items=g.children.filter(c=>c.isMesh||c.isLine||c.isGroup||c.type==='Object3D');
+    const cs=items.map(c=>{const b=objBox(c);return b.isEmpty()?null:g.worldToLocal(b.getCenter(new V3()));});
+    const ok=cs.filter(Boolean);
+    if(ok.length>=2){const gc=new THREE.Box3().setFromPoints(ok).getCenter(new V3());
+      items.forEach((c,i)=>{if(!cs[i])return;const W=new THREE.Group();W.userData.exw=true;const k=g.children.indexOf(c);g.children.splice(k,1,W);W.parent=g;c.parent=W;W.children.push(c);
+        W.userData.dir=cs[i].clone().sub(gc);out.push(W);});}
+    items.forEach(c=>{if(!c.isMesh&&!c.isLine)rec(c);});};
+  rec(p.g);p.wraps=out;}
+root.updateMatrixWorld(true);
+Object.values(P).forEach(p=>{if(p.layer==='tool'||p.layer==='fx')return;wrapPart(p);});
+function applySub(p){const s=p.cur.sub||0;if(Math.abs(s-(p._ls||0))<1e-4)return;p._ls=s;
+  if(p.wraps)p.wraps.forEach(W=>W.position.copy(W.userData.dir).multiplyScalar(SUBK*s));
+  if(p.scanU)p.scanU.forEach(u=>u.value=SUBK*s);}
+/* part boxes at home position (mm), system centres, automatic explode directions and camera views */
+const SYSC={};
+function partBox(p){const b=new THREE.Box3();p.g.updateMatrixWorld(true);
+  p.g.traverse(o=>{if(!(o.isMesh||o.isLine)||o.userData.dead)return;if(p.scan&&!o.userData.scan)return;b.union(objBox(o));});
+  if(b.isEmpty())return null;b.min.divideScalar(S);b.max.divideScalar(S);b.translate(p.home.clone().sub(p.g.position));return b;}
+function computeSys(){const all=new THREE.Box3(),boxes={};
+  Object.values(P).forEach(p=>{if(p.gone||p.layer==='tool'||p.layer==='fx')return;const b=partBox(p);if(b){boxes[p.id]=b;if(p.layer!=='internal'||p.wasBike)all.union(b);}});
+  const scopes=Object.assign({bike:{ids:Object.keys(boxes),dir:[1,.45,1],n:'Общий'}},SYSDEF);
+  Object.entries(scopes).forEach(([k,Sd])=>{const u=new THREE.Box3();Sd.ids.forEach(id=>{if(boxes[id])u.union(boxes[id]);});if(u.isEmpty())return;
+    const c=u.getCenter(new V3()),r=u.getSize(new V3()).length()/2;SYSC[k]=c;
+    Sd.ids.forEach(id=>{const p=P[id],b=boxes[id];if(!p||!b)return;const v=b.getCenter(new V3()).sub(c);let n=v.length()>1?v.clone().normalize():new V3(0,1,0);
+      const shell=!!p.scan;p.sysEx=p.sysEx||{};p.sysEx[k]=v.clone().multiplyScalar(shell?1.1:0.5).addScaledVector(n,shell?110:45);});
+    if(k!=='bike'){const d=new V3(...Sd.dir).normalize();VIEWS['sys_'+k]={p:c.clone().addScaledVector(d,Math.max(700,r*2.7)).toArray(),t:c.toArray(),n:Sd.n.toUpperCase()};}});}
+computeSys();
+const CLIP=new THREE.Plane(new V3(1,0,0),0);renderer.localClippingEnabled=true;
+function setClip(p,on){if(!!p._clip===on)return;p._clip=on;p.g.traverse(o=>{if(!o.isMesh||!o.userData.scan)return;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.clippingPlanes=on?[CLIP]:null;m.needsUpdate=true;});});}
+function updateClip(){if(!cutPlane)return;const c=controls.target.clone();
+  const n=c.clone().sub(camera.position);n.y*=0.25;n.normalize();CLIP.normal.copy(n);CLIP.constant=-n.dot(c);}
 
 /* ---------- SERVICE DATA ---------- */
 const OPS=[
@@ -1754,7 +1808,7 @@ const OPS=[
    {h:'Мотоцикл ровно, поддон под двигатель',v:'sump',f:['crankcase'],x:'Центральной подножки у Scrambler нет. Лучше всего задний подкат под ось колеса, или держи вертикально с помощником.'},
    {h:'Открой заливную пробку',v:'filler',f:['filler'],off:['filler'],x:'Чёрная круглая пробка сверху на правой крышке клапанов. Очисти вокруг, вставь биту из бортового набора крестом вперёд в рукоятку отвёртки, поставь на замок пробки, поверни против часовой и сними. Открываешь до слива: масло уйдёт быстрее и без бульканья.',facts:[['Инструмент','бита из бортового набора + рукоятка']]},
    {h:'Открути сливную пробку',v:'sump',f:['drainplug'],off:['drainplug'],x:'Пробка внизу картера. Последние витки откручивай пальцами и сразу уводи руку в сторону, масло пойдёт струёй. Сливай минут 10.',facts:[['Резьба','M16x1,5']]},
-   {h:'Сними старый фильтр',v:'filter',f:['oilfilter'],off:['oilfilter'],x:'Фильтр спереди внизу картера. Съёмник-чашка, против часовой. Из фильтра тоже течёт, держи поддон под ним.'},
+   {h:'Сними старый фильтр',v:'filter',f:['oilfilter'],off:['oilfilter'],x:'Фильтр снизу спереди картера, вкручен вертикально. Съёмник-чашка, против часовой. Из фильтра тоже течёт, держи поддон под ним.'},
    {h:'Поставь новый фильтр',v:'filter',f:['oilfilter'],x:'Протри посадочное место. Смажь резиновое кольцо нового фильтра свежим маслом, накрути рукой до касания, затем дотяни ключом.',facts:[['Момент','11 Нм','tq']]},
    {h:'Закрути сливную пробку',v:'sump',f:['drainplug'],x:'Новое уплотнительное кольцо, протри пробку, закрути рукой и дотяни динамометром.',facts:[['Момент','32 Нм','tq'],['Кольцо','новое']]},
    {h:'Залей масло',v:'rightSide',f:['filler'],off:['filler'],x:'Залей 3,5 л. Закрой пробку, заведи на минуту, заглуши, подожди 5 минут. Доливай по окошку до середины между MIN и MAX.',facts:[['Объём','до 3,8 л'],['Масло','15W-50']]},
@@ -1927,9 +1981,39 @@ const SOURCES=[
 
 function diffBars(n){let h='<span class="diff" aria-label="Сложность '+n+' из 5">';for(let i=1;i<=5;i++)h+='<i class="'+(i<=n?'on':'')+'"></i>';return h+'</span>';}
 
+const SYSTXT={
+ drive:{h:'Привод: от сцепления до колеса',lead:'Сухое однодисковое сцепление сзади на коленвале, шестиступенчатая коробка, карданный вал внутри маятника Paralever, гипоидная главная передача в ступице заднего колеса. Включи передачу и посмотри, как вращение идёт до колеса. Ползунок внизу разбирает узел на детали.',ops:['fd','clutch'],src:'Схемы BMW 21_0195, 23_*, 33_1226, 33_1622, 33_1626, 33_1627, 33_1651, 33_1873.'},
+ brakes:{h:'Тормоза и ABS',lead:'Спереди два плавающих диска 320 мм с четырёхпоршневыми суппортами, сзади один диск 265 мм с двухпоршневым плавающим суппортом. Блок ABS сравнивает скорость колёс по датчикам и не даёт колесу заблокироваться. Бачки: передний на правом рычаге руля, задний у правой подножки.',ops:['brakes'],src:'Схемы BMW 34_* и инструкция владельца R nineT Scrambler.'},
+ elec:{h:'Электрика',lead:'Генератор 720 Вт спереди на двигателе крутится ремнём от коленвала, через регулятор заряжает аккумулятор AGM 12 В 14 А·ч под сиденьем. Оттуда питание идёт через главное реле на блок управления двигателем, модуль «Свет», приборку, катушки, форсунки и датчики. Цвета жгутов на модели условные.',ops:['spark','coilSwap','deadCyl'],src:'Схемы BMW 61_3273, 61_3928, 61_5758, 61_5331, 61_5196, 12_2129, 13_1979.'}};
+function hud3D(){
+  hud.innerHTML=`<label class="slider" for="ex">Разобрать <input id="ex" type="range" min="0" max="100" value="${Math.round(explode*100)}"></label>
+    <button class="chipbtn" id="rot" aria-pressed="${autoRot}">Вращение</button>
+    <button class="chipbtn" id="xr" aria-pressed="${xray}">Прозрачно</button>
+    <button class="chipbtn" id="cut" aria-pressed="${cutPlane}">Разрез</button>
+    <button class="chipbtn" id="home">Общий вид</button>`;
+  document.getElementById('ex').oninput=e=>{const o=explode;explode=e.target.value/100;dolly((1+0.9*explode)/(1+0.9*o));if(explode>0&&activeSys){activeSys=null;setFlow(null);panel.querySelectorAll('[data-sys]').forEach(x=>x.setAttribute('aria-pressed','false'));}setTargets();};
+  document.getElementById('rot').onclick=e=>{autoRot=!autoRot;e.target.setAttribute('aria-pressed',autoRot);};
+  document.getElementById('xr').onclick=e=>{xray=!xray;e.target.setAttribute('aria-pressed',xray);setTargets();};
+  document.getElementById('cut').onclick=e=>{cutPlane=!cutPlane;e.target.setAttribute('aria-pressed',cutPlane);setTargets();};
+  document.getElementById('home').onclick=()=>goView(SYSDEF[tab]&&VIEWS['sys_'+tab]?'sys_'+tab:(tab==='engine'?'engine':'overall'));}
+function animCtl(){return `<h3>Работа</h3><p class="ctl"><button class="chipbtn" id="play" aria-pressed="${playing}">${playing?'Пауза':'Пуск'}</button>
+    <label class="slider" for="spd">Скорость <input id="spd" type="range" min="5" max="300" value="${Math.round(speed*100)}"></label>
+    <button class="chipbtn" id="clu" aria-pressed="${CLU.pulled}">${CLU.pulled?'Отпустить сцепление':'Выжать сцепление'}</button></p>
+    <h3>Коробка передач</h3>
+    <div class="gears" role="group" aria-label="Передача">${['N',1,2,3,4,5,6].map((g,i)=>`<button data-g="${i}" aria-pressed="${gear===i}">${g}</button>`).join('')}</div>
+    <p class="ratio" id="ratio"></p><p class="lead" style="font-size:13px">Пока узел разобран ползунком, механизм стоит.</p>`;}
+function bindAnimCtl(){
+  panel.querySelectorAll('.gears button').forEach(b=>b.onclick=()=>{gear=+b.dataset.g;panel.querySelectorAll('.gears button').forEach(x=>x.setAttribute('aria-pressed',x===b));showRatio();});
+  document.getElementById('clu').onclick=e=>{const v=CLU.toggle();e.target.setAttribute('aria-pressed',v);e.target.textContent=v?'Отпустить сцепление':'Выжать сцепление';};
+  document.getElementById('play').onclick=e=>{playing=!playing;e.target.textContent=playing?'Пауза':'Пуск';e.target.setAttribute('aria-pressed',playing);};
+  document.getElementById('spd').oninput=e=>speed=e.target.value/100;showRatio();}
+function partList(k){const ids=SYSDEF[k].ids.filter(id=>P[id]&&!P[id].gone);
+  return `<h3>Из чего состоит</h3><ul class="plist">${ids.map(id=>`<li><button class="chipbtn" data-pk="${id}" aria-pressed="${picked===id}">${esc(P[id].name)}</button></li>`).join('')}</ul>`;}
+function bindPartList(){panel.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{picked=picked===b.dataset.pk?null:b.dataset.pk;
+  panel.querySelectorAll('[data-pk]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.pk===picked));renderPick();setTargets();});}
 function renderPanel(){
   if(tab==='dash'){if(window.DASH)DASH.panel(panel);return;}
-  if(tab==='cat'){CAT.render(panel);return;}
+  if(tab==='cat'){CAT.render(panel);hud3D();return;}
   if(tab==='bike'){
     panel.innerHTML=`<h2>Твой R nineT Scrambler</h2>
     <p class="lead">Кузов, рама, двигатель снаружи, вилка, тормоза и руль взяты из подробной 3D-модели R nineT, разбитой на детали. Твоё поверх неё: спицованные колёса и два глушителя слева, как на Scrambler. Тяни, чтобы покрутить. Ползунок внизу разносит мотоцикл на узлы, клик по детали покажет, что это и какие работы с ней связаны.</p>
@@ -1944,14 +2028,7 @@ function renderPanel(){
     <h3>Источники</h3><ul class="src">${SOURCES.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join('')}</ul>`;
     renderPick();
     panel.querySelectorAll('[data-sys]').forEach(b=>b.onclick=()=>{activeSys=activeSys===b.dataset.sys?null:b.dataset.sys;panel.querySelectorAll('[data-sys]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.sys===activeSys));setFlow(CONTOURS.find(c=>c.id===activeSys));if(activeSys){explode=0;const ex=document.getElementById('ex');if(ex)ex.value=0;}setTargets();});
-    hud.innerHTML=`<label class="slider" for="ex">Разобрать <input id="ex" type="range" min="0" max="100" value="${Math.round(explode*100)}"></label>
-      <button class="chipbtn" id="rot" aria-pressed="${autoRot}">Вращение</button><button class="chipbtn" id="home">Общий вид</button>
-      <button class="chipbtn" id="elx" aria-pressed="${elecMode}">Электрика</button><button class="chipbtn" id="seatx" aria-pressed="${seatOff}">Под сиденьем</button>`;
-    document.getElementById('elx').onclick=e=>{elecMode=!elecMode;if(elecMode&&activeSys){activeSys=null;setFlow(null);}e.target.setAttribute('aria-pressed',elecMode);setTargets();if(elecMode)goView('overall');};
-    document.getElementById('seatx').onclick=e=>{seatOff=!seatOff;e.target.setAttribute('aria-pressed',seatOff);setTargets();goView(seatOff?'underSeat':'overall');};
-    document.getElementById('ex').oninput=e=>{explode=e.target.value/100;setTargets();};
-    document.getElementById('rot').onclick=e=>{autoRot=!autoRot;e.target.setAttribute('aria-pressed',autoRot);};
-    document.getElementById('home').onclick=()=>goView('overall');
+    hud3D();
   }
   else if(tab==='engine'){
     panel.innerHTML=`<h2>Как это работает</h2>
@@ -1961,24 +2038,26 @@ function renderPanel(){
       ${STROKES.map((s,i)=>`<span>${s}</span><span class="cell" id="sl${i}">${i*180}-${i*180+180}°</span><span class="cell" id="sr${i}">${i*180}-${i*180+180}°</span>`).join('')}
     </div>
     <div class="legend"><span><i style="background:#ffc83d"></i>искра</span><span>клапаны открываются кулачками</span></div>
-    <h3>Коробка передач</h3>
-    <div class="gears" role="group" aria-label="Передача">${['N',1,2,3,4,5,6].map((g,i)=>`<button data-g="${i}" aria-pressed="${gear===i}">${g}</button>`).join('')}</div>
-    <p class="ratio" id="ratio"></p>
-    <p class="lead">Дальше вращение идёт по карданному валу внутри маятника на конический редуктор в ступице. Цепи нет, смазывать и тянуть нечего, только масло в редукторе раз в 2 года.</p>
+    ${animCtl()}
+    <p class="lead">Дальше вращение идёт по карданному валу внутри маятника на конический редуктор в ступице. Цепи нет, смазывать и тянуть нечего, только масло в редукторе раз в 2 года. Это вкладка «Привод».</p>
+    <div id="pickbox"></div>${partList('engine')}
     <h3>Что здесь обслуживаешь ты</h3>
     <ul class="ops">${['spark','valves','oilChange','fd','clutch'].map(id=>{const o=OPS.find(x=>x.id===id);return `<li><button class="op" data-op="${id}"><b>${o.t}</b><span class="sub">${o.when}</span>${diffBars(o.diff)}</button></li>`;}).join('')}</ul>`;
     for(let i=0;i<4;i++){stEls['l'+i]=document.getElementById('sl'+i);stEls['r'+i]=document.getElementById('sr'+i);}
-    panel.querySelectorAll('.gears button').forEach(b=>b.onclick=()=>{gear=+b.dataset.g;panel.querySelectorAll('.gears button').forEach(x=>x.setAttribute('aria-pressed',x===b));showRatio();});
     panel.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>openOp(b.dataset.op));
-    showRatio();
-    hud.innerHTML=`<button class="chipbtn" id="play" aria-pressed="${playing}">${playing?'Пауза':'Пуск'}</button>
-      <label class="slider" for="spd">Скорость <input id="spd" type="range" min="5" max="300" value="${Math.round(speed*100)}"></label>
-      <button class="chipbtn" id="cut" aria-pressed="${cutaway}">Разрез</button>
-      <button class="chipbtn" id="clu" aria-pressed="${CLU.pulled}">${CLU.pulled?'Отпустить сцепление':'Выжать сцепление'}</button>`;
-    document.getElementById('clu').onclick=e=>{const v=CLU.toggle();e.target.setAttribute('aria-pressed',v);e.target.textContent=v?'Отпустить сцепление':'Выжать сцепление';};
-    document.getElementById('play').onclick=e=>{playing=!playing;e.target.textContent=playing?'Пауза':'Пуск';e.target.setAttribute('aria-pressed',playing);};
-    document.getElementById('spd').oninput=e=>speed=e.target.value/100;
-    document.getElementById('cut').onclick=e=>{cutaway=!cutaway;e.target.setAttribute('aria-pressed',cutaway);setTargets();};
+    bindAnimCtl();bindPartList();renderPick();hud3D();
+  }
+  else if(SYSDEF[tab]){const T=SYSTXT[tab];
+    panel.innerHTML=`<h2>${T.h}</h2><p class="lead">${T.lead}</p>
+    ${tab==='drive'?animCtl():''}
+    ${tab==='elec'?`<p><button class="chipbtn" id="seatx" aria-pressed="${seatOff}">${seatOff?'Поставить сиденье':'Снять сиденье'}</button></p>`:''}
+    <div id="pickbox"></div>${partList(tab)}
+    ${T.ops.length?`<h3>Что здесь обслуживаешь ты</h3><ul class="ops">${T.ops.map(id=>{const o=OPS.find(x=>x.id===id);return o?`<li><button class="op" data-op="${id}"><b>${o.t}</b><span class="sub">${o.when}</span>${diffBars(o.diff)}</button></li>`:'';}).join('')}</ul>`:''}
+    <p class="src">${T.src}</p>`;
+    if(tab==='drive')bindAnimCtl();
+    const sx=document.getElementById('seatx');if(sx)sx.onclick=e=>{seatOff=!seatOff;e.target.setAttribute('aria-pressed',seatOff);e.target.textContent=seatOff?'Поставить сиденье':'Снять сиденье';setTargets();if(seatOff)goView('underSeat');};
+    panel.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>openOp(b.dataset.op));
+    bindPartList();renderPick();hud3D();
   }
   else if(tab==='service'){
     if(!curOp){
@@ -2037,23 +2116,32 @@ function renderStep(){const o=curOp,s=o.steps[curStep];
 
 function altCoils(){if(!GLB_OK)return;['L','R'].forEach(s=>{let use=false;
   if(tab==='service'&&curOp){const st=curOp.steps[curStep];const L=[].concat(st.f||[],st.off||[],st.show||[]);use=L.some(x=>x==='coil'+s||x==='conn'+s||x==='plug'+s||x==='well'+s);}
-  if(tab==='engine'&&cutaway)use=true;
+  if((tab==='engine'||tab==='elec'||tab==='bike')&&(xray||cutPlane||explode>0.01))use=true;
   ['coil','conn'].forEach(b=>{const p=P[b+s];if(!p)return;p.g.traverse(o=>{if(!o.isMesh)return;if(o.userData.dead){o.visible=false;return;}const scan=!!o.userData.scan;o.visible=scan?!use:use;});});});}
 let elecMode=false,seatOff=false;
 const ELECSET=new Set(['harness','underseat','battery','ecu','relays','diag','powerCables','regulator','alternator','starter','coilL','coilR','sensors','lambda','flap','abs','wheelSensors','instrument','light','horn','tail','standSwitch','fuelPump','iat']);
 const USEAT=new Set(['battery','ecu','relays','diag','powerCables','underseat','harness','abs']);
 function setTargets(){altCoils();
   Object.values(P).forEach(p=>{const t=p.tgt;t.hl=0;t.off=0;t.op=1;
-    if(tab==='bike'||tab==='cat'){t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)?0:1;if(p.hid&&picked===p.id)t.op=1;t.off=explode*1.2;if(picked===p.id)t.hl=1;
-      if(elecMode&&p.layer!=='tool'&&p.layer!=='fx'){t.op=ELECSET.has(p.id)?1:(p.id==='bars'?0.35:0.07);t.off=0;}
+    t.exT=p.ex;t.sub=0;
+    if(tab==='bike'||tab==='cat'){const inner=(p.layer==='internal'||p.hid)&&!(p.gone||/^well/.test(p.id));
+      t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)?0:1;
+      if(inner)t.op=(xray||cutPlane)?1:(explode>0.01?Math.min(1,explode*4):0);
+      if(xray&&p.scan)t.op=0.16;
+      if(p.hid&&picked===p.id)t.op=1;
+      t.exT=p.ex.length()>1?p.ex.clone().multiplyScalar(1.2):((p.sysEx&&p.sysEx.bike)||p.ex);t.off=explode;t.sub=explode;if(picked===p.id)t.hl=1;
+
       if(seatOff){if(p.id==='seat')t.op=0;if(USEAT.has(p.id))t.op=Math.max(t.op,p.id==='harness'?0.9:1);}
-      if(activeSys){const C=CONTOURS.find(c=>c.id===activeSys);const inC=C.parts.indexOf(p.id)>=0;t.op=(p.layer==='tool'||p.layer==='fx')?0:(inC?(SHELL.indexOf(p.id)>=0?0.32:1):0.07);t.off=0;}}
-    else if(tab==='engine'){
-      if(p.layer==='bike'||p.wasBike||p.layer==='tool'||p.layer==='fx'||p.id==='airfilter'||p.id==='belt'||p.id==='harness'||p.id==='underseat'){t.op=0;if(p.id==='wheelR')t.op=1;}
-      if(cutaway&&/^(head|cover|cyl)[LR]$|^crankcase$|^gearbox$|^swingarm$|^finaldrive$|^beltcover$|^throttle$/.test(p.id))t.op=0.16;
-      if(!cutaway&&t.op>0&&!p.scan&&p.id!=='wheelR')t.op=0;   /* closed engine: only the real outer shell, nothing hand-built sticks out */
-      if(/^(coil)[LR]$/.test(p.id)&&cutaway)t.op=0.3;
-    }
+      if(activeSys){const C=CONTOURS.find(c=>c.id===activeSys);const inC=C.parts.indexOf(p.id)>=0;t.op=(p.layer==='tool'||p.layer==='fx')?0:(inC?(SHELL.indexOf(p.id)>=0?0.32:1):0.07);t.off=0;t.sub=0;}}
+    else if(SYSDEF[tab]){const Sd=SYSDEF[tab],inS=Sd.set.has(p.id);
+      t.exT=(p.sysEx&&p.sysEx[tab])||p.ex;
+      if(p.layer==='tool'||p.layer==='fx'||p.gone||/^well/.test(p.id))t.op=0;
+      else if(inS){const open=xray||cutPlane||Sd.open||Sd.always.indexOf(p.id)>=0;
+        if(p.scan)t.op=xray?0.16:1;else t.op=open?1:(explode>0.01?Math.min(1,explode*4):0);
+        if(tab==='engine'&&/^coil[LR]$/.test(p.id)&&xray)t.op=0.3;
+        t.off=explode;t.sub=explode;if(picked===p.id)t.hl=1;}
+      else if(Sd.ctxSet.has(p.id))t.op=(tab==='elec'&&seatOff&&p.id==='seat')?0:0.07;
+      else t.op=0;}
     else if(tab==='service'){
       if(p.layer==='internal'&&!/^cams|^crank$|^piston/.test(p.id))t.op=0;
       if(/^piston|^crank$/.test(p.id))t.op=0;
@@ -2075,18 +2163,19 @@ function setTargets(){altCoils();
       if(!curOp&&(p.layer==='tool'||p.layer==='fx'))t.op=0;
     }
   });
-  P.wheelR.tgt.op=tab==='engine'?1:P.wheelR.tgt.op;
+  const scopeAll=tab==='bike'||tab==='cat';Object.values(P).forEach(p=>setClip(p,cutPlane&&!!p.scan&&(scopeAll||(SYSDEF[tab]&&SYSDEF[tab].set.has(p.id)))&&!activeSys));
   if(hoverId&&P[hoverId]&&P[hoverId].tgt.op>0.5)P[hoverId].tgt.hl=Math.max(P[hoverId].tgt.hl,0.75);
 }
 
-function setTab(t){tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}['bike','engine','service','dash','cat'].forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
-  if(t!=='service'&&t!=='bike'&&t!=='cat')picked=null;
+const TABS=['bike','engine','drive','brakes','elec','dash','service','cat'];
+function setTab(t){tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}TABS.forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
+  if(t==='dash')picked=null;else if(picked&&SYSDEF[t]&&!SYSDEF[t].set.has(picked))picked=null;
   const dEl=document.getElementById('dash');dEl.hidden=t!=='dash';
   if(t==='dash'){renderPanel();try{localStorage.setItem('r9t-tab',t);}catch(e){}if(window.DASH)DASH.onShow();return;}
   renderPanel();setTargets();
-  if(t==='bike'||t==='cat')goView('overall');else if(t==='engine')goView('engine');else goView(curOp?curOp.steps[curStep].v:'overall');
+  if(t==='bike'||t==='cat')goView('overall');else if(SYSDEF[t])goView(VIEWS['sys_'+t]?'sys_'+t:(t==='engine'?'engine':'overall'));else goView(curOp?curOp.steps[curStep].v:'overall');
   try{localStorage.setItem('r9t-tab',t);}catch(e){}}
-['bike','engine','service','dash','cat'].forEach(x=>document.getElementById('t-'+x).onclick=()=>{if(x==='service'&&tab!=='service')curOp=curOp;setTab(x);});
+TABS.forEach(x=>document.getElementById('t-'+x).onclick=()=>{if(x==='service'&&tab!=='service')curOp=curOp;setTab(x);});
 
 /* ---------- picking ---------- */
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downXY=null;
@@ -2095,8 +2184,8 @@ canvas.addEventListener('pointerup',e=>{if(!downXY||Math.hypot(e.clientX-downXY[
   const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
   ray.setFromCamera(mouse,camera);
   const hits=ray.intersectObjects(pickables.filter(m=>{let o=m;while(o){if(o.visible===false)return false;o=o.parent;}return P[m.userData.part]&&P[m.userData.part].cur.op>0.5;}),false);
-  if(tab!=='bike')return;
-  picked=hits.length?hits[0].object.userData.part:null;renderPick();setTargets();});
+  if(!(tab==='bike'||SYSDEF[tab]))return;
+  picked=hits.length?hits[0].object.userData.part:null;renderPick();panel.querySelectorAll('[data-pk]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.pk===picked));setTargets();});
 
 /* ---------- hover: highlight + what it is ---------- */
 const tipEl=document.getElementById('tip');let lastHover=0;
@@ -2118,11 +2207,12 @@ let last=performance.now();
 let FADEDT=0;const SVC={cam:Math.PI};
 function loop(now){FADEDT=Math.min(.5,(now-last)/1000);const dt=Math.min(.05,(now-last)/1000);last=now;
   if(fly){const k=Math.min(1,(now-fly.s)/fly.d),e=ease(k);camera.position.lerpVectors(fly.p0,fly.p,e);controls.target.lerpVectors(fly.t0,fly.t,e);if(k>=1)fly=null;}
-  controls.autoRotate=tab==='bike'&&autoRot&&!fly;
-  if(tab==='engine'&&playing){theta+=dt*360*speed*(RM?0.3:1);}
+  controls.autoRotate=(tab==='bike'||!!SYSDEF[tab])&&autoRot&&!fly;
+  const anim=(tab==='engine'||tab==='drive')&&playing&&explode<0.02;updateClip();
+  if(anim){theta+=dt*360*speed*(RM?0.3:1);}
   updateEngine();
-  if(tab!=='engine'){E2.set((SVC.cam-Math.PI)*2*180/Math.PI,false);}
-  if(tab==='engine'&&gear&&playing&&CLU.amt<0.5){wPivot.rotation.z-=dt*2*Math.PI*speed*(RM?0.3:1)/(PRIMARY*RATIOS[gear-1]*FINAL);}
+  if(tab!=='engine'&&tab!=='drive'){E2.set((SVC.cam-Math.PI)*2*180/Math.PI,false);}
+  if(anim&&gear&&CLU.amt<0.5){wPivot.rotation.z-=dt*2*Math.PI*speed*(RM?0.3:1)/(PRIMARY*RATIOS[gear-1]*FINAL);}
   DRV.set(wPivot.rotation.z);
   if(tab==='engine'){const ph=[((theta+360)%720+720)%720,((theta%720)+720)%720];
     for(let i=0;i<4;i++){if(stEls['l'+i]){stEls['l'+i].classList.toggle('on',strokeOf(ph[0])===i);stEls['r'+i].classList.toggle('on',strokeOf(ph[1])===i);}}}
@@ -2145,9 +2235,9 @@ function loop(now){FADEDT=Math.min(.5,(now-last)/1000);const dt=Math.min(.05,(no
 applyTheme();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
 new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-let startTab='bike';try{const s=localStorage.getItem('r9t-tab');if(s==='engine'||s==='service'||s==='dash'||s==='cat')startTab=s;}catch(e){}
-const hash=(location.hash||'').slice(1);if(['bike','engine','service'].indexOf(hash)>=0)startTab=hash;
-resize();setTab(startTab);goView(startTab==='engine'?'engine':'overall',true);
+let startTab='bike';try{const s=localStorage.getItem('r9t-tab');if(TABS.indexOf(s)>=0)startTab=s;}catch(e){}
+const hash=(location.hash||'').slice(1);if(TABS.indexOf(hash)>=0)startTab=hash;
+resize();setTab(startTab);if(fly){camera.position.copy(fly.p);controls.target.copy(fly.t);fly=null;}
 Object.values(P).forEach(p=>{p.cur.op=p.tgt.op;p.cur.off=p.tgt.off;});
 
 /* ---------- scanned body: detailed 3D model (CC-BY 4.0, Nieve5677 on Sketchfab), split into our parts ---------- */
@@ -2159,6 +2249,19 @@ function glbMaterial(id,mn){const k=(PARTMAT[id]&&PARTMAT[id][mn])||GLBMAT[mn]||
   if(k==='lensA')return new THREE.MeshStandardMaterial({color:0xe07b00,roughness:.15,metalness:0});
   return mat(k,true);}
 var GLB_OK=false;
+/* connected pieces of a scanned mesh: vertices with the same quantized position are one point, triangles join points into pieces;
+   each vertex gets the centre of its piece, so the shader can push the piece away from the part centre */
+function compCentres(qp,qi,P3,nv){const key=new Map(),rep=new Int32Array(nv),par=new Int32Array(nv);
+  for(let i=0;i<nv;i++){const k=qp[3*i]+qp[3*i+1]*65536+qp[3*i+2]*4294967296;let r=key.get(k);if(r===undefined){r=i;key.set(k,i);}rep[i]=r;par[i]=i;}
+  const f=x=>{while(par[x]!==x){par[x]=par[par[x]];x=par[x];}return x;};
+  for(let t=0;t<qi.length;t+=3){const a=f(rep[qi[t]]),b=f(rep[qi[t+1]]);if(a!==b)par[a]=b;const c=f(rep[qi[t+2]]),d=f(b);if(c!==d)par[c]=d;}
+  const mn=new Map();for(let i=0;i<nv;i++){const r=f(rep[i]);let e=mn.get(r);if(!e){e=[1e9,1e9,1e9,-1e9,-1e9,-1e9];mn.set(r,e);}
+    for(let a=0;a<3;a++){const v=P3[3*i+a];if(v<e[a])e[a]=v;if(v>e[a+3])e[a+3]=v;}}
+  const out=new Float32Array(nv*3);for(let i=0;i<nv;i++){const e=mn.get(f(rep[i]));for(let a=0;a<3;a++)out[3*i+a]=(e[a]+e[a+3])/2;}return out;}
+function finishScanOffsets(){Object.values(P).forEach(p=>{if(!p.scanU)return;const ms=[];p.g.traverse(o=>{if(o.isMesh&&o.userData.compC)ms.push(o);});
+  const b=new THREE.Box3();ms.forEach(m=>{m.geometry.computeBoundingBox();b.union(m.geometry.boundingBox);});const c=b.getCenter(new V3());
+  ms.forEach(m=>{const cc=m.userData.compC,off=new Float32Array(cc.length);for(let i=0;i<cc.length;i+=3){off[i]=cc[i]-c.x;off[i+1]=cc[i+1]-c.y;off[i+2]=cc[i+2]-c.z;}
+    m.geometry.setAttribute('aOff',new THREE.BufferAttribute(off,3));delete m.userData.compC;});});}
 async function loadBody(){
   let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;buf=await r.arrayBuffer();const u=new Uint8Array(buf,0,2);
     if(u[0]===0x1f&&u[1]===0x8b){if(typeof DecompressionStream==='undefined')throw 0;buf=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}}catch(e){console.warn('body',e);return;}
@@ -2174,6 +2277,8 @@ async function loadBody(){
     const P3=new Float32Array(c.nv*3);for(let i=0;i<c.nv*3;i++){const a=i%3;P3[i]=c.lo[a]+qp[i]/65535*c.sc[a];}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P3,3));g.setAttribute('normal',new THREE.BufferAttribute(qn,3,true));g.setIndex(new THREE.BufferAttribute(qi,1));g.computeBoundingSphere();
     const m=new THREE.Mesh(g,glbMaterial(c.l,c.m));m.position.copy(p.home).multiplyScalar(-1);
+    m.userData.compC=compCentres(qp,qi,P3,c.nv);
+    {const u={value:0};(p.scanU=p.scanU||[]).push(u);m.material.onBeforeCompile=sh=>{sh.uniforms.uEx=u;sh.vertexShader='attribute vec3 aOff;\nuniform float uEx;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=aOff*uEx;');};}
     m.userData.part=c.l;m.userData.scan=true;m.userData.baseOpacity=m.material.opacity;m.material.transparent=true;m.castShadow=false;p.g.add(m);pickables.push(m);
     if(c.l==='silencers'){const m2=new THREE.Mesh(g,m.material);m2.position.copy(m.position).add(new V3(63,124,-12));m2.userData=Object.assign({},m.userData);p.g.add(m2);pickables.push(m2);}});
   /* second silencer feed: from the collector outlet up into the upper can */
@@ -2190,7 +2295,7 @@ async function loadBody(){
   /* hand-built parts with no scanned twin stay inside: shown in contours and service steps */
   const KEEP=new Set(['wheelF','wheelR','capR','capL']);
   Object.values(P).forEach(p=>{if(got.has(p.id)||KEEP.has(p.id))return;if(p.layer==='bike'||p.layer==='drive'){p.hid=true;if(p.layer==='bike'){p.wasBike=true;p.layer='internal';}}});
-  GLB_OK=true;setTargets();if(window.__onBody)window.__onBody();}
+  finishScanOffsets();GLB_OK=true;computeSys();setTargets();if(SYSDEF[tab])goView('sys_'+tab);if(window.__onBody)window.__onBody();}
 loadBody();
 requestAnimationFrame(loop);
 /* ===== Каталог BMW: все разделы K23 с номерами деталей, связаны с 3D ===== */
