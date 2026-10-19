@@ -38,6 +38,13 @@ header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10p
 
 main{display:grid;grid-template-columns:1fr 400px;min-height:0}
 .bay{position:relative;min-height:0;min-width:0}
+.loader{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg);transition:opacity .5s ease}
+.loader.done{opacity:0;pointer-events:none}
+.loader svg{width:min(78%,420px);height:auto}
+.loader .ln{fill:none;stroke:var(--line);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.loader .fl{fill:none;stroke:var(--hazard);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.loader b{font:600 13px var(--f-mono);color:var(--muted);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){.loader{transition:none}}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #gl:active{cursor:grabbing}
 .hud{position:absolute;left:12px;bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:calc(100% - 24px)}
@@ -165,6 +172,16 @@ table.cat small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px
 </header>
 <main>
   <div class="bay">
+    <div class="loader" id="loader" role="status" aria-live="polite"><svg viewBox="0 0 410 210" aria-hidden="true"><defs><clipPath id="ldclip"><rect id="ldrect" x="0" y="210" width="410" height="210"/></clipPath></defs>
+<g class="ln"><g>
+<circle cx="80" cy="150" r="52"/><circle cx="80" cy="150" r="14"/><circle cx="330" cy="150" r="52"/><circle cx="330" cy="150" r="14"/>
+<path d="M80 150 L150 120 L205 128 L245 92"/><path d="M150 120 L178 76 L280 70 L318 52"/><path d="M330 150 L300 58 L292 30 L268 26"/>
+<path d="M190 72 C200 50 250 46 276 58 L280 70"/><path d="M106 74 L182 70"/><path d="M196 128 C188 104 206 92 232 98 C250 104 250 124 236 132 Z"/>
+<path d="M210 132 L150 140 L118 128"/><path d="M300 58 L322 66"/></g></g><g class="fl" clip-path="url(#ldclip)"><g>
+<circle cx="80" cy="150" r="52"/><circle cx="80" cy="150" r="14"/><circle cx="330" cy="150" r="52"/><circle cx="330" cy="150" r="14"/>
+<path d="M80 150 L150 120 L205 128 L245 92"/><path d="M150 120 L178 76 L280 70 L318 52"/><path d="M330 150 L300 58 L292 30 L268 26"/>
+<path d="M190 72 C200 50 250 46 276 58 L280 70"/><path d="M106 74 L182 70"/><path d="M196 128 C188 104 206 92 232 98 C250 104 250 124 236 132 Z"/>
+<path d="M210 132 L150 140 L118 128"/><path d="M300 58 L322 66"/></g></g></svg><b id="ldtxt">ЗАГРУЖАЮ МОДЕЛЬ 0%</b></div>
     <canvas id="gl" aria-label="3D-модель мотоцикла, вращается мышью или пальцем"></canvas>
     <div class="tag3d" id="tag3d">ВИД: ОБЩИЙ</div>
     <div class="hint">Вращать во все стороны, даже снизу · Зум: колесо или щипок<br>Наведи на деталь: что это и зачем</div>
@@ -1399,10 +1416,9 @@ P.crank.desc='Коленвал (BMW 11 21 7 702 660): два шатунных ш
   webCW(L+PW/2,L+PW/2+16,-CR_R);                                       // front web, counterweight opposite left pin
   [[R,CR_R],[L,-CR_R]].forEach(([x,z])=>{const m=M('chrome',new THREE.CylinderGeometry(23,23,PW,32).rotateZ(Math.PI/2),[x,0,z]);crank.add(m);});
   sh(L+PW/2+16,1010,28);                                               // front main journal
-  sh(1010,1110,19,'satin');                                            // tapered nose
+  sh(1010,1104,19,'satin');                                            // tapered nose, alternator pulley on its front end
   const sp=sprocketGeo(24,8);crank.add(M('steel',sp.g,[X_PRIM,0,0]));crank.userData.rp=sp.rp;
-  const pul=new THREE.LatheGeometry([[0.1,-8],[42,-8],[44,-5],[42,-3],[44,-1],[42,1],[44,3],[42,5],[44,7],[0.1,8]].map(p=>new THREE.Vector2(p[0],p[1])),40);pul.rotateZ(Math.PI/2);
-  crank.add(M('satin',pul,[1100,0,0]));}
+}
 reg(gC,'crank',crank);
 
 /* ================= pistons + conrods ================= */
@@ -1553,6 +1569,51 @@ const BAL=(function(){const g=P.balancer.g;P.balancer.g.visible=true;P.balancer.
   [cg,bg].forEach(o=>reg(g,'balancer',o));
   function set(theta){const a=-theta*DEG;cg.rotation.x=a;bg.rotation.x=meshAngle(a,Z,Z,Math.atan2(0,IY-CY));}
   return {set};})();
+/* ===== alternator drive (BMW 12_2111): crankshaft pulley 12 31 7 694 069 on the crank nose under washer 22 and nut M22x1,5,
+   ribbed V-belt 4PK582 (4 ribs, 582 mm effective length) up to the alternator pulley. Both pulleys in one plane at the very front
+   of the engine, under the belt guard. Pulley sizes are estimates; the centre distance is solved so the belt is exactly 582 mm.
+   The belt runs on the pulleys and moves with them: crank pulley turns with the crank, alternator 40/27 = 1,48 times faster. ===== */
+const BELT=(function(){
+  const XB=1088, R1=40, R2=27, LEN=582;
+  let d=180;for(let i=0;i<20;i++){d=(LEN-Math.PI*(R1+R2)-(R1-R2)*(R1-R2)/d)/2;}           /* open belt length -> centre distance */
+  const AY=CY+d;
+  ['belt','alternator'].forEach(id=>{const p=P[id];if(!p)return;delete OFFS[id];
+    for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.part===id)pickables.splice(i,1);
+    while(p.g.children.length)p.g.remove(p.g.children[0]);p.g.position.set(0,0,0);});
+  const ribs=(rIn,rOut,w,n)=>{const pr=[];for(let i=0;i<=n*2;i++){const x=-w/2+w*i/(n*2);pr.push([i%2?rIn:rOut,x]);}return pr;};
+  /* crank pulley + washer + nut, turning with the crank */
+  {const g=new THREE.Group();
+    const l=new THREE.LatheGeometry([[19,-12],[26,-12],[26,-7],[R1+1.5,-7]].concat(ribs(R1-1,R1+1.5,14,4).slice(1)).concat([[R1+1.5,7],[19,7]]).map(p=>new THREE.Vector2(p[0],p[1])),48);
+    l.rotateZ(-Math.PI/2);g.add(M('satin',l,[XB,0,0]));
+    g.add(M('steel',new THREE.CylinderGeometry(18,18,3,24).rotateZ(Math.PI/2),[XB+8.5,0,0]));      /* washer 22 */
+    g.add(M('steel',new THREE.CylinderGeometry(17,17,11,6).rotateZ(Math.PI/2),[XB+15.5,0,0]));     /* nut M22x1,5 */
+    g.traverse(m=>{if(m.isMesh){m.userData.sub='pulley';m.userData.part='crank';pickables.push(m);}});crank.add(g);}
+  /* alternator: body behind its pulley, pulley + fan turn */
+  const ga=P.alternator.g;P.alternator.name='Генератор';
+  P.alternator.desc='BMW 12_2111: генератор Denso 60 А на трёх болтах M8x25 спереди сверху на картере. Крутится поликлиновым ремнём 4PK582 от шкива на носке коленвала, в 1,48 раза быстрее коленвала. Ток идёт через регулятор на аккумулятор и всю электрику.';
+  ga.add(M('black',(()=>{const l=new THREE.LatheGeometry([[0.1,0],[50,0],[54,8],[54,96],[48,104],[0.1,106]].map(p=>new THREE.Vector2(p[0],p[1])),40);l.rotateZ(Math.PI/2);return l;})(),[XB-14,AY,0]));
+  for(let i=0;i<10;i++){const a=i/10*Math.PI*2;ga.add(M('satin',new THREE.BoxGeometry(90,2,4),[XB-66,AY+Math.sin(a)*54,Math.cos(a)*54]));}
+  const ap=new THREE.Group();ap.position.set(XB,AY,0);
+  {const l=new THREE.LatheGeometry([[8,-12],[16,-12],[16,-7],[R2+1.5,-7]].concat(ribs(R2-1,R2+1.5,14,4).slice(1)).concat([[R2+1.5,7],[8,7]]).map(p=>new THREE.Vector2(p[0],p[1])),40);
+    l.rotateZ(-Math.PI/2);ap.add(M('steel',l));
+    ap.add(M('steel',new THREE.CylinderGeometry(9,9,8,6).rotateZ(Math.PI/2),[10,0,0]));
+    for(let k=0;k<3;k++){const b=M('satin',new THREE.BoxGeometry(2,16,5),[-13,10*Math.cos(k*2.09),10*Math.sin(k*2.09)]);b.rotation.x=k*2.09;ap.add(b);}}
+  ga.add(ap);
+  ga.traverse(m=>{if(m.isMesh){m.userData.part='alternator';pickables.push(m);}});
+  /* belt: 4 ribs on the inside, flat back; built from short pieces that run along the path */
+  const bp=beltPath([CY,0],R1,[AY,0],R2),pitch=bp.len/Math.round(bp.len/4),n=Math.round(bp.len/pitch);
+  const seg=new THREE.InstancedMesh(new THREE.BoxGeometry(14,3.2,pitch*1.04),mat('rubber'),n);
+  const rib=new THREE.InstancedMesh(new THREE.BoxGeometry(12,1.8,pitch*.5),mat('black'),n);
+  [seg,rib].forEach(m=>{m.userData.part='belt';P.belt.g.add(m);pickables.push(m);});
+  P.belt.desc='BMW 11 31 8 528 385, поликлиновой ремень 4PK582: 4 ручья, длина 582 мм. Обходит шкив коленвала и шкив генератора, натяжителя нет, натяг задаётся положением генератора. Замена раз в 6 лет или каждые 40 000 км. Порвался: генератор стоит, аккумулятор садится, горит предупреждение напряжения.';
+  const _b=new THREE.Object3D(),_n=new V3();
+  function set(theta){const D=Math.PI/180,a=-theta*D;ap.rotation.x=a*R1/R2;const off=theta*D*R1;
+    for(let i=0;i<n;i++){const [y,z,ty,tz]=bp.at(i*pitch+off);_n.set(0,-tz,ty);   /* normal pointing out of the loop */
+      const cy=(CY+AY)/2;if(_n.y*(y-cy)+_n.z*z<0)_n.multiplyScalar(-1);
+      _b.position.set(XB,y+_n.y*1.6,z+_n.z*1.6);_b.quaternion.setFromUnitVectors(new V3(0,0,1),new V3(0,ty,tz));_b.updateMatrix();seg.setMatrixAt(i,_b.matrix);
+      _b.position.set(XB,y-_n.y*.9,z-_n.z*.9);_b.updateMatrix();rib.setMatrixAt(i,_b.matrix);}
+    seg.instanceMatrix.needsUpdate=true;rib.instanceMatrix.needsUpdate=true;}
+  set(0);return {set,AY,XB};})();
 const PRIM=chain(X_PRIM,[CY,0],24,[IY,0],48,1,true);
 /* the lower run of each cam chain is pulled up by the curved rail so that the chain and rail stay inside the cylinder (its underside
    in the scan is at y 370-380 in the chain plane); the upper run is only slightly curved. First number: run c1->c2 (lower on the right
@@ -1578,7 +1639,7 @@ function setChains(th){CHAINS.forEach(c=>{const off=th*DEG*c.speed*(c===PRIM?c.r
     for(let i=0;i<c.n;i++){const [y,z,ty,tz]=c.bp.at(i*c.pitch+off*(c===PRIM?1:1));_o.position.set(c.x,y,z);_o.quaternion.setFromUnitVectors(new V3(0,0,1),new V3(0,ty,tz));_o.updateMatrix();
       c.plate.setMatrixAt(i,_o.matrix);c.roll.setMatrixAt(i,_o.matrix);}
     c.plate.instanceMatrix.needsUpdate=true;c.roll.instanceMatrix.needsUpdate=true;});}
-function set(theta,fire){crank.rotation.x=-theta*DEG;ish.rotation.x=-theta*DEG/2;BAL.set(theta);
+function set(theta,fire){crank.rotation.x=-theta*DEG;ish.rotation.x=-theta*DEG/2;BAL.set(theta);BELT.set(theta);
   rotors.forEach(r=>{r.gi.rotation.x=-theta*DEG/2;r.go.rotation.x=-theta*DEG/2*4/5;});
   setChains(theta);
   ['R','L'].forEach(k=>{const p=pistons[k],s=p.s,a=theta*DEG+(k==='L'?Math.PI:0);
@@ -2458,9 +2519,18 @@ function finishScanOffsets(){Object.values(P).forEach(p=>{if(!p.scanU)return;con
   const b=new THREE.Box3();ms.forEach(m=>{m.geometry.computeBoundingBox();b.union(m.geometry.boundingBox);});const c=b.getCenter(new V3());
   ms.forEach(m=>{const cc=m.userData.compC,off=new Float32Array(cc.length);for(let i=0;i<cc.length;i+=3){let x=cc[i]-c.x,y=cc[i+1]-c.y,z=cc[i+2]-c.z;const L=Math.hypot(x,y,z);if(L>260){x*=260/L;y*=260/L;z*=260/L;}off[i]=x;off[i+1]=y;off[i+2]=z;}
     m.geometry.setAttribute('aOff',new THREE.BufferAttribute(off,3));delete m.userData.compC;});});}
+/* loading screen: an outline bike fills up from the bottom while the detailed scan downloads; the simple placeholder bike is never shown */
+function loaderProgress(f){const r=document.getElementById('ldrect'),t=document.getElementById('ldtxt');if(!r)return;const h=210*f;r.setAttribute('y',210-h);t.textContent='ЗАГРУЖАЮ МОДЕЛЬ '+Math.round(f*100)+'%';}
+function loaderDone(){const l=document.getElementById('loader');if(l){l.classList.add('done');setTimeout(()=>l.remove(),600);}}
 async function loadBody(){
-  let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;buf=await r.arrayBuffer();const u=new Uint8Array(buf,0,2);
-    if(u[0]===0x1f&&u[1]===0x8b){if(typeof DecompressionStream==='undefined')throw 0;buf=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}}catch(e){console.warn('body',e);return;}
+  let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;
+    const total=+r.headers.get('content-length')||5637773;
+    if(r.body&&r.body.getReader){const rd=r.body.getReader(),parts=[];let got=0;
+      for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;loaderProgress(Math.min(.95,got/total*.95));}
+      const all=new Uint8Array(got);let o=0;parts.forEach(q=>{all.set(q,o);o+=q.length;});buf=all.buffer;}
+    else buf=await r.arrayBuffer();
+    loaderProgress(.97);const u=new Uint8Array(buf,0,2);
+    if(u[0]===0x1f&&u[1]===0x8b){if(typeof DecompressionStream==='undefined')throw 0;buf=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}}catch(e){console.warn('body',e);loaderDone();return;}
   const dv=new DataView(buf),hl=dv.getUint32(0,true),H=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl))),base=4+hl;
   const got=new Set(H.map(c=>c.l));got.add('clutchMaster');
   [['capR','справа',1],['capL','слева',-1]].forEach(([id,nm,s])=>{if(P[id])return;part(id,{name:'Накладка катушки, '+nm,desc:'Чёрная пластиковая накладка на крышке клапанов. Под ней верхушка катушки с разъёмом, а провод от разъёма идёт вниз по каналу под этой же накладкой и уходит к жгуту под цилиндром. Снаружи провода не видно.',sys:'Зажигание',layer:'drive',ex:[0,90,s*260]});P[id].home=new V3();});
@@ -2510,7 +2580,7 @@ async function loadBody(){
   /* hand-built parts with no scanned twin stay inside: shown in contours and service steps */
   const KEEP=new Set(['wheelF','wheelR','capR','capL']);
   Object.values(P).forEach(p=>{if(got.has(p.id)||KEEP.has(p.id))return;if(p.layer==='bike'||p.layer==='drive'){p.hid=true;if(p.layer==='bike'){p.wasBike=true;p.layer='internal';}}});
-  finishScanOffsets();GLB_OK=true;computeSys();setTargets();if(SYSDEF[tab])goView('sys_'+tab);if(window.__onBody)window.__onBody();}
+  finishScanOffsets();GLB_OK=true;loaderProgress(1);setTimeout(loaderDone,250);computeSys();setTargets();if(SYSDEF[tab])goView('sys_'+tab);if(window.__onBody)window.__onBody();}
 loadBody();
 requestAnimationFrame(loop);
 /* ===== Каталог BMW: все разделы K23 с номерами деталей, связаны с 3D ===== */
