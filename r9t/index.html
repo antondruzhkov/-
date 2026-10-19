@@ -1568,8 +1568,8 @@ const reg=(g,id,o)=>{o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.pu
   while(p.g.children.length)p.g.remove(p.g.children[0]);p.g.position.set(0,0,0);});
 /* geometry measured on the scanned swingarm (orthographic side view): swingarm front pivot on the gearbox (524,341),
    final-drive pivot on the swingarm end (170,285), wheel axle (0,318), torque-strut eyes (112,432) and (490,410).
-   Paralever rule: each universal joint sits exactly on a pivot axis, so the shaft never bends where the arm swings. */
-const FJ=new V3(524,341,112), RJ=new V3(170,285,148), AX=new V3(0,318,0), PZ=148, CF=134;
+   Per the BMW Paralever cutaway: the shaft runs straight inside the swingarm tube and its rear joint sits just ahead of the final-drive housing, above the pivot; the pinion then slopes down to the crown wheel at axle height. The sliding spline takes up the small length change. */
+const FJ=new V3(524,341,112), RJ=new V3(188,346,148), AX=new V3(0,318,0), PZ=148, CF=134;
 function gpart(id,name,desc){const g=new THREE.Group();g.name=id;root.add(g);P[id]={id,g,name,desc,sys:'Трансмиссия',layer:'drive',ex:new V3(0,0,0),cur:{off:0,op:1,hl:0},tgt:{off:0,op:1,hl:0},ops:['fd'],home:new V3()};return g;}
 function ujoint(){const g=new THREE.Group();
   [[-1,0],[1,Math.PI/2]].forEach(([s,rot])=>{const y=new THREE.Group();y.rotation.x=rot;g.add(y);
@@ -1579,14 +1579,14 @@ function ujoint(){const g=new THREE.Group();
 function along(a,b){const g=new THREE.Group();g.position.copy(a);g.quaternion.setFromUnitVectors(new V3(1,0,0),b.clone().sub(a).normalize());return g;}
 /* ---- drive shaft (inside the swingarm tube) ---- */
 const gS=P.driveshaft.g;P.driveshaft.layer='drive';P.driveshaft.name='Карданный вал';
-P.driveshaft.desc='BMW 33 73 9 898 679, внутри маятника. Передний карданный шарнир стоит точно на оси качания маятника у коробки, задний точно на оси качания корпуса редуктора: поэтому при ходе подвески вал не ломается. Между шарнирами шлицевое скользящее соединение (труба и вал), оно компенсирует изменение длины. Стопорные кольца 22x2,5, шлицы смазывают Klüber LFT 71-402. Пыльники (гофры) спереди и сзади маятника закрывают шарниры.';
+P.driveshaft.desc='BMW 33 73 9 898 679, внутри маятника. Передний карданный шарнир стоит на оси качания маятника у коробки, задний на конце трубы маятника перед корпусом редуктора, чуть выше его оси качания (так на разрезе BMW Paralever). От заднего шарнира пинион идёт вниз к ведомой шестерне на высоте оси колеса. Между шарнирами шлицевое скользящее соединение (труба и вал), оно компенсирует изменение длины при ходе подвески. Стопорные кольца 22x2,5, шлицы смазывают Klüber LFT 71-402. Пыльники (гофры) спереди и сзади маятника закрывают шарниры.';
 const spin=along(FJ,RJ),L=FJ.distanceTo(RJ);gS.add(spin);const rot=new THREE.Group();spin.add(rot);
 rot.add(ujoint());rot.add(M('steel',new THREE.CylinderGeometry(15,15,L*.5,24).rotateZ(Math.PI/2),[L*.3,0,0]));
 rot.add(M('satin',new THREE.CylinderGeometry(9,9,L*.42,20).rotateZ(Math.PI/2),[L*.72,0,0]));{const j=ujoint();j.position.x=L;rot.add(j);}
 reg(gS,'driveshaft',spin);
 {const o=along(new V3(575,350,104),FJ);o.add(M('steel',new THREE.CylinderGeometry(11,11,52,16).rotateZ(Math.PI/2),[26,0,0]));reg(gS,'driveshaft',o);}
 /* pivots: swingarm on gearbox (tapered roller bearings 17x40x13,25 on two pivot pins) and final drive on swingarm end */
-const gPv=gpart('pivots','Оси качания: маятник и редуктор','Две оси, на которых всё качается (BMW 33_1226). Спереди маятник висит на коробке на двух пальцах (правый 33 17 2 332 569 и левый) в конических роликовых подшипниках 17x40x13,25, контргайка M24x1,25 на 145 Нм. Сзади корпус редуктора качается на конце маятника на своих пальцах с подшипником: это та большая круглая шайба внизу перед колесом. Каждая ось это два коротких пальца, по одному с каждой стороны, они упираются в стенки корпуса. Между ними пусто, и именно там, ровно на оси качания, вращается карданный шарнир: сквозь шарнир палец не проходит.');
+const gPv=gpart('pivots','Оси качания: маятник и редуктор','Две оси, на которых всё качается (BMW 33_1226). Спереди маятник висит на коробке на двух пальцах (правый 33 17 2 332 569 и левый) в конических роликовых подшипниках 17x40x13,25, контргайка M24x1,25 на 145 Нм. Сзади корпус редуктора качается на конце маятника на своих пальцах с подшипником: это та большая круглая шайба внизу перед колесом. Каждая ось это два коротких пальца, по одному с каждой стороны, они упираются в стенки корпуса, сквозного пальца нет.');
 /* the pivot is two short pins, one from each side, that end at the housing walls: the space between them is open,
    and the universal joint turns in that space exactly on the pivot axis. No pin passes through the joint. */
 [[524,341,[[-190,-150],[150,192]]],[170,285,[[70,112],[184,206]]]].forEach(([x,y,pins])=>{const g=new THREE.Group();
