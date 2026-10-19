@@ -2434,7 +2434,7 @@ async function loadBody(){
       const az=Math.abs(z),hit=MC.some(b=>x>b[0]&&x<b[3]&&y>b[1]&&y<b[4]&&az>b[2]&&az<b[5]);
       out[hit?(z>0?'resF':'clutchMaster'):'bars'].push(qi[t],qi[t+1],qi[t+2]);}
     return Object.keys(out).filter(k=>out[k].length).map(k=>[k,new Uint32Array(out[k])]);}
-  H.forEach(c=>{if(!P[c.l])return;
+  H.forEach(c=>{if(!P[c.l]||/^LicPlate/.test(c.m))return;   /* number plate replaced by a blank one below */
     const qp=new Uint16Array(buf,base+c.p,c.nv*3),qn=new Int8Array(buf,base+c.n,c.nv*3),qi0=c.i32?new Uint32Array(buf,base+c.i,c.nt*3):new Uint16Array(buf,base+c.i,c.nt*3);
     const P3=new Float32Array(c.nv*3);for(let i=0;i<c.nv*3;i++){const a=i%3;P3[i]=c.lo[a]+qp[i]/65535*c.sc[a];}
     const cc=compCentres(qp,qi0,P3,c.nv),pos=new THREE.BufferAttribute(P3,3),nrm=new THREE.BufferAttribute(qn,3,true);
@@ -2445,6 +2445,14 @@ async function loadBody(){
     {const u={value:0};(p.scanU=p.scanU||[]).push(u);m.material.onBeforeCompile=sh=>{sh.uniforms.uEx=u;sh.vertexShader='attribute vec3 aOff;\nuniform float uEx;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=aOff*uEx;');};}
     m.userData.part=l;m.userData.scan=true;m.userData.baseOpacity=m.material.opacity;m.material.transparent=true;m.castShadow=false;p.g.add(m);pickables.push(m);
     if(l==='silencers'){const m2=new THREE.Mesh(g,m.material);m2.position.copy(m.position).add(new V3(63,124,-12));m2.userData=Object.assign({},m.userData);p.g.add(m2);pickables.push(m2);}});});
+  /* blank number plate in the plane of the scanned one: no letters, no flag, no frame print */
+  {const p=P.tail,n=new V3(.873,-.488,0).normalize(),w=new V3(.488,.873,0),zz=new V3(0,0,-1);
+   const W=220,Hh=174,R=8,sh=new THREE.Shape();sh.moveTo(-W/2+R,-Hh/2);sh.lineTo(W/2-R,-Hh/2);sh.quadraticCurveTo(W/2,-Hh/2,W/2,-Hh/2+R);sh.lineTo(W/2,Hh/2-R);sh.quadraticCurveTo(W/2,Hh/2,W/2-R,Hh/2);
+   sh.lineTo(-W/2+R,Hh/2);sh.quadraticCurveTo(-W/2,Hh/2,-W/2,Hh/2-R);sh.lineTo(-W/2,-Hh/2+R);sh.quadraticCurveTo(-W/2,-Hh/2,-W/2+R,-Hh/2);
+   const g=new THREE.ExtrudeGeometry(sh,{depth:3,bevelEnabled:true,bevelThickness:.6,bevelSize:.6,bevelSegments:2,curveSegments:6});g.translate(0,0,-1.5);
+   const m=new THREE.Mesh(g,mat('black',true));m.matrixAutoUpdate=true;m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(zz,w,n));
+   const c=new V3(-288.01,633.46,11.61).addScaledVector(w,.45).addScaledVector(n,-1.6);c.z=0;m.position.copy(c).sub(p.home);
+   m.userData.part='tail';m.userData.scan=true;m.userData.baseOpacity=1;m.material.transparent=true;p.g.add(m);pickables.push(m);}
   /* second silencer feed: from the collector outlet up into the upper can */
   {const p=P.silencers,o=p.home;const pts=[[425,236,-124],[452,282,-136],[460,340,-148],[440,394,-155],[390,421,-160]].map(q=>[q[0]-o.x,q[1]-o.y,q[2]-o.z]);
    const t=tube(p.g,pts,27,'pipe',40);t.userData.scan=true;t.material.transparent=true;t.userData.baseOpacity=1;}
