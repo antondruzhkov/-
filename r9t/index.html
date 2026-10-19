@@ -2142,12 +2142,10 @@ function hud3D(){
   hud.innerHTML=`<label class="slider" for="ex">Разобрать <input id="ex" type="range" min="0" max="100" value="${Math.round(explode*100)}"></label>
     <button class="chipbtn" id="rot" aria-pressed="${autoRot}">Вращение</button>
     <button class="chipbtn" id="xr" aria-pressed="${xray}">Прозрачно</button>
-    <button class="chipbtn" id="cut" aria-pressed="${cutPlane}">Разрез</button>
     <button class="chipbtn" id="home">Общий вид</button>`;
   document.getElementById('ex').oninput=e=>{const o=explode;explode=e.target.value/100;dolly((1+0.9*explode)/(1+0.9*o));if(explode>0&&activeSys){activeSys=null;setFlow(null);panel.querySelectorAll('[data-sys]').forEach(x=>x.setAttribute('aria-pressed','false'));}setTargets();};
   document.getElementById('rot').onclick=e=>{autoRot=!autoRot;e.target.setAttribute('aria-pressed',autoRot);};
   document.getElementById('xr').onclick=e=>{xray=!xray;e.target.setAttribute('aria-pressed',xray);setTargets();};
-  document.getElementById('cut').onclick=e=>{cutPlane=!cutPlane;e.target.setAttribute('aria-pressed',cutPlane);setTargets();};
   document.getElementById('home').onclick=()=>goView(SYSDEF[tab]&&VIEWS['sys_'+tab]?'sys_'+tab:(tab==='engine'?'engine':'overall'));}
 function animCtl(){return `<h3>Работа</h3><p class="ctl"><button class="chipbtn" id="play" aria-pressed="${playing}">${playing?'Пауза':'Пуск'}</button>
     <label class="slider" for="spd">Скорость <input id="spd" type="range" min="5" max="300" value="${Math.round(speed*100)}"></label>
