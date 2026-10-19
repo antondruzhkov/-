@@ -1353,7 +1353,7 @@ const PITCH=8, VL=10.8, Z_VFACE=193.5, Z_TIP=267.5, Z_PIV=277, RB=14, CAM_Z=295.
 const VALVES=[['in',-24,19.5],['ex',25,16.5]]; // kind, dx from bore axis at the valve seat, head radius
 const VT=8*Math.PI/180, TX=(dx)=>dx+Math.sign(dx)*(Z_TIP-Z_VFACE)*Math.sin(VT); // valves lean apart like a pent roof: tip x offset
 const PK={in:460,ex:270}, WIN=220; // crank degrees: lift peak and duration
-const IY=350, X_PRIM=1035, chX=s=>s>0?961:1013;
+const CHLOW=34, IY=350, X_PRIM=1035, chX=s=>s>0?961:1013;
 const REBUILT=['crank','pistonR','pistonL','camsR','camsL','camchains','oilpump','balancer'];
 const NEW=[];
 
@@ -1477,35 +1477,48 @@ const heads={};
 /* ================= timing chains ================= */
 const gT=P.camchains.g;
 P.camchains.desc='Привод ГРМ спереди мотора под крышкой цепей (BMW 11_4277, 11_4267): у каждой цепи светлая натяжная планка на оси, её поджимает гидравлический натяжитель, вкрученный снаружи, а с другой стороны цепь идёт по рёбристой успокоительной планке. звёздочка коленвала Z24 через короткую цепь крутит большую звёздочку Z48 на промежуточном валу под коленвалом, поэтому он вращается в два раза медленнее. От промежуточного вала две цепи идут вверх к головкам и крутят нижние распредвалы (звёздочки Z22 и Z22). На каждой цепи гидравлический натяжитель с подвижным башмаком и неподвижная направляющая. Натягивать вручную ничего не нужно.';
-function beltPath(c1,r1,c2,r2){const dy=c2[0]-c1[0],dz=c2[1]-c1[1],d=Math.hypot(dy,dz),ph=Math.atan2(dz,dy),b=Math.asin((r1-r2)/d);
+/* chain path around two sprockets. Each straight run can be bowed inward by a curved rail (bow1 on the c1->c2 run, bow2 on the
+   c2->c1 run, mm): the chain leaves the sprocket a little further round and follows a smooth curve (cubic Bezier) to the other one,
+   like it does on the curved sliding face of the BMW guide and tensioner rails. */
+function beltPath(c1,r1,c2,r2,bow1,bow2){const dy=c2[0]-c1[0],dz=c2[1]-c1[1],d=Math.hypot(dy,dz),ph=Math.atan2(dz,dy),b=Math.asin((r1-r2)/d);
   const e=a=>[Math.cos(a),Math.sin(a)],P=(c,r,a)=>[c[0]+r*Math.cos(a),c[1]+r*Math.sin(a)];
-  const a1=ph+Math.PI/2+b,a2=ph-Math.PI/2-b,seg=[];
-  seg.push({t:'L',p:P(c1,r1,a1),q:P(c2,r2,a1)});
-  seg.push({t:'A',c:c2,r:r2,a0:a1,a1:a2});
-  seg.push({t:'L',p:P(c2,r2,a2),q:P(c1,r1,a2)});
-  seg.push({t:'A',c:c1,r:r1,a0:a2,a1:a1-2*Math.PI});
-  seg.forEach(sg=>{sg.len=sg.t==='L'?Math.hypot(sg.q[0]-sg.p[0],sg.q[1]-sg.p[1]):Math.abs(sg.a1-sg.a0)*sg.r;});
-  const len=seg.reduce((a,b)=>a+b.len,0);
-  const at=(s)=>{s=((s%len)+len)%len;for(const sg of seg){if(s<=sg.len){const f=s/sg.len;
-      if(sg.t==='L'){const ty=(sg.q[0]-sg.p[0])/sg.len,tz=(sg.q[1]-sg.p[1])/sg.len;return [sg.p[0]+ty*s,sg.p[1]+tz*s,ty,tz];}
-      const a=sg.a0+(sg.a1-sg.a0)*f;return [sg.c[0]+sg.r*Math.cos(a),sg.c[1]+sg.r*Math.sin(a),Math.sin(a),-Math.cos(a)];}s-=sg.len;}return at(0);};
-  return {len,at,seg,n1:e(a1),n2:e(a2)};}
+  const a1=ph+Math.PI/2+b,a2=ph-Math.PI/2-b;
+  function run(cA,rA,cB,rB,al,bow){const p=P(cA,rA,al),q=P(cB,rB,al),L=Math.hypot(q[0]-p[0],q[1]-p[1]),u=[(q[0]-p[0])/L,(q[1]-p[1])/L],n=e(al);
+    if(!bow)return {aA:al,aB:al,pts:[p,q],nrm:n};
+    const s=(-u[1]*n[0]+u[0]*n[1])<0?1:-1,dl=Math.asin(Math.min(.5,4*bow/L));
+    const aA=al+s*dl,aB=al-s*dl,p0=P(cA,rA,aA),p3=P(cB,rB,aB);
+    const rot=(v,t)=>[v[0]*Math.cos(t)-v[1]*Math.sin(t),v[0]*Math.sin(t)+v[1]*Math.cos(t)],tA=rot(u,s*dl),tB=rot(u,-s*dl);
+    const p1=[p0[0]+tA[0]*L/3,p0[1]+tA[1]*L/3],p2=[p3[0]-tB[0]*L/3,p3[1]-tB[1]*L/3],pts=[];
+    for(let i=0;i<=60;i++){const t=i/60,m=1-t;pts.push([m*m*m*p0[0]+3*m*m*t*p1[0]+3*m*t*t*p2[0]+t*t*t*p3[0],m*m*m*p0[1]+3*m*m*t*p1[1]+3*m*t*t*p2[1]+t*t*t*p3[1]]);}
+    return {aA,aB,pts,nrm:n};}
+  const R1=run(c1,r1,c2,r2,a1,bow1||0),R2=run(c2,r2,c1,r1,a2,bow2||0);
+  const arc=(c,r,f,t)=>{const k=Math.max(2,Math.ceil(Math.abs(t-f)*r/1.5)),o=[];for(let i=0;i<=k;i++)o.push(P(c,r,f+(t-f)*i/k));return o;};
+  const poly=[].concat(R1.pts,arc(c2,r2,R1.aB,R2.aA).slice(1),R2.pts.slice(1),arc(c1,r1,R2.aB,R1.aA-2*Math.PI).slice(1,-1));
+  const cum=[0];for(let i=1;i<=poly.length;i++){const A=poly[i-1],B=poly[i%poly.length];cum.push(cum[i-1]+Math.hypot(B[0]-A[0],B[1]-A[1]));}
+  const len=cum[cum.length-1];
+  const at=(s)=>{s=((s%len)+len)%len;let lo=0,hi=poly.length;while(hi-lo>1){const m=(lo+hi)>>1;if(cum[m]<=s)lo=m;else hi=m;}
+    const A=poly[lo],B=poly[(lo+1)%poly.length],sl=cum[lo+1]-cum[lo]||1,f=(s-cum[lo])/sl,ty=(B[0]-A[0])/sl,tz=(B[1]-A[1])/sl;return [A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f,ty,tz];};
+  /* a run as a curve: point at fraction f, offset d along the outward normal */
+  const runAt=(R,f,dd)=>{const N=R.pts.length-1,x=Math.min(N-1e-6,Math.max(0,f*N)),i=Math.floor(x),g=x-i,A=R.pts[i],B=R.pts[Math.min(N,i+1)];
+    let ty=B[0]-A[0],tz=B[1]-A[1];const l=Math.hypot(ty,tz)||1;ty/=l;tz/=l;let ny=-tz,nz=ty;if(ny*R.nrm[0]+nz*R.nrm[1]<0){ny=-ny;nz=-nz;}
+    return [A[0]+(B[0]-A[0])*g+ny*dd,A[1]+(B[1]-A[1])*g+nz*dd,ny,nz];};
+  return {len,at,runs:[R1,R2],runAt,n1:e(a1),n2:e(a2)};}
 const CHAINS=[];
-function chain(x,c1,Z1,c2,Z2,speed,tens){const r1=Z1*PITCH/(2*Math.PI),r2=Z2*PITCH/(2*Math.PI);const bp=beltPath(c1,r1,c2,r2);
+function chain(x,c1,Z1,c2,Z2,speed,tens,bows){const r1=Z1*PITCH/(2*Math.PI),r2=Z2*PITCH/(2*Math.PI);const bp=beltPath(c1,r1,c2,r2,...(bows||[0,0]));
   const n=Math.round(bp.len/PITCH),pitch=bp.len/n;
   const plate=new THREE.InstancedMesh(new THREE.BoxGeometry(11,5.2,pitch*1.08),mat('steel'),n),roll=new THREE.InstancedMesh(new THREE.CylinderGeometry(2.6,2.6,8,8).rotateZ(Math.PI/2),mat('satin'),n);
   [plate,roll].forEach(m=>{m.userData.part='camchains';gT.add(m);pickables.push(m);});
   /* rails along both straight runs (BMW 11_4277): tensioner rail on one run, pivoting at its end and pressed by the hydraulic
      tensioner screwed in from outside; ribbed guide rail on the other run */
-  [[bp.seg[0],bp.n1,tens],[bp.seg[2],bp.n2,!tens]].forEach(([sg,nrm,isT])=>{const N=24,A=[],B=[];
-    const P=(f,d)=>[sg.p[0]+(sg.q[0]-sg.p[0])*f+nrm[0]*d,sg.p[1]+(sg.q[1]-sg.p[1])*f+nrm[1]*d];
+  [[bp.runs[0],tens],[bp.runs[1],!tens]].forEach(([R,isT])=>{const N=24,A=[],B=[];
+    const P=(f,d)=>bp.runAt(R,f,d);
     for(let i=0;i<=N;i++){const f=0.1+0.8*i/N,b=1-Math.pow(2*(f-0.5)/0.8,2);
       A.push(P(f,3.6));B.push(P(f,isT?9.5+5*b:9+(i%3===0?5.5:2)));}
     const out=A.concat(B.reverse());const geo=prismYZ(out,null,isT?12:13);
     const rail=M(isT?'ceramic':'brass',geo,[x,0,0]);rail.userData.part='camchains';gT.add(rail);pickables.push(rail);
     if(isT){const pv=P(0.06,8),tp=P(0.42,15);
       const boss=M('steel',new THREE.CylinderGeometry(5,5,16,14).rotateZ(Math.PI/2),[x,pv[0],pv[1]]);boss.userData.part='camchains';gT.add(boss);pickables.push(boss);
-      const tg=new THREE.Group();tg.position.set(x,tp[0],tp[1]);tg.quaternion.setFromUnitVectors(new V3(0,1,0),new V3(0,nrm[0],nrm[1]));
+      const tg=new THREE.Group();tg.position.set(x,tp[0],tp[1]);tg.quaternion.setFromUnitVectors(new V3(0,1,0),new V3(0,tp[2],tp[3]));
       tg.add(M('chrome',new THREE.CylinderGeometry(4.5,4.5,10,14),[0,4,0]));                                   // plunger on the rail
       tg.add(M('satin',new THREE.CylinderGeometry(8,8,34,18),[0,24,0]));                                        // tensioner body
       for(let k=0;k<6;k++)tg.add(M('satin',new THREE.TorusGeometry(8.2,.8,6,18).rotateX(Math.PI/2),[0,26+k*2.6,0])); // thread M24x1,5
@@ -1541,7 +1554,10 @@ const BAL=(function(){const g=P.balancer.g;P.balancer.g.visible=true;P.balancer.
   function set(theta){const a=-theta*DEG;cg.rotation.x=a;bg.rotation.x=meshAngle(a,Z,Z,Math.atan2(0,IY-CY));}
   return {set};})();
 const PRIM=chain(X_PRIM,[CY,0],24,[IY,0],48,1,true);
-const CAMCH={R:chain(chX(1),[IY,0],22,[CY-CAM_DY,CAM_Z],22,.5,false),L:chain(chX(-1),[IY,0],22,[CY-CAM_DY,-CAM_Z],22,.5,true)};
+/* the lower run of each cam chain is pulled up by the curved rail so that the chain and rail stay inside the cylinder (its underside
+   in the scan is at y 370-380 in the chain plane); the upper run is only slightly curved. First number: run c1->c2 (lower on the right
+   cylinder, upper on the left), second: the other run. */
+const CAMCH={R:chain(chX(1),[IY,0],22,[CY-CAM_DY,CAM_Z],22,.5,false,[CHLOW,6]),L:chain(chX(-1),[IY,0],22,[CY-CAM_DY,-CAM_Z],22,.5,true,[6,CHLOW])};
 /* oil pump: twin gerotor at the rear end of the intermediate shaft (BMW 11_4216) */
 const gP=P.oilpump.g;P.oilpump.desc='Масляный насос: два героторных насоса (внутренний ротор и наружное кольцо) на заднем конце промежуточного вала, вращаются вдвое медленнее коленвала. Один качает масло под давлением к подшипникам и головкам, второй откачивает. Заборник из поддона снизу.';
 const rotors=[];
