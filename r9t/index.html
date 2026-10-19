@@ -1593,6 +1593,9 @@ set(0,false);
 /* feeler gauge target for valve k (right cylinder): gap between cam base circle and rocker pad */
 function gapPoint(i){const [kind,dx]=VALVES[i%2],u=i<2?1:-1;return new V3(AX.R.x+TX(dx),CY+u*CAM_DY,Z_PIV+4.6+0.12);}
 return {set,gapPoint,heads,pistons};})();
+/* sub tags so the catalog can show just the conrods, pistons, camshafts or valves */
+['R','L'].forEach(k=>{E2.pistons[k].rod.userData.sub='rod';E2.pistons[k].pg.userData.sub='piston';
+  E2.heads[k].cams.forEach(c=>c.g.userData.sub='cam');E2.heads[k].valves.forEach(v=>[v.vg,v.spr,v.piv].forEach(o=>{if(o)o.userData.sub='valve';}));});
 
 /* ===================== DRY CLUTCH (BMW 21_0195, 21_0307) =====================
    On the crankshaft rear flange, inside the crankcase bell (front of gearbox), coaxial with the crank:
@@ -2288,6 +2291,30 @@ function altCoils(){if(!GLB_OK)return;['L','R'].forEach(s=>{let use=false;
 let elecMode=false,seatOff=false;
 const ELECSET=new Set(['harness','underseat','battery','ecu','relays','diag','powerCables','regulator','alternator','starter','coilL','coilR','sensors','lambda','flap','abs','wheelSensors','instrument','light','horn','tail','standSwitch','fuelPump','iat']);
 const USEAT=new Set(['battery','ecu','relays','diag','powerCables','underseat','harness','abs']);
+/* ---------- catalog: show a diagram's parts on the model ----------
+   CATSHOW = {label, parts: {partId: [sub tags] | null}}. Only these parts are drawn solid and pulsing; the scanned shell stays as a
+   faint outline for orientation, everything else is hidden. A sub tag (rod, piston, cam, valve) keeps only that piece of a part. */
+let CATSHOW=null;const catHidden=[];
+function subOf(o,root){while(o&&o!==root){if(o.userData&&o.userData.sub)return o.userData.sub;o=o.parent;}return null;}
+function applyCatShow(){catHidden.splice(0).forEach(o=>{o.visible=true;});
+  if(!CATSHOW)return;
+  Object.values(P).forEach(p=>{const t=p.tgt,want=CATSHOW.parts[p.id];
+    if(want!==undefined){t.op=1;t.hl=1;t.off=0;t.sub=0;
+      if(want&&want.length)p.g.traverse(o=>{if(o.isMesh&&o.visible&&!o.userData.scan){const s=subOf(o,p.g);if(want.indexOf(s)<0){o.visible=false;catHidden.push(o);}}});}
+    else{t.hl=0;t.off=0;t.sub=0;t.op=(p.scan&&!p.gone&&p.layer!=='tool'&&p.layer!=='fx')?0.06:0;}});}
+function catFocusView(){if(!CATSHOW)return;const b=new THREE.Box3();
+  Object.keys(CATSHOW.parts).forEach(id=>{const p=P[id];if(!p)return;p.g.updateMatrixWorld(true);
+    p.g.traverse(o=>{if(!o.isMesh||!o.visible||!o.geometry)return;if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
+      if(o.isInstancedMesh){const q=new THREE.Matrix4(),w=new THREE.Matrix4();for(let i=0;i<o.count;i+=Math.max(1,o.count>>4)){o.getMatrixAt(i,q);w.multiplyMatrices(o.matrixWorld,q);b.union(o.geometry.boundingBox.clone().applyMatrix4(w));}}
+      else b.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));});});
+  if(b.isEmpty())return;const c=b.getCenter(new V3()),r=Math.max(b.getSize(new V3()).length()/2,1.6);
+  const dir=camera.position.clone().sub(controls.target).normalize();if(dir.y<0.15){dir.y=0.35;dir.normalize();}
+  const p=c.clone().addScaledVector(dir,Math.max(controls.minDistance+.3,r*3.2));
+  document.getElementById('tag3d').textContent='ВИД: '+CATSHOW.label;
+  if(RM){camera.position.copy(p);controls.target.copy(c);fly=null;return;}
+  fly={p0:camera.position.clone(),t0:controls.target.clone(),p,t:c,s:performance.now(),d:900};}
+function setCatShow(v){CATSHOW=v;autoRot=false;const rb=document.getElementById('rot');if(rb)rb.setAttribute('aria-pressed','false');
+  picked=null;setTargets();if(v)catFocusView();else goView('overall');}
 function setTargets(){altCoils();
   Object.values(P).forEach(p=>{const t=p.tgt;t.hl=0;t.off=0;t.op=1;
     t.exT=p.ex;t.sub=0;
@@ -2331,11 +2358,12 @@ function setTargets(){altCoils();
     }
   });
   const scopeAll=tab==='bike'||tab==='cat';Object.values(P).forEach(p=>setClip(p,cutPlane&&!!p.scan&&(scopeAll||(SYSDEF[tab]&&SYSDEF[tab].set.has(p.id)))&&!activeSys));
+  if(tab==='cat'&&CATSHOW)applyCatShow();else if(catHidden.length)applyCatShow();
   if(hoverId&&P[hoverId]&&P[hoverId].tgt.op>0.5)P[hoverId].tgt.hl=Math.max(P[hoverId].tgt.hl,0.75);
 }
 
 const TABS=['bike','engine','drive','brakes','elec','dash','service','cat'];
-function setTab(t){tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}TABS.forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
+function setTab(t){if(t!=='cat')CATSHOW=null;tab=t;if(t!=='bike'&&activeSys){activeSys=null;setFlow(null);}TABS.forEach(x=>document.getElementById('t-'+x).setAttribute('aria-selected',x===t));
   if(t==='dash')picked=null;else if(picked&&SYSDEF[t]&&!SYSDEF[t].set.has(picked))picked=null;
   const dEl=document.getElementById('dash');dEl.hidden=t!=='dash';
   if(t==='dash'){renderPanel();try{localStorage.setItem('r9t-tab',t);}catch(e){}if(window.DASH)DASH.onShow();return;}
@@ -2404,8 +2432,9 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',appl
 new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 let startTab='bike';try{const s=localStorage.getItem('r9t-tab');if(TABS.indexOf(s)>=0)startTab=s;}catch(e){}
 const hash=(location.hash||'').slice(1);if(TABS.indexOf(hash)>=0)startTab=hash;
-resize();setTab(startTab);if(fly){camera.position.copy(fly.p);controls.target.copy(fly.t);fly=null;}
-Object.values(P).forEach(p=>{p.cur.op=p.tgt.op;p.cur.off=p.tgt.off;});
+/* start after the whole script has run: the catalog module (CAT) is defined further down, and the remembered tab may be the catalog */
+queueMicrotask(()=>{resize();setTab(startTab);if(fly){camera.position.copy(fly.p);controls.target.copy(fly.t);fly=null;}
+Object.values(P).forEach(p=>{p.cur.op=p.tgt.op;p.cur.off=p.tgt.off;});});
 
 /* ---------- scanned body: detailed 3D model (CC-BY 4.0, Nieve5677 on Sketchfab), split into our parts ---------- */
 const GLBMAT={'black.069':'black','chrome.069':'chrome','mattemetal.030':'brushed','clearglass.068':'lensG','white.048':'alu','gray.003':'headcov','blue.048':'blue','carpaint.068':'paint','redglass.068':'lensR','orangeglass.052':'lensA','red.014':'red','rim_second.005':'rimblk','brakedisk.049':'disc','mirror.062':'chrome','tire.068':'rubber','LicPlate_black.021':'black','LicPlate_white.021':'black','LicPlate_blue.021':'black','LicPlate_yellow.021':'black'};
@@ -2503,21 +2532,29 @@ const MAP=[[/^11.*CRANKSHAFT/,'crank'],[/^11.*CONNECTING ROD|^11.*PISTON/,'pisto
  [/^62/,'instrument'],[/^63.*TAIL/,'tail'],[/^63/,'light']];
 let DATA=null,cur=null,q='',open=null;setTimeout(()=>load(),3000);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const partOf=d=>{const k=d.id+' '+d.t;for(const [re,id] of MAP)if(re.test(k)&&P[id])return id;return null;};
+/* every diagram -> the 3D parts it covers (checked by hand against the part lists); id:tag keeps one piece of a part */
+const LINK={"02_0112":"oilfilter drainplug filler sightglass","02_0117":"fork","02_0146":"brakeF brakeR","02_0411":"filler sightglass","11_2806":"pistonR:rod pistonL:rod","11_3595":"cylR cylL","11_3669":"crank","11_4200":"crankcase sightglass","11_4202":"pistonR:piston pistonL:piston","11_4206":"breather","11_4209":"balancer","11_4215":"oilfilter drainplug","11_4216":"oilpump","11_4218":"crankcase","11_4267":"camchains","11_4277":"camchains","11_4289":"coverR coverL","11_4292":"headR headL","11_4293":"headR headL","11_4294":"camsR:valve camsL:valve","11_4432":"beltcover","11_4566":"crankcase cylR cylL headR headL crank pistonR pistonL","11_4589":"crankcase cylR cylL headR headL coverR coverL beltcover crank pistonR pistonL camsR camsL camchains balancer oilpump","11_5104":"crankcase","11_6541":"camsR:cam camsL:cam","11_7101":"coverR coverL","12_1259":"plugR plugL coilR coilL connR connL","12_2110":"starter","12_2111":"alternator belt","12_2129":"harness","12_2359":"sensors","12_2365":"sensors","12_2366":"iat","12_2368":"sensors","12_2412":"sensors","12_2413":"sensors","13_1118":"airbox airfilter intakeDuct","13_1391":"throttle","13_1516":"fuelLine","13_1705":"ecu","13_1876":"throttle","13_1979":"ecu","16_0907":"fuelCap","16_0909":"tank","16_1098":"canister","16_1099":"fuelPump","16_1121":"tank","17_0730":"cooler oilLines","18_0529":"headers collector lambda","18_1206":"flap","18_1870":"silencers","21_0195":"clutch","21_0307":"clutchSlave","23_0964":"shiftLink","23_1108":"gears","23_1109":"shiftMech","23_1110":"shiftMech","23_1114":"gearbox","23_1115":"gearbox gears shiftMech","23_1120":"gearbox","31_1297":"fork","31_1302":"fork","31_1303":"fork","31_1304":"triple","32_2466":"triple","32_2481":"bars","32_2483":"bars throttle","32_2498":"resF","32_2499":"clutchMaster","32_2701":"bars","32_2752":"bars","32_2753":"bars","32_2754":"bars","33_1226":"swingarm pivots","33_1622":"finaldrive fdgear fdfill fddrain","33_1626":"finaldrive fdgear","33_1627":"finaldrive fdgear","33_1651":"driveshaft","33_1873":"strut","33_2050":"shock","34_1393":"brakeR","34_1994":"resF resR clutchMaster","34_2092":"abs","34_2427":"brakeF","34_2434":"rearMaster resR","34_2435":"wheelSensors","34_2436":"wheelSensors","34_2437":"brakeLines","34_2438":"brakeLines","35_0478":"rearMaster","36_2298":"wheelF wheelR","36_2300":"wheelR","36_2301":"wheelF","36_2309":"wheelF","36_2310":"wheelR","36_2575":"wheelF wheelR","46_1535":"frame","46_1553":"throttle","46_1554":"frame seat","46_1556":"tail","46_1829":"airbox","46_1889":"frame","46_1891":"frame","46_1892":"standSwitch","46_1894":"fender","46_1901":"instrument","46_1902":"bars","46_1903":"pegs","46_2027":"pegs","46_2028":"pegs","46_2062":"pegs","51_0602":"bars","51_3316":"bars","51_3485":"bars","51_4053":"bars","51_4093":"fender","51_9980":"fender","52_4240":"seat","61_1998":"harness","61_2484":"harness","61_2485":"harness","61_3019":"diag","61_3065":"horn","61_3273":"harness loom underseat","61_3642":"standSwitch","61_3928":"battery","61_5083":"underseat","61_5196":"underseat","61_5331":"underseat","61_5658":"standSwitch","61_5758":"underseat relays","61_5852":"harness","61_5853":"harness","61_5909":"harness","61_5912":"diag","61_5935":"relays","61_6046":"rearMaster","61_6232":"harness","61_6289":"harness","61_6469":"harness","61_6470":"harness","61_6475":"harness","61_6476":"harness","61_6638":"diag","61_7021":"bars","61_7041":"bars","61_7044":"bars","61_7057":"bars","61_7058":"bars","61_7797":"harness","62_0636":"instrument","62_0642":"instrument","62_0644":"instrument","63_1582":"light","63_1756":"tail","63_1823":"light","63_1824":"tail","63_1827":"tail","63_2131":"light","63_2252":"light","63_2253":"light","63_2308":"tail","65_3038":"underseat","65_3230":"underseat","77_0029":"filler","77_0350":"coverR coverL","77_0351":"coverR coverL","77_0599":"bars","77_0659":"bars","77_0661":"light","77_0781":"tank","77_0835":"headers","77_0836":"coverR coverL","77_0837":"cooler","77_0840":"wheelF","77_0842":"bars","77_0843":"bars resF clutchMaster","77_0844":"pegs","77_0845":"throttle","77_0847":"bars","77_0850":"seat","77_0851":"seat","77_0852":"seat","77_0855":"coverR coverL","77_0859":"silencers","77_0867":"pegs","77_0869":"silencers","77_0870":"silencers","77_0879":"silencers","77_0880":"instrument","77_0882":"instrument","77_0886":"airbox","77_0887":"underseat","77_0912":"coverR coverL","77_0913":"coverR coverL","77_0950":"wheelF","77_0969":"fender","77_0978":"bars","77_0984":"airbox","77_1009":"instrument","77_1030":"light","77_1193":"beltcover","77_1306":"pegs","77_1344":"resF clutchMaster","77_1392":"wheelR","77_1396":"wheelR","77_0885":"triple","77_0857":"tank"};
+function linkOf(d){const L=LINK[d.id];if(!L){const k=d.id+' '+d.t;for(const [re,id] of MAP)if(re.test(k)&&P[id])return {[id]:null};return null;}
+  const o={};L.split(' ').forEach(x=>{const [id,tag]=x.split(':');if(!P[id]||P[id].gone)return;if(tag){(o[id]=o[id]||[]).push(tag);}else o[id]=null;});
+  return Object.keys(o).length?o:null;}
+const partOf=d=>{const o=linkOf(d);return o?Object.keys(o)[0]:null;};
 async function load(){if(DATA)return DATA;try{DATA=await (await fetch('catalog.json')).json();}catch(e){DATA=[];}return DATA;}
 function rowsHTML(d){return `<table class="cat"><thead><tr><th>№</th><th>Номер BMW</th><th>Деталь</th><th>Шт</th></tr></thead><tbody>${d.r.map(r=>`<tr><td>${esc(r[0])}</td><td class="pn">${esc(r[1])}</td><td>${esc(r[2])}${r[4]?`<small>${esc(r[4])}</small>`:''}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table>${d.n&&d.n.length?`<p class="src">${d.n.map(esc).join('<br>')}</p>`:''}`;}
 function list(){const ql=q.trim().toLowerCase().replace(/\s+/g,'');
   const hits=DATA.filter(d=>!ql||(d.id+d.t).toLowerCase().replace(/\s+/g,'').includes(ql)||d.r.some(r=>(r[1]+r[2]).toLowerCase().replace(/\s+/g,'').includes(ql)));
   const by={};hits.forEach(d=>{(by[d.id.slice(0,2)]=by[d.id.slice(0,2)]||[]).push(d);});
-  return Object.keys(by).sort().map(g=>`<h3>${g} · ${esc(GROUPS[g]||'')}</h3><ul class="ops">${by[g].map(d=>{const pid=partOf(d);return `<li><button class="op catd" data-id="${d.id}"><b>${esc(d.t)}</b><span class="sub">${d.id} · ${d.r.length} поз.${pid?' · есть в 3D':''}</span></button>${open===d.id?`<div class="catbody">${pid?`<button class="chipbtn" data-show="${pid}">Показать на модели</button> `:''}<a class="chipbtn" target="_blank" rel="noopener" href="https://shop.maxbmw.com/fiche/DiagramsMain.aspx?vid=58482#${d.id}">Схема BMW</a>${rowsHTML(d)}</div>`:''}</li>`;}).join('')}</ul>`).join('')||'<p class="lead">Ничего не нашлось.</p>';}
+  return Object.keys(by).sort().map(g=>`<h3>${g} · ${esc(GROUPS[g]||'')}</h3><ul class="ops">${by[g].map(d=>{const pid=partOf(d);return `<li><button class="op catd" data-id="${d.id}"><b>${esc(d.t)}</b><span class="sub">${d.id} · ${d.r.length} поз.${pid?' · есть в 3D':''}</span></button>${open===d.id?`<div class="catbody">${pid?`<button class="chipbtn" data-show="${d.id}" aria-pressed="${!!(CATSHOW&&CATSHOW.id===d.id)}">${CATSHOW&&CATSHOW.id===d.id?'Убрать подсветку':'Показать на модели'}</button> `:'<span class="sub">Этой детали нет на модели (аксессуар или расходник).</span> '}<a class="chipbtn" target="_blank" rel="noopener" href="https://shop.maxbmw.com/fiche/DiagramsMain.aspx?vid=58482#${d.id}">Схема BMW</a>${rowsHTML(d)}</div>`:''}</li>`;}).join('')}</ul>`).join('')||'<p class="lead">Ничего не нашлось.</p>';}
 function render(el){if(!DATA){el.innerHTML='<p class="lead">Загружаю каталог...</p>';load().then(()=>render(el));return;}
   el.innerHTML=`<h2>Каталог деталей BMW</h2><p class="lead">Все ${DATA.length} разделов официального каталога для R nineT Scrambler K23 (2015-2020): номер каждой детали, количество, замены номеров и оговорки «только для». Ищи по названию по-английски или по номеру.</p>
    <div class="search"><input id="catq" type="search" placeholder="например 11 12 или SPARK PLUG" value="${esc(q)}" aria-label="Поиск по каталогу"></div><div id="catl">${list()}</div>`;
   const inp=el.querySelector('#catq');inp.oninput=()=>{q=inp.value;el.querySelector('#catl').innerHTML=list();bind(el);};bind(el);}
-function bind(el){el.querySelectorAll('.catd').forEach(b=>b.onclick=()=>{open=open===b.dataset.id?null:b.dataset.id;el.querySelector('#catl').innerHTML=list();bind(el);
-    const d=DATA.find(x=>x.id===open);const pid=d&&partOf(d);if(pid){picked=pid;setTargets();}});
-  el.querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{picked=b.dataset.show;setTargets();});}
-return {render,openDiag:(id)=>{open=id;q='';setTab('cat');},partFor:(id)=>DATA?DATA.filter(d=>partOf(d)===id):[]};})();
+function show(d){const parts=d&&linkOf(d);setCatShow(parts?{id:d.id,label:d.id+' '+d.t,parts}:null);}
+function bind(el){el.querySelectorAll('.catd').forEach(b=>b.onclick=()=>{open=open===b.dataset.id?null:b.dataset.id;
+    const d=DATA.find(x=>x.id===open);if(CATSHOW&&(!d||CATSHOW.id!==d.id))show(d&&linkOf(d)?d:null);
+    el.querySelector('#catl').innerHTML=list();bind(el);});
+  el.querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{const d=DATA.find(x=>x.id===b.dataset.show);show(CATSHOW&&CATSHOW.id===d.id?null:d);
+    el.querySelector('#catl').innerHTML=list();bind(el);});}
+return {render,openDiag:(id)=>{open=id;q='';setTab('cat');},partFor:(id)=>DATA?DATA.filter(d=>{const o=linkOf(d);return o&&id in o;}):[]};})();
 
 window.THREE=THREE;window.__r9t={setTab,openOp,P,goView,setStep:(i)=>{curStep=i;renderStep();setTargets();goView(curOp.steps[i].v);},goViewRaw:(V)=>{camera.position.set(...V.p).multiplyScalar(S);controls.target.set(...V.t).multiplyScalar(S);fly=null;}};
 })();
