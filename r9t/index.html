@@ -927,8 +927,8 @@ const gSh=part('shock',{name:'Задний амортизатор',desc:'Цен�
   cyl(gSh,14,28,'z',A,'alu',16);cyl(gSh,14,28,'z',B,'alu',16);})();
 
 /* oil service points */
-const gF1=part('oilfilter',{name:'Масляный фильтр',desc:'Спереди внизу картера. BMW/Mahle 11 42 7 673 541 или Hiflofiltro HF164. Момент 11 Нм, кольцо смазать маслом.',sys:'Смазка',layer:'drive',ex:[360,-60,0]});
-lathe(gF1,[[30,0],[38,4],[38,64],[34,70],[0.1,72]],'x',[928,300,0],'blue',36);
+const gF1=part('oilfilter',{name:'Масляный фильтр',desc:'Спереди внизу картера, за передней крышкой: чтобы до него добраться, снимают переднюю крышку. BMW/Mahle 11 42 7 673 541 или Hiflofiltro HF164. Момент 11 Нм, кольцо смазать маслом.',sys:'Смазка',layer:'drive',ex:[360,-60,0]});
+lathe(gF1,[[30,0],[38,4],[38,64],[34,70],[0.1,72]],'x',[880,300,0],'satin',36);
 const gDr=part('drainplug',{name:'Сливная пробка масла',desc:'Внизу картера. Резьба M16x1,5, момент 32 Нм, новое уплотнительное кольцо.',sys:'Смазка',layer:'drive',ex:[0,-260,0]});
 cyl(gDr,13,14,'y',[800,226,0],'steel',6);cyl(gDr,15,2,'y',[800,234,0],'copper',24);
 const gSG=part('sightglass',{name:'Окошко уровня масла',desc:'Слева внизу картера. Уровень между MIN и MAX на прогретом двигателе, мотоцикл ровно, через 5 минут после остановки.',sys:'Смазка',layer:'drive',ex:[0,0,-260]});
@@ -1566,7 +1566,7 @@ const M=(k,geo,pos)=>{const m=new THREE.Mesh(geo,mat(k,true));if(pos)m.position.
 const reg=(g,id,o)=>{o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}});g.add(o);return o;};
 ['driveshaft'].forEach(id=>{const p=P[id];if(!p)return;delete OFFS[id];for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.part===id)pickables.splice(i,1);
   while(p.g.children.length)p.g.remove(p.g.children[0]);p.g.position.set(0,0,0);});
-const FJ=new V3(455,369,58), RJ=new V3(168,318,128), PIN=new V3(84,312,138), AX=new V3(0,315,0);
+const FJ=new V3(455,369,58), RJ=new V3(168,315,118), PIN=new V3(50,315,118), AX=new V3(0,315,0);
 function gpart(id,name,desc){const g=new THREE.Group();g.name=id;root.add(g);P[id]={id,g,name,desc,sys:'Трансмиссия',layer:'drive',ex:new V3(0,0,0),cur:{off:0,op:1,hl:0},tgt:{off:0,op:1,hl:0},ops:['fd'],home:new V3()};return g;}
 /* universal joint: two yokes + cross */
 function ujoint(){const g=new THREE.Group();
@@ -1592,35 +1592,37 @@ reg(gS,'driveshaft',spin);
 /* ---- final drive internals ---- */
 const gF=gpart('fdgear','Шестерни главной передачи','Внутри корпуса редуктора (BMW 33_1622, 33_1626, 33_1627): ведущая шестерня (пинион, 11 зубьев) приходит от заднего шарнира кардана и сидит в двух подшипниках: большом коническом роликовом и игольчатом 32x16. Её поджимает резьбовое кольцо и гайка M24x1,5, а положение в корпусе задают шайбы 1,50-2,50 мм. Пинион крутит гипоидную ведомую шестерню (32 зуба, 32 : 11 = 2,91), она сидит на большом шариковом подшипнике и игольчатой втулке. Ведомая шестерня отдаёт вращение фланцу с пятью приливами, на него пятью болтами крепится колесо (60 Нм, крест-накрест). Зазор в зацеплении задают регулировочные шайбы 0,70-1,25 мм. Масло: Hypoid Axle Oil G3, заливная пробка M12x1,5 с медной шайбой, сливная M12x1 с кольцом. Датчик скорости колеса ABS стоит в корпусе. Сапун наверху выпускает воздух при нагреве.');
 // pinion: shaft along X from the rear joint to the crown
-const pin=along(RJ,PIN);gF.add(pin);const pinR=new THREE.Group();pin.add(pinR);const PL=RJ.distanceTo(PIN);
-pinR.add(M('steel',new THREE.CylinderGeometry(10,10,PL,16).rotateZ(Math.PI/2),[PL/2,0,0]));
-{const t=[];const Z=11;for(let i=0;i<=Z*8;i++){}                                                            // spiral bevel pinion (cone)
-  const pg=new THREE.CylinderGeometry(15,26,30,Z*2,1);pg.rotateZ(Math.PI/2);
-  const pa=pg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i),z=pa.getZ(i),a=Math.atan2(z,y),r=Math.hypot(y,z);const k=1+0.09*Math.sign(Math.cos(Z*a+pa.getX(i)*0.06));pa.setY(i,y*k);pa.setZ(i,z*k);}
-  pg.computeVertexNormals();pinR.add(M('steel',pg,[PL-14,0,0]));}
-pinR.add(M('satin',new THREE.CylinderGeometry(24,24,22,24).rotateZ(Math.PI/2),[PL-50,0,0]));                // taper roller bearing
-pinR.add(M('satin',new THREE.CylinderGeometry(14,14,12,20).rotateZ(Math.PI/2),[PL+4,0,0]));                 // needle bearing 32x16
-pinR.add(M('steel',new THREE.CylinderGeometry(15,15,10,6).rotateZ(Math.PI/2),[PL-72,0,0]));                 // nut M24x1,5
+/* pinion: axis along the bike (X), 118 mm out from the centre plane, at wheel-axle height. Its bevel head points at the
+   wheel axle and meshes with the face teeth of the crown wheel, which turns about the axle (Z): longitudinal -> transverse. */
+const PZ=118;
+const pin=new THREE.Group();pin.position.set(0,AX.y,PZ);gF.add(pin);const pinR=new THREE.Group();pin.add(pinR);
+pinR.add(M('steel',new THREE.CylinderGeometry(10,10,RJ.x-86,16).rotateZ(Math.PI/2),[(RJ.x+86)/2,0,0]));     // pinion shaft
+{const Z=11,pg=new THREE.CylinderGeometry(12,22,36,Z*4,1);pg.rotateZ(Math.PI/2);                                // bevel head: wide end at x=86, narrow towards the axle
+  const pa=pg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i),z=pa.getZ(i),a=Math.atan2(z,y),k=1+0.12*Math.sign(Math.cos(Z*a+(pa.getX(i)+18)*0.05));pa.setY(i,y*k);pa.setZ(i,z*k);}
+  pg.computeVertexNormals();pinR.add(M('steel',pg,[68,0,0]));}
+pinR.add(M('satin',new THREE.CylinderGeometry(26,26,22,24).rotateZ(Math.PI/2),[100,0,0]));                     // tapered roller bearing
+pinR.add(M('steel',new THREE.CylinderGeometry(16,16,10,6).rotateZ(Math.PI/2),[122,0,0]));                     // nut M24x1,5
+pinR.add(M('satin',new THREE.CylinderGeometry(9,9,12,16).rotateZ(Math.PI/2),[44,0,0]));                        // pilot needle bearing 32x16 at the nose
 reg(gF,'fdgear',pin);
-// crown gear on the wheel axis (Z), teeth facing the pinion
+/* crown wheel: disc square to the axle, 32 face teeth on the side that faces the pinion */
 const crown=new THREE.Group();crown.position.set(AX.x,AX.y,0);gF.add(crown);
-{const Z=32,pts=[];for(let i=0;i<96;i++){const t=i/96*Math.PI*2;pts.push(new THREE.Vector2(72*Math.cos(t),72*Math.sin(t)));}
-  for(let i=0;i<Z;i++){const t=i/Z*Math.PI*2,tb=new THREE.Mesh(new THREE.BoxGeometry(22,6,7),mat('steel',true));tb.position.set(61*Math.cos(t),61*Math.sin(t),139);tb.rotation.z=t+0.35;crown.add(tb);}
-  const sh=new THREE.Shape(pts);const h=new THREE.Path();h.absarc(0,0,36,0,Math.PI*2,true);sh.holes.push(h);
-  const g=new THREE.ExtrudeGeometry(sh,{depth:16,bevelEnabled:true,bevelThickness:2,bevelSize:2,bevelSegments:1});g.translate(0,0,150-8);crown.add(M('steel',g));
-  const hub=new THREE.CylinderGeometry(36,36,62,32).rotateX(Math.PI/2);crown.add(M('satin',hub,[0,0,118]));
-  crown.add(M('chrome',new THREE.TorusGeometry(46,7,10,40),[0,0,132]));                                   // grooved ball bearing
-  // output flange with 5 lugs + wheel bolts
+{const Z=32,FZ=PZ+14;
+  const ring=new THREE.Shape();ring.absarc(0,0,88,0,Math.PI*2,false);const rh=new THREE.Path();rh.absarc(0,0,40,0,Math.PI*2,true);ring.holes.push(rh);
+  const rg=new THREE.ExtrudeGeometry(ring,{depth:14,bevelEnabled:true,bevelThickness:1.5,bevelSize:1.5,bevelSegments:1,curveSegments:64});rg.translate(0,0,FZ+6);crown.add(M('steel',rg));
+  for(let i=0;i<Z;i++){const t=i/Z*Math.PI*2,tb=new THREE.Mesh(new THREE.BoxGeometry(38,7,8),mat('steel',true));tb.position.set(67*Math.cos(t),67*Math.sin(t),FZ+2);tb.rotation.z=t;crown.add(tb);}
+  crown.add(M('satin',new THREE.CylinderGeometry(40,40,60,32).rotateX(Math.PI/2),[0,0,FZ+50]));               // hub
+  crown.add(M('chrome',new THREE.TorusGeometry(50,7,10,40),[0,0,FZ+40]));                                     // grooved ball bearing
   const f=new THREE.Shape();const lugs=5;for(let i=0;i<lugs*20;i++){const t=i/(lugs*20)*Math.PI*2,r=52+16*Math.max(0,Math.cos(lugs*t))**3;i?f.lineTo(r*Math.cos(t),r*Math.sin(t)):f.moveTo(r*Math.cos(t),r*Math.sin(t));}
   const fh=new THREE.Path();fh.absarc(0,0,26,0,Math.PI*2,true);f.holes.push(fh);
-  const fg=new THREE.ExtrudeGeometry(f,{depth:10,bevelEnabled:false});fg.translate(0,0,82);crown.add(M('satin',fg));
-  for(let i=0;i<lugs;i++){const t=i/lugs*Math.PI*2;crown.add(M('chrome',new THREE.CylinderGeometry(7,7,22,6).rotateX(Math.PI/2),[60*Math.cos(t),60*Math.sin(t),80]));}}
+  const fg=new THREE.ExtrudeGeometry(f,{depth:10,bevelEnabled:false});fg.translate(0,0,72);crown.add(M('satin',fg));        // output flange on the wheel side
+  crown.add(M('satin',new THREE.CylinderGeometry(30,30,FZ-82,24).rotateX(Math.PI/2),[0,0,(FZ+82)/2]));       // hollow hub to the flange
+  for(let i=0;i<lugs;i++){const t=i/lugs*Math.PI*2;crown.add(M('chrome',new THREE.CylinderGeometry(7,7,22,6).rotateX(Math.PI/2),[60*Math.cos(t),60*Math.sin(t),70]));}}
 reg(gF,'fdgear',crown);
 /* ---- Paralever torque strut (black rod L=380, rubber mounting at the final drive) ---- */
 const gR=gpart('strut','Реактивная тяга Paralever','BMW 33 17 7 685 093, чёрная тяга 380 мм под маятником. Передний конец крепится к коробке болтом M10x55, задний к корпусу редуктора болтом M10x60 через резиновую опору. Вместе с маятником и шарниром редуктора образует параллелограмм: при газе и торможении корпус редуктора не проворачивается, и мотоцикл не приседает и не подпрыгивает на кардане.');
 {const a=new V3(430,262,112),b=new V3(56,250,112);const o=along(a,b),Ls=a.distanceTo(b);o.add(M('black',new THREE.CylinderGeometry(9,9,Ls-40,16).rotateZ(Math.PI/2),[Ls/2,0,0]));
   [0,Ls].forEach(x=>o.add(M('rubber',new THREE.CylinderGeometry(17,17,26,20).rotateX(Math.PI/2),[x,0,0])));reg(gR,'strut',o);}
-function set(w){crown.rotation.z=w;rot.rotation.x=-w*2.909;pinR.rotation.x=-w*2.909;}
+function set(w){crown.rotation.z=w;rot.rotation.x=w*2.909;pinR.rotation.x=w*2.909;}
 return {set};})();
 
 Object.values(P).forEach(p=>{p.home.copy(p.g.position);if(OFFS[p.id])p.home.add(new V3(...OFFS[p.id]));
@@ -1680,7 +1682,7 @@ function goView(v,instant){const V=VIEWS[v];if(!V)return;document.getElementById
   fly={p0:camera.position.clone(),t0:controls.target.clone(),p,t,s:performance.now(),d:900};}
 
 /* ---------- engine animation state ---------- */
-let theta=0, speed=1, playing=true, gear=0, cutaway=true;
+let theta=0, speed=1, playing=true, gear=0, cutaway=false;
 function bump(ph,a,b){ph=((ph%720)+720)%720;if(ph<a||ph>b)return 0;return Math.sin(Math.PI*(ph-a)/(b-a));}
 const STROKES=['Рабочий ход','Выпуск','Впуск','Сжатие'];
 function strokeOf(ph){ph=((ph%720)+720)%720;return Math.floor(ph/180);}
@@ -2022,6 +2024,7 @@ function setTargets(){altCoils();
     else if(tab==='engine'){
       if(p.layer==='bike'||p.wasBike||p.layer==='tool'||p.layer==='fx'||p.id==='airfilter'||p.id==='belt'||p.id==='harness'||p.id==='underseat'){t.op=0;if(p.id==='wheelR')t.op=1;}
       if(cutaway&&/^(head|cover|cyl)[LR]$|^crankcase$|^gearbox$|^swingarm$|^finaldrive$|^beltcover$|^throttle$/.test(p.id))t.op=0.16;
+      if(!cutaway&&t.op>0&&!p.scan&&p.id!=='wheelR')t.op=0;   /* closed engine: only the real outer shell, nothing hand-built sticks out */
       if(/^(coil)[LR]$/.test(p.id)&&cutaway)t.op=0.3;
     }
     else if(tab==='service'){
