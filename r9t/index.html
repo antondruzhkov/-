@@ -1746,6 +1746,8 @@ const SYSDEF={
  brakes:{n:'Тормоза',dir:[.75,.55,1],ids:['brakeF','brakeR','resF','resR','abs','brakeLines','rearMaster','wheelSensors'],ctx:['wheelF','wheelR','fork','bars','frame'],always:['resR']},
  elec:{n:'Электрика',dir:[-.55,.75,-1],ids:['harness','underseat','battery','ecu','relays','diag','powerCables','regulator','alternator','starter','coilL','coilR','connL','connR','plugL','plugR','sensors','lambda','flap','abs','wheelSensors','instrument','light','horn','tail','standSwitch','fuelPump','iat','loom'],
    ctx:['frame','tank','seat','crankcase','cylL','cylR','headL','headR','coverL','coverR','gearbox','bars','fork','wheelF','wheelR'],open:true}};
+/* hand-built parts that are outside on the real bike: always shown, like the scanned shell */
+['oilfilter','drainplug','fdfill','fddrain'].forEach(id=>{if(P[id])P[id].ext=true;});
 Object.values(SYSDEF).forEach(S=>{S.set=new Set(S.ids);S.ctxSet=new Set(S.ctx);S.always=S.always||[];});
 const SUBK=0.7;                               /* how far the pieces inside one part fly apart, relative to their distance from the part centre */
 /* every procedural part: put each child into its own wrapper, so the wrapper can move the child away without touching its animation */
@@ -1759,7 +1761,7 @@ function wrapPart(p){const out=[];
     const ok=cs.filter(Boolean);
     if(ok.length>=2){const gc=new THREE.Box3().setFromPoints(ok).getCenter(new V3());
       items.forEach((c,i)=>{if(!cs[i])return;const W=new THREE.Group();W.userData.exw=true;const k=g.children.indexOf(c);g.children.splice(k,1,W);W.parent=g;c.parent=W;W.children.push(c);
-        W.userData.dir=cs[i].clone().sub(gc);out.push(W);});}
+        W.userData.dir=cs[i].clone().sub(gc);if(W.userData.dir.length()>200)W.userData.dir.setLength(200);out.push(W);});}
     items.forEach(c=>{if(!c.isMesh&&!c.isLine)rec(c);});};
   rec(p.g);p.wraps=out;}
 root.updateMatrixWorld(true);
@@ -1778,7 +1780,7 @@ function computeSys(){const all=new THREE.Box3(),boxes={};
   Object.entries(scopes).forEach(([k,Sd])=>{const u=new THREE.Box3();Sd.ids.forEach(id=>{if(boxes[id])u.union(boxes[id]);});if(u.isEmpty())return;
     const c=u.getCenter(new V3()),r=u.getSize(new V3()).length()/2;SYSC[k]=c;
     Sd.ids.forEach(id=>{const p=P[id],b=boxes[id];if(!p||!b)return;const v=b.getCenter(new V3()).sub(c);let n=v.length()>1?v.clone().normalize():new V3(0,1,0);
-      const shell=!!p.scan;p.sysEx=p.sysEx||{};p.sysEx[k]=v.clone().multiplyScalar(shell?1.1:0.5).addScaledVector(n,shell?110:45);});
+      const shell=!!p.scan;p.sysEx=p.sysEx||{};const e=v.clone().multiplyScalar(shell?1.1:0.5).addScaledVector(n,shell?110:45);if(b.min.y+e.y<15)e.y=15-b.min.y;p.sysEx[k]=e;});
     if(k!=='bike'){const d=new V3(...Sd.dir).normalize();VIEWS['sys_'+k]={p:c.clone().addScaledVector(d,Math.max(700,r*2.7)).toArray(),t:c.toArray(),n:Sd.n.toUpperCase()};}});}
 computeSys();
 const CLIP=new THREE.Plane(new V3(1,0,0),0);renderer.localClippingEnabled=true;
@@ -2124,8 +2126,8 @@ const USEAT=new Set(['battery','ecu','relays','diag','powerCables','underseat','
 function setTargets(){altCoils();
   Object.values(P).forEach(p=>{const t=p.tgt;t.hl=0;t.off=0;t.op=1;
     t.exT=p.ex;t.sub=0;
-    if(tab==='bike'||tab==='cat'){const inner=(p.layer==='internal'||p.hid)&&!(p.gone||/^well/.test(p.id));
-      t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)?0:1;
+    if(tab==='bike'||tab==='cat'){const inner=(p.layer==='internal'||p.hid)&&!(p.gone||p.ext||/^well/.test(p.id));
+      t.op=(p.layer==='internal'||p.layer==='tool'||p.layer==='fx'||p.hid)&&!p.ext?0:1;
       if(inner)t.op=(xray||cutPlane)?1:(explode>0.01?Math.min(1,explode*4):0);
       if(xray&&p.scan)t.op=0.16;
       if(p.hid&&picked===p.id)t.op=1;
@@ -2136,7 +2138,7 @@ function setTargets(){altCoils();
     else if(SYSDEF[tab]){const Sd=SYSDEF[tab],inS=Sd.set.has(p.id);
       t.exT=(p.sysEx&&p.sysEx[tab])||p.ex;
       if(p.layer==='tool'||p.layer==='fx'||p.gone||/^well/.test(p.id))t.op=0;
-      else if(inS){const open=xray||cutPlane||Sd.open||Sd.always.indexOf(p.id)>=0;
+      else if(inS){const open=xray||cutPlane||Sd.open||p.ext||Sd.always.indexOf(p.id)>=0;
         if(p.scan)t.op=xray?0.16:1;else t.op=open?1:(explode>0.01?Math.min(1,explode*4):0);
         if(tab==='engine'&&/^coil[LR]$/.test(p.id)&&xray)t.op=0.3;
         t.off=explode;t.sub=explode;if(picked===p.id)t.hl=1;}
@@ -2260,7 +2262,7 @@ function compCentres(qp,qi,P3,nv){const key=new Map(),rep=new Int32Array(nv),par
   const out=new Float32Array(nv*3);for(let i=0;i<nv;i++){const e=mn.get(f(rep[i]));for(let a=0;a<3;a++)out[3*i+a]=(e[a]+e[a+3])/2;}return out;}
 function finishScanOffsets(){Object.values(P).forEach(p=>{if(!p.scanU)return;const ms=[];p.g.traverse(o=>{if(o.isMesh&&o.userData.compC)ms.push(o);});
   const b=new THREE.Box3();ms.forEach(m=>{m.geometry.computeBoundingBox();b.union(m.geometry.boundingBox);});const c=b.getCenter(new V3());
-  ms.forEach(m=>{const cc=m.userData.compC,off=new Float32Array(cc.length);for(let i=0;i<cc.length;i+=3){off[i]=cc[i]-c.x;off[i+1]=cc[i+1]-c.y;off[i+2]=cc[i+2]-c.z;}
+  ms.forEach(m=>{const cc=m.userData.compC,off=new Float32Array(cc.length);for(let i=0;i<cc.length;i+=3){let x=cc[i]-c.x,y=cc[i+1]-c.y,z=cc[i+2]-c.z;const L=Math.hypot(x,y,z);if(L>260){x*=260/L;y*=260/L;z*=260/L;}off[i]=x;off[i+1]=y;off[i+2]=z;}
     m.geometry.setAttribute('aOff',new THREE.BufferAttribute(off,3));delete m.userData.compC;});});}
 async function loadBody(){
   let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;buf=await r.arrayBuffer();const u=new Uint8Array(buf,0,2);
