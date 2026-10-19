@@ -703,7 +703,7 @@ tube(gH,[[1006,1054,232],[1060,1000,170],[1120,900,110],[1112,760,122],[950,620,
 tube(gH,[[1042,1046,-182],[1080,980,-140],[1125,880,-100],[1110,740,-120],[900,640,-140],[700,580,-128],[500,520,-92]],4,'black',80);
 /* ignition lock: left of the top clamp, at the tank */
 lathe(gH,[[0.1,0],[28,0],[30,6],[26,22],[18,26],[0.1,27]],'y',[1116,962,0],'black',32);box(gH,[4,6,14],[1116,990,0],'steel');
-const gRes=part('resF',{name:'Бачок переднего тормоза',desc:'На правой стороне руля. Жидкость DOT 4. Уровень проверяют при ровном руле, бачок горизонтально, не ниже MIN.',sys:'Тормоза',ex:[150,320,160]});
+const gRes=part('resF',{name:'Главный цилиндр и бачок переднего тормоза',desc:'BMW 32_2498: на правой рукоятке, бачок встроен в корпус главного цилиндра (поршень D=14 мм), крышка бачка на трёх винтах M4x20 под резиновой мембраной, корпус держит хомут на двух винтах M6x25. Спереди окошко уровня. Жидкость DOT 4. Уровень проверяют при ровном руле, бачок горизонтально, не ниже MIN.',sys:'Тормоза',ex:[150,320,160]});
 slab(gRes,rr(54,40,8),40,4,'black',[1180,1080,196],'z');slab(gRes,rr(58,8,4),44,2,'satin',[1180,1102,196],'z');add(gRes,new THREE.PlaneGeometry(34,12),mat('glass'),[1207.5,1074,196],[0,Math.PI/2,0]);
 /* headlight: steel shell in Monolith, chrome ring, H4 reflector look */
 const gL=part('light',{name:'Фара и прибор',desc:'Круглая фара в стальном корпусе, H4 60/55 Вт, габарит W5W. Круглый аналоговый спидометр в металлическом корпусе.',sys:'Электрика',ex:[420,220,0]});
@@ -1112,6 +1112,7 @@ function updateChains(th){CHAINS.forEach(c=>{const off=((-th*Math.PI/180*20)%c.l
   if(window.__ishaft)window.__ishaft.rotation.x=-th*Math.PI/180;}
 updateChains(0);
 /* drive-side controls: clutch slave, shift linkage */
+part('clutchMaster',{name:'Главный цилиндр сцепления с бачком',desc:'BMW 32_2499: на левой рукоятке, бачок встроен в корпус главного цилиндра, крышка на трёх винтах M4x20, в рычаге микровыключатели (сцепление выжато, можно заводить). От него магистраль идёт к рабочему цилиндру сзади на коробке. Уровень смотри в окошке при ровном руле.',sys:SYS.drive,ex:[150,320,-160]});
 const gSlave=part('clutchSlave',{name:'Рабочий цилиндр сцепления',desc:'Сзади на коробке слева. Гидравлика от рычага давит шток, тот выжимает сухое сцепление. Тормозная жидкость DOT 4 в бачке на левой рукоятке.',sys:SYS.drive,ex:[-120,0,-80]});
 lathe(gSlave,[[0.1,0],[20,0],[22,4],[22,50],[0.1,52]],'-x',[516,520,-92],'satin',24);
 const gShift=part('shiftLink',{name:'Тяга переключения передач',desc:'От рычага на левой подножке к валу переключения коробки. Люфт или задевание: регулировать длину тяги.',sys:SYS.ctrl,ex:[0,-40,-120]});
@@ -1755,7 +1756,7 @@ const stEls={};
 /* ===== Узлы: что входит в каждый, разлёт на детали, разрез ===== */
 const SYSDEF={
  engine:{n:'Двигатель',dir:[1,.5,.95],ids:['crankcase','beltcover','throttle','cylL','cylR','headL','headR','coverL','coverR','capL','capR','coilL','coilR','connL','connR','plugL','plugR','camsL','camsR','pistonL','pistonR','crank','camchains','balancer','oilpump','oilfilter','drainplug','sightglass','filler','alternator','belt','starter','sensors','clutch','breather'],ctx:[],always:[]},
- drive:{n:'Привод',dir:[.25,.4,1],ids:['clutch','clutchSlave','gearbox','gears','shiftLink','driveshaft','pivots','swingarm','strut','finaldrive','fdgear','fdfill','fddrain','wheelR'],ctx:[],always:[]},
+ drive:{n:'Привод',dir:[.25,.4,1],ids:['clutchMaster','clutch','clutchSlave','gearbox','gears','shiftLink','driveshaft','pivots','swingarm','strut','finaldrive','fdgear','fdfill','fddrain','wheelR'],ctx:['bars'],always:[],noFrame:['clutchMaster']},
  brakes:{n:'Тормоза',dir:[.75,.55,1],ids:['brakeF','brakeR','resF','resR','abs','brakeLines','rearMaster','wheelSensors'],ctx:['wheelF','wheelR','fork','bars','frame'],always:['resR']},
  elec:{n:'Электрика',dir:[-.55,.75,-1],ids:['harness','underseat','battery','ecu','relays','diag','powerCables','regulator','alternator','starter','coilL','coilR','connL','connR','plugL','plugR','sensors','lambda','flap','abs','wheelSensors','instrument','light','horn','tail','standSwitch','fuelPump','iat','loom'],
    ctx:['frame','tank','seat','crankcase','cylL','cylR','headL','headR','coverL','coverR','gearbox','bars','fork','wheelF','wheelR'],open:true}};
@@ -1790,7 +1791,7 @@ function partBox(p){const b=new THREE.Box3();p.g.updateMatrixWorld(true);
 function computeSys(){const all=new THREE.Box3(),boxes={};
   Object.values(P).forEach(p=>{if(p.gone||p.layer==='tool'||p.layer==='fx')return;const b=partBox(p);if(b){boxes[p.id]=b;if(p.layer!=='internal'||p.wasBike)all.union(b);}});
   const scopes=Object.assign({bike:{ids:Object.keys(boxes),dir:[1,.45,1],n:'Общий'}},SYSDEF);
-  Object.entries(scopes).forEach(([k,Sd])=>{const u=new THREE.Box3();Sd.ids.forEach(id=>{if(boxes[id])u.union(boxes[id]);});if(u.isEmpty())return;
+  Object.entries(scopes).forEach(([k,Sd])=>{const u=new THREE.Box3();Sd.ids.forEach(id=>{if(boxes[id]&&!(Sd.noFrame&&Sd.noFrame.includes(id)))u.union(boxes[id]);});if(u.isEmpty())return;
     const c=u.getCenter(new V3()),r=u.getSize(new V3()).length()/2;SYSC[k]=c;
     Sd.ids.forEach(id=>{const p=P[id],b=boxes[id];if(!p||!b)return;const v=b.getCenter(new V3()).sub(c);let n=v.length()>1?v.clone().normalize():new V3(0,1,0);
       const shell=!!p.scan;p.sysEx=p.sysEx||{};const e=v.clone().multiplyScalar(shell?1.1:0.5).addScaledVector(n,shell?110:45);if(b.min.y+e.y<15)e.y=15-b.min.y;p.sysEx[k]=e;});
@@ -2281,21 +2282,32 @@ async function loadBody(){
   let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;buf=await r.arrayBuffer();const u=new Uint8Array(buf,0,2);
     if(u[0]===0x1f&&u[1]===0x8b){if(typeof DecompressionStream==='undefined')throw 0;buf=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}}catch(e){console.warn('body',e);return;}
   const dv=new DataView(buf),hl=dv.getUint32(0,true),H=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl))),base=4+hl;
-  const got=new Set(H.map(c=>c.l));
+  const got=new Set(H.map(c=>c.l));got.add('clutchMaster');
   [['capR','справа',1],['capL','слева',-1]].forEach(([id,nm,s])=>{if(P[id])return;part(id,{name:'Накладка катушки, '+nm,desc:'Чёрная пластиковая накладка на крышке клапанов. Под ней верхушка катушки с разъёмом, а провод от разъёма идёт вниз по каналу под этой же накладкой и уходит к жгуту под цилиндром. Снаружи провода не видно.',sys:'Зажигание',layer:'drive',ex:[0,90,s*260]});P[id].home=new V3();});
   ['R','L'].forEach(s=>{if(P['conn'+s])P['conn'+s].ex=new V3(0,20,(s==='R'?1:-1)*110);});
   /* hide our hand-built geometry where the scan has the real part */
   got.forEach(id=>{const p=P[id];if(!p)return;p.scan=true;if(/^(coil|conn)[LR]$/.test(id))return;
     p.g.traverse(o=>{if(o.isMesh&&o!==p.g&&(id!=='wheelF'&&id!=='wheelR'||o.userData.tyre))o.visible=false;});});
-  H.forEach(c=>{const p=P[c.l];if(!p)return;
-    const qp=new Uint16Array(buf,base+c.p,c.nv*3),qn=new Int8Array(buf,base+c.n,c.nv*3),qi=c.i32?new Uint32Array(buf,base+c.i,c.nt*3):new Uint16Array(buf,base+c.i,c.nt*3);
+  /* the scan glues the hand controls into the handlebar; the piece it calls the front reservoir is the right mirror stem.
+     Carve the two master cylinders with their built-in reservoirs (BMW 32_2498 brake, 32_2499 clutch) out of the handlebar by triangle position. */
+  const MC=[[1072,1018,112,1152,1078,246],[1066,994,112,1136,1018,246]];
+  function relabel(l,qi,P3){if(l==='resF')return [['bars',qi]];if(l!=='bars')return [[l,qi]];
+    const out={bars:[],resF:[],clutchMaster:[]};
+    for(let t=0;t<qi.length;t+=3){let x=0,y=0,z=0;for(let j=0;j<3;j++){const v=qi[t+j]*3;x+=P3[v];y+=P3[v+1];z+=P3[v+2];}x/=3;y/=3;z/=3;
+      const az=Math.abs(z),hit=MC.some(b=>x>b[0]&&x<b[3]&&y>b[1]&&y<b[4]&&az>b[2]&&az<b[5]);
+      out[hit?(z>0?'resF':'clutchMaster'):'bars'].push(qi[t],qi[t+1],qi[t+2]);}
+    return Object.keys(out).filter(k=>out[k].length).map(k=>[k,new Uint32Array(out[k])]);}
+  H.forEach(c=>{if(!P[c.l])return;
+    const qp=new Uint16Array(buf,base+c.p,c.nv*3),qn=new Int8Array(buf,base+c.n,c.nv*3),qi0=c.i32?new Uint32Array(buf,base+c.i,c.nt*3):new Uint16Array(buf,base+c.i,c.nt*3);
     const P3=new Float32Array(c.nv*3);for(let i=0;i<c.nv*3;i++){const a=i%3;P3[i]=c.lo[a]+qp[i]/65535*c.sc[a];}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P3,3));g.setAttribute('normal',new THREE.BufferAttribute(qn,3,true));g.setIndex(new THREE.BufferAttribute(qi,1));g.computeBoundingSphere();
-    const m=new THREE.Mesh(g,glbMaterial(c.l,c.m));m.position.copy(p.home).multiplyScalar(-1);
-    m.userData.compC=compCentres(qp,qi,P3,c.nv);
+    const cc=compCentres(qp,qi0,P3,c.nv),pos=new THREE.BufferAttribute(P3,3),nrm=new THREE.BufferAttribute(qn,3,true);
+    relabel(c.l,qi0,P3).forEach(([l,qi])=>{const p=P[l];if(!p)return;
+    const g=new THREE.BufferGeometry();g.setAttribute('position',pos);g.setAttribute('normal',nrm);g.setIndex(new THREE.BufferAttribute(qi,1));g.computeBoundingSphere();
+    const m=new THREE.Mesh(g,glbMaterial(l,c.m));m.position.copy(p.home).multiplyScalar(-1);
+    m.userData.compC=cc;
     {const u={value:0};(p.scanU=p.scanU||[]).push(u);m.material.onBeforeCompile=sh=>{sh.uniforms.uEx=u;sh.vertexShader='attribute vec3 aOff;\nuniform float uEx;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=aOff*uEx;');};}
-    m.userData.part=c.l;m.userData.scan=true;m.userData.baseOpacity=m.material.opacity;m.material.transparent=true;m.castShadow=false;p.g.add(m);pickables.push(m);
-    if(c.l==='silencers'){const m2=new THREE.Mesh(g,m.material);m2.position.copy(m.position).add(new V3(63,124,-12));m2.userData=Object.assign({},m.userData);p.g.add(m2);pickables.push(m2);}});
+    m.userData.part=l;m.userData.scan=true;m.userData.baseOpacity=m.material.opacity;m.material.transparent=true;m.castShadow=false;p.g.add(m);pickables.push(m);
+    if(l==='silencers'){const m2=new THREE.Mesh(g,m.material);m2.position.copy(m.position).add(new V3(63,124,-12));m2.userData=Object.assign({},m.userData);p.g.add(m2);pickables.push(m2);}});});
   /* second silencer feed: from the collector outlet up into the upper can */
   {const p=P.silencers,o=p.home;const pts=[[425,236,-124],[452,282,-136],[460,340,-148],[440,394,-155],[390,421,-160]].map(q=>[q[0]-o.x,q[1]-o.y,q[2]-o.z]);
    const t=tube(p.g,pts,27,'pipe',40);t.userData.scan=true;t.material.transparent=true;t.userData.baseOpacity=1;}
