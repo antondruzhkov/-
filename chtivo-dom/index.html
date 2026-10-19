@@ -41,7 +41,7 @@ button:disabled{opacity:.6;cursor:wait}
 </form>
 </main>
 <script>
-let SALT="SjKaQUJCMQHUXdzt/uoQxw==", ITER=250000, VER="4a329a4142";
+let SALT="DajthwayS8rZRahglqPtSw==", ITER=250000, VER="0da8ed8706";
 async function meta(){ try{ const r=await fetch('meta.json?t='+Date.now(),{cache:'no-store'}); if(r.ok){ const m=await r.json(); SALT=m.salt; ITER=m.iter; VER=m.ver; } }catch(_){} }
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function keyFrom(pw){ const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
