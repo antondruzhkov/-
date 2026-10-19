@@ -174,6 +174,9 @@ table.cat small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px
   <div class="bay">
     <div class="loader" id="loader" role="status" aria-live="polite"><svg viewBox="40 30 330 170" aria-hidden="true"><defs><clipPath id="ldclip"><rect id="ldrect" x="40" y="0" width="0" height="230"/></clipPath></defs>
 <g class="ln"><path d="M58 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0M266 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0"/><path d="M102 150l52-44h58l20 44h-40M154 106l-22-26h-34M212 106l34-30 64 74M246 76l40-6M286 70l-6-20M300 62a10 10 0 1 0 0.1 0"/><path d="M150 84c12-22 58-26 86-12l6 10c-26 10-68 12-92 2zM96 80h58"/><path d="M186 134c14 4 40 4 52-6M118 130c18 8 50 10 64 4"/></g><g class="fl" clip-path="url(#ldclip)"><path d="M58 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0M266 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0"/><path d="M102 150l52-44h58l20 44h-40M154 106l-22-26h-34M212 106l34-30 64 74M246 76l40-6M286 70l-6-20M300 62a10 10 0 1 0 0.1 0"/><path d="M150 84c12-22 58-26 86-12l6 10c-26 10-68 12-92 2zM96 80h58"/><path d="M186 134c14 4 40 4 52-6M118 130c18 8 50 10 64 4"/></g></svg><b id="ldtxt">ЗАГРУЖАЮ МОДЕЛЬ 0%</b></div>
+    <script>/* no WebGL in this browser (graphics acceleration off or the GPU process crashed): say so right away */
+    (function(){var ok=false;try{var c=document.createElement('canvas');ok=!!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){}
+      if(!ok){var t=document.getElementById('ldtxt');if(t)t.textContent='БРАУЗЕР ВЫКЛЮЧИЛ 3D (WEBGL). ПЕРЕЗАПУСТИ CHROME';}})();</script>
     <script>/* if the page script never starts (no network, blocked library), say so instead of waiting forever */
     setTimeout(function(){var l=document.getElementById('loader');if(l&&!window.__r9tLoaded){var t=document.getElementById('ldtxt');if(t)t.textContent='НЕ ЗАГРУЗИЛОСЬ. ОБНОВИ СТРАНИЦУ';}},45000);</script>
     <canvas id="gl" aria-label="3D-модель мотоцикла, вращается мышью или пальцем"></canvas>
