@@ -1566,62 +1566,58 @@ const M=(k,geo,pos)=>{const m=new THREE.Mesh(geo,mat(k,true));if(pos)m.position.
 const reg=(g,id,o)=>{o.traverse(m=>{if(m.isMesh){m.userData.part=id;pickables.push(m);}});g.add(o);return o;};
 ['driveshaft'].forEach(id=>{const p=P[id];if(!p)return;delete OFFS[id];for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.part===id)pickables.splice(i,1);
   while(p.g.children.length)p.g.remove(p.g.children[0]);p.g.position.set(0,0,0);});
-const FJ=new V3(455,369,58), RJ=new V3(168,315,118), PIN=new V3(50,315,118), AX=new V3(0,315,0);
+/* geometry measured on the scanned swingarm (orthographic side view): swingarm front pivot on the gearbox (524,341),
+   final-drive pivot on the swingarm end (170,285), wheel axle (0,318), torque-strut eyes (112,432) and (490,410).
+   Paralever rule: each universal joint sits exactly on a pivot axis, so the shaft never bends where the arm swings. */
+const FJ=new V3(524,341,112), RJ=new V3(170,285,148), AX=new V3(0,318,0), PZ=148, CF=134;
 function gpart(id,name,desc){const g=new THREE.Group();g.name=id;root.add(g);P[id]={id,g,name,desc,sys:'Трансмиссия',layer:'drive',ex:new V3(0,0,0),cur:{off:0,op:1,hl:0},tgt:{off:0,op:1,hl:0},ops:['fd'],home:new V3()};return g;}
-/* universal joint: two yokes + cross */
 function ujoint(){const g=new THREE.Group();
   [[-1,0],[1,Math.PI/2]].forEach(([s,rot])=>{const y=new THREE.Group();y.rotation.x=rot;g.add(y);
-    y.add(M('steel',new THREE.CylinderGeometry(15,15,14,20).rotateZ(Math.PI/2),[s*20,0,0]));
-    [-1,1].forEach(q=>y.add(M('steel',new THREE.BoxGeometry(18,6,10),[s*9,q*14,0])));});
-  g.add(M('chrome',new THREE.CylinderGeometry(4.5,4.5,30,10),[0,0,0]));g.add(M('chrome',new THREE.CylinderGeometry(4.5,4.5,30,10).rotateX(Math.PI/2),[0,0,0]));
-  return g;}
+    y.add(M('steel',new THREE.CylinderGeometry(13,13,12,20).rotateZ(Math.PI/2),[s*17,0,0]));
+    [-1,1].forEach(q=>y.add(M('steel',new THREE.BoxGeometry(14,5,9),[s*7,q*12,0])));});
+  g.add(M('chrome',new THREE.CylinderGeometry(4,4,26,10)));g.add(M('chrome',new THREE.CylinderGeometry(4,4,26,10).rotateX(Math.PI/2)));return g;}
 function along(a,b){const g=new THREE.Group();g.position.copy(a);g.quaternion.setFromUnitVectors(new V3(1,0,0),b.clone().sub(a).normalize());return g;}
-/* ---- drive shaft ---- */
-const gS=P.driveshaft.g;P.driveshaft.layer='drive';
-P.driveshaft.name='Карданный вал';
-P.driveshaft.desc='BMW 33 73 9 898 679, внутри правой трубы маятника. Два карданных шарнира: передний стоит на оси качания маятника у коробки, задний на оси качания редуктора. Между ними шлицевое скользящее соединение (толстая труба и тонкий вал), оно меняет длину, когда маятник ходит вверх-вниз. На концах шлицы со стопорными кольцами 22x2,5. Шлицы при сборке смазывают Klüber LFT 71-402. Отдельно не обслуживается, но если стучит или есть люфт в шарнирах, это в сервис.';
-const spin=along(FJ,RJ),L=FJ.distanceTo(RJ);gS.add(spin);
-const rot=new THREE.Group();spin.add(rot);
-rot.add(ujoint());
-rot.add(M('steel',new THREE.CylinderGeometry(18,18,L*.55,24).rotateZ(Math.PI/2),[L*.3,0,0]));      // outer tube
-rot.add(M('satin',new THREE.CylinderGeometry(11,11,L*.42,20).rotateZ(Math.PI/2),[L*.7,0,0]));       // inner sliding shaft
-{const j=ujoint();j.position.x=L;rot.add(j);}
+/* ---- drive shaft (inside the swingarm tube) ---- */
+const gS=P.driveshaft.g;P.driveshaft.layer='drive';P.driveshaft.name='Карданный вал';
+P.driveshaft.desc='BMW 33 73 9 898 679, внутри маятника. Передний карданный шарнир стоит точно на оси качания маятника у коробки, задний точно на оси качания корпуса редуктора: поэтому при ходе подвески вал не ломается. Между шарнирами шлицевое скользящее соединение (труба и вал), оно компенсирует изменение длины. Стопорные кольца 22x2,5, шлицы смазывают Klüber LFT 71-402. Пыльники (гофры) спереди и сзади маятника закрывают шарниры.';
+const spin=along(FJ,RJ),L=FJ.distanceTo(RJ);gS.add(spin);const rot=new THREE.Group();spin.add(rot);
+rot.add(ujoint());rot.add(M('steel',new THREE.CylinderGeometry(15,15,L*.5,24).rotateZ(Math.PI/2),[L*.3,0,0]));
+rot.add(M('satin',new THREE.CylinderGeometry(9,9,L*.42,20).rotateZ(Math.PI/2),[L*.72,0,0]));{const j=ujoint();j.position.x=L;rot.add(j);}
 reg(gS,'driveshaft',spin);
-/* gearbox output stub to the front joint */
-{const o=along(new V3(470,369,58),FJ);o.add(M('steel',new THREE.CylinderGeometry(12,12,15,16).rotateZ(Math.PI/2),[7,0,0]));reg(gS,'driveshaft',o);}
-/* ---- final drive internals ---- */
-const gF=gpart('fdgear','Шестерни главной передачи','Внутри корпуса редуктора (BMW 33_1622, 33_1626, 33_1627): ведущая шестерня (пинион, 11 зубьев) приходит от заднего шарнира кардана и сидит в двух подшипниках: большом коническом роликовом и игольчатом 32x16. Её поджимает резьбовое кольцо и гайка M24x1,5, а положение в корпусе задают шайбы 1,50-2,50 мм. Пинион крутит гипоидную ведомую шестерню (32 зуба, 32 : 11 = 2,91), она сидит на большом шариковом подшипнике и игольчатой втулке. Ведомая шестерня отдаёт вращение фланцу с пятью приливами, на него пятью болтами крепится колесо (60 Нм, крест-накрест). Зазор в зацеплении задают регулировочные шайбы 0,70-1,25 мм. Масло: Hypoid Axle Oil G3, заливная пробка M12x1,5 с медной шайбой, сливная M12x1 с кольцом. Датчик скорости колеса ABS стоит в корпусе. Сапун наверху выпускает воздух при нагреве.');
-// pinion: shaft along X from the rear joint to the crown
-/* pinion: axis along the bike (X), 118 mm out from the centre plane, at wheel-axle height. Its bevel head points at the
-   wheel axle and meshes with the face teeth of the crown wheel, which turns about the axle (Z): longitudinal -> transverse. */
-const PZ=118;
-const pin=new THREE.Group();pin.position.set(0,AX.y,PZ);gF.add(pin);const pinR=new THREE.Group();pin.add(pinR);
-pinR.add(M('steel',new THREE.CylinderGeometry(10,10,RJ.x-86,16).rotateZ(Math.PI/2),[(RJ.x+86)/2,0,0]));     // pinion shaft
-{const Z=11,pg=new THREE.CylinderGeometry(12,22,36,Z*4,1);pg.rotateZ(Math.PI/2);                                // bevel head: wide end at x=86, narrow towards the axle
-  const pa=pg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i),z=pa.getZ(i),a=Math.atan2(z,y),k=1+0.12*Math.sign(Math.cos(Z*a+(pa.getX(i)+18)*0.05));pa.setY(i,y*k);pa.setZ(i,z*k);}
-  pg.computeVertexNormals();pinR.add(M('steel',pg,[68,0,0]));}
-pinR.add(M('satin',new THREE.CylinderGeometry(26,26,22,24).rotateZ(Math.PI/2),[100,0,0]));                     // tapered roller bearing
-pinR.add(M('steel',new THREE.CylinderGeometry(16,16,10,6).rotateZ(Math.PI/2),[122,0,0]));                     // nut M24x1,5
-pinR.add(M('satin',new THREE.CylinderGeometry(9,9,12,16).rotateZ(Math.PI/2),[44,0,0]));                        // pilot needle bearing 32x16 at the nose
+{const o=along(new V3(575,350,104),FJ);o.add(M('steel',new THREE.CylinderGeometry(11,11,52,16).rotateZ(Math.PI/2),[26,0,0]));reg(gS,'driveshaft',o);}
+/* pivots: swingarm on gearbox (tapered roller bearings 17x40x13,25 on two pivot pins) and final drive on swingarm end */
+const gPv=gpart('pivots','Оси качания: маятник и редуктор','Две оси, на которых всё качается (BMW 33_1226). Спереди маятник висит на коробке на двух пальцах (правый 33 17 2 332 569 и левый) в конических роликовых подшипниках 17x40x13,25, контргайка M24x1,25 на 145 Нм. Сзади корпус редуктора качается на конце маятника на своих пальцах с подшипником: это та большая круглая шайба внизу перед колесом. Шарниры кардана стоят ровно на этих осях.');
+[[524,341,-185,190],[170,285,70,205]].forEach(([x,y,z0,z1])=>{const g=new THREE.Group();g.add(M('chrome',new THREE.CylinderGeometry(8,8,z1-z0,16).rotateX(Math.PI/2),[x,y,(z0+z1)/2]));
+  [z0+10,z1-10].forEach(z=>{g.add(M('satin',new THREE.CylinderGeometry(20,20,14,24).rotateX(Math.PI/2),[x,y,z]));});reg(gPv,'pivots',g);});
+/* ---- final drive internals, sized to the scanned housing (body radius about 60 mm) ---- */
+const gF=gpart('fdgear','Шестерни главной передачи','Внутри корпуса редуктора (BMW 33_1622, 33_1626, 33_1627). Ведущая шестерня (пинион, 11 зубьев) продолжает задний шарнир кардана: её ось идёт от оси качания редуктора прямо к оси колеса, конический носик входит в зацепление с торцевыми зубьями ведомой шестерни (32 зуба, 2,91). Пинион держат конический роликовый подшипник (с резьбовым кольцом, гайкой M24x1,5 и шайбами 1,50-2,50 мм) и игольчатый 32x16 у носика. Ведомая шестерня сидит на полой ступице, которая вращается в большом шариковом подшипнике и игольчатой втулке. Ступица несёт фланец с пятью болтами колеса и тормозной диск: вес колеса и нагрузка идут через этот подшипник на корпус, корпус через ось качания на маятник, маятник на коробку. Зазор в зацеплении задают шайбы 0,70-1,25 мм. Масло Hypoid Axle Oil G3.');
+const d=new V3(AX.x-RJ.x,AX.y-RJ.y,0).normalize();
+const pin=new THREE.Group();pin.position.set(RJ.x,RJ.y,PZ);pin.quaternion.setFromUnitVectors(new V3(1,0,0),d);gF.add(pin);const pinR=new THREE.Group();pin.add(pinR);
+const DL=Math.hypot(AX.x-RJ.x,AX.y-RJ.y);                      // distance pivot -> axle along the pinion axis
+pinR.add(M('steel',new THREE.CylinderGeometry(9,9,DL-62-16,16).rotateZ(Math.PI/2),[16+(DL-62-16)/2,0,0]));
+{const Z=11,pg=new THREE.CylinderGeometry(9,15,26,Z*4,1);pg.rotateZ(Math.PI/2);
+  const pa=pg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i),z=pa.getZ(i),a=Math.atan2(z,y),k=1+0.12*Math.sign(Math.cos(Z*a+(pa.getX(i)+13)*0.07));pa.setY(i,y*k);pa.setZ(i,z*k);}
+  pg.computeVertexNormals();pinR.add(M('steel',pg,[DL-49,0,0]));}
+pinR.add(M('satin',new THREE.CylinderGeometry(20,20,18,24).rotateZ(Math.PI/2),[DL-80,0,0]));
+pinR.add(M('steel',new THREE.CylinderGeometry(13,13,8,6).rotateZ(Math.PI/2),[DL-98,0,0]));
+pinR.add(M('satin',new THREE.CylinderGeometry(7,7,10,16).rotateZ(Math.PI/2),[DL-31,0,0]));
 reg(gF,'fdgear',pin);
-/* crown wheel: disc square to the axle, 32 face teeth on the side that faces the pinion */
 const crown=new THREE.Group();crown.position.set(AX.x,AX.y,0);gF.add(crown);
-{const Z=32,FZ=PZ+14;
-  const ring=new THREE.Shape();ring.absarc(0,0,88,0,Math.PI*2,false);const rh=new THREE.Path();rh.absarc(0,0,40,0,Math.PI*2,true);ring.holes.push(rh);
-  const rg=new THREE.ExtrudeGeometry(ring,{depth:14,bevelEnabled:true,bevelThickness:1.5,bevelSize:1.5,bevelSegments:1,curveSegments:64});rg.translate(0,0,FZ+6);crown.add(M('steel',rg));
-  for(let i=0;i<Z;i++){const t=i/Z*Math.PI*2,tb=new THREE.Mesh(new THREE.BoxGeometry(38,7,8),mat('steel',true));tb.position.set(67*Math.cos(t),67*Math.sin(t),FZ+2);tb.rotation.z=t;crown.add(tb);}
-  crown.add(M('satin',new THREE.CylinderGeometry(40,40,60,32).rotateX(Math.PI/2),[0,0,FZ+50]));               // hub
-  crown.add(M('chrome',new THREE.TorusGeometry(50,7,10,40),[0,0,FZ+40]));                                     // grooved ball bearing
-  const f=new THREE.Shape();const lugs=5;for(let i=0;i<lugs*20;i++){const t=i/(lugs*20)*Math.PI*2,r=52+16*Math.max(0,Math.cos(lugs*t))**3;i?f.lineTo(r*Math.cos(t),r*Math.sin(t)):f.moveTo(r*Math.cos(t),r*Math.sin(t));}
-  const fh=new THREE.Path();fh.absarc(0,0,26,0,Math.PI*2,true);f.holes.push(fh);
-  const fg=new THREE.ExtrudeGeometry(f,{depth:10,bevelEnabled:false});fg.translate(0,0,72);crown.add(M('satin',fg));        // output flange on the wheel side
-  crown.add(M('satin',new THREE.CylinderGeometry(30,30,FZ-82,24).rotateX(Math.PI/2),[0,0,(FZ+82)/2]));       // hollow hub to the flange
-  for(let i=0;i<lugs;i++){const t=i/lugs*Math.PI*2;crown.add(M('chrome',new THREE.CylinderGeometry(7,7,22,6).rotateX(Math.PI/2),[60*Math.cos(t),60*Math.sin(t),70]));}}
+{const Z=32;
+  const ring=new THREE.Shape();ring.absarc(0,0,58,0,Math.PI*2,false);const rh=new THREE.Path();rh.absarc(0,0,24,0,Math.PI*2,true);ring.holes.push(rh);
+  const rg=new THREE.ExtrudeGeometry(ring,{depth:10,bevelEnabled:true,bevelThickness:1,bevelSize:1,bevelSegments:1,curveSegments:64});rg.translate(0,0,CF-12);crown.add(M('steel',rg));
+  for(let i=0;i<Z;i++){const t=i/Z*Math.PI*2,tb=new THREE.Mesh(new THREE.BoxGeometry(24,5,6),mat('steel',true));tb.position.set(46*Math.cos(t),46*Math.sin(t),CF+1);tb.rotation.z=t;crown.add(tb);}
+  crown.add(M('satin',new THREE.CylinderGeometry(24,24,CF-12-70,32).rotateX(Math.PI/2),[0,0,(CF-12+70)/2]));   // hollow hub towards the wheel
+  crown.add(M('chrome',new THREE.TorusGeometry(33,6,10,40),[0,0,100]));                                        // grooved ball bearing
+  const f=new THREE.Shape();const lugs=5;for(let i=0;i<lugs*20;i++){const t=i/(lugs*20)*Math.PI*2,r=46+12*Math.max(0,Math.cos(lugs*t))**3;i?f.lineTo(r*Math.cos(t),r*Math.sin(t)):f.moveTo(r*Math.cos(t),r*Math.sin(t));}
+  const fh=new THREE.Path();fh.absarc(0,0,20,0,Math.PI*2,true);f.holes.push(fh);
+  const fg=new THREE.ExtrudeGeometry(f,{depth:8,bevelEnabled:false});fg.translate(0,0,62);crown.add(M('satin',fg));
+  for(let i=0;i<lugs;i++){const t=i/lugs*Math.PI*2;crown.add(M('chrome',new THREE.CylinderGeometry(6,6,20,6).rotateX(Math.PI/2),[52*Math.cos(t),52*Math.sin(t),60]));}}
 reg(gF,'fdgear',crown);
-/* ---- Paralever torque strut (black rod L=380, rubber mounting at the final drive) ---- */
-const gR=gpart('strut','Реактивная тяга Paralever','BMW 33 17 7 685 093, чёрная тяга 380 мм под маятником. Передний конец крепится к коробке болтом M10x55, задний к корпусу редуктора болтом M10x60 через резиновую опору. Вместе с маятником и шарниром редуктора образует параллелограмм: при газе и торможении корпус редуктора не проворачивается, и мотоцикл не приседает и не подпрыгивает на кардане.');
-{const a=new V3(430,262,112),b=new V3(56,250,112);const o=along(a,b),Ls=a.distanceTo(b);o.add(M('black',new THREE.CylinderGeometry(9,9,Ls-40,16).rotateZ(Math.PI/2),[Ls/2,0,0]));
-  [0,Ls].forEach(x=>o.add(M('rubber',new THREE.CylinderGeometry(17,17,26,20).rotateX(Math.PI/2),[x,0,0])));reg(gR,'strut',o);}
+/* ---- Paralever torque strut: upper link between final-drive top eye and the frame/gearbox ---- */
+const gR=gpart('strut','Реактивная тяга Paralever','BMW 33 17 7 685 093, чёрная тяга 380 мм над маятником. Задний глаз на верхнем приливе корпуса редуктора (болт M10x60 через резиновую опору), передний на коробке (болт M10x55). Маятник, корпус редуктора и тяга образуют параллелограмм: при газе и торможении корпус не проворачивается вокруг своей оси качания, и мотоцикл не приседает и не подпрыгивает на кардане.');
+{const a=new V3(112,432,168),b=new V3(490,410,168);const o=along(a,b),Ls=a.distanceTo(b);o.add(M('black',new THREE.CylinderGeometry(8,8,Ls-30,16).rotateZ(Math.PI/2),[Ls/2,0,0]));
+  [0,Ls].forEach(x=>o.add(M('rubber',new THREE.CylinderGeometry(14,14,22,20).rotateX(Math.PI/2),[x,0,0])));reg(gR,'strut',o);}
 function set(w){crown.rotation.z=w;rot.rotation.x=w*2.909;pinR.rotation.x=w*2.909;}
 return {set};})();
 
