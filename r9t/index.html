@@ -40,9 +40,9 @@ main{display:grid;grid-template-columns:1fr 400px;min-height:0}
 .bay{position:relative;min-height:0;min-width:0}
 .loader{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg);transition:opacity .5s ease}
 .loader.done{opacity:0;pointer-events:none}
-.loader svg{width:min(78%,420px);height:auto}
-.loader .ln{fill:none;stroke:var(--line);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
-.loader .fl{fill:none;stroke:var(--hazard);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.loader svg{width:min(70%,360px);height:auto}
+.loader .ln{fill:none;stroke:var(--line);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.loader .fl{fill:none;stroke:var(--hazard);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .loader b{font:600 13px var(--f-mono);color:var(--muted);letter-spacing:.06em;font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion: reduce){.loader{transition:none}}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
@@ -172,16 +172,10 @@ table.cat small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px
 </header>
 <main>
   <div class="bay">
-    <div class="loader" id="loader" role="status" aria-live="polite"><svg viewBox="0 0 410 210" aria-hidden="true"><defs><clipPath id="ldclip"><rect id="ldrect" x="0" y="210" width="410" height="210"/></clipPath></defs>
-<g class="ln"><g>
-<circle cx="80" cy="150" r="52"/><circle cx="80" cy="150" r="14"/><circle cx="330" cy="150" r="52"/><circle cx="330" cy="150" r="14"/>
-<path d="M80 150 L150 120 L205 128 L245 92"/><path d="M150 120 L178 76 L280 70 L318 52"/><path d="M330 150 L300 58 L292 30 L268 26"/>
-<path d="M190 72 C200 50 250 46 276 58 L280 70"/><path d="M106 74 L182 70"/><path d="M196 128 C188 104 206 92 232 98 C250 104 250 124 236 132 Z"/>
-<path d="M210 132 L150 140 L118 128"/><path d="M300 58 L322 66"/></g></g><g class="fl" clip-path="url(#ldclip)"><g>
-<circle cx="80" cy="150" r="52"/><circle cx="80" cy="150" r="14"/><circle cx="330" cy="150" r="52"/><circle cx="330" cy="150" r="14"/>
-<path d="M80 150 L150 120 L205 128 L245 92"/><path d="M150 120 L178 76 L280 70 L318 52"/><path d="M330 150 L300 58 L292 30 L268 26"/>
-<path d="M190 72 C200 50 250 46 276 58 L280 70"/><path d="M106 74 L182 70"/><path d="M196 128 C188 104 206 92 232 98 C250 104 250 124 236 132 Z"/>
-<path d="M210 132 L150 140 L118 128"/><path d="M300 58 L322 66"/></g></g></svg><b id="ldtxt">ЗАГРУЖАЮ МОДЕЛЬ 0%</b></div>
+    <div class="loader" id="loader" role="status" aria-live="polite"><svg viewBox="40 30 330 170" aria-hidden="true"><defs><clipPath id="ldclip"><rect id="ldrect" x="40" y="0" width="0" height="230"/></clipPath></defs>
+<g class="ln"><path d="M58 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0M266 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0"/><path d="M102 150l52-44h58l20 44h-40M154 106l-22-26h-34M212 106l34-30 64 74M246 76l40-6M286 70l-6-20M300 62a10 10 0 1 0 0.1 0"/><path d="M150 84c12-22 58-26 86-12l6 10c-26 10-68 12-92 2zM96 80h58"/><path d="M186 134c14 4 40 4 52-6M118 130c18 8 50 10 64 4"/></g><g class="fl" clip-path="url(#ldclip)"><path d="M58 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0M266 150a44 44 0 1 0 88 0a44 44 0 1 0-88 0"/><path d="M102 150l52-44h58l20 44h-40M154 106l-22-26h-34M212 106l34-30 64 74M246 76l40-6M286 70l-6-20M300 62a10 10 0 1 0 0.1 0"/><path d="M150 84c12-22 58-26 86-12l6 10c-26 10-68 12-92 2zM96 80h58"/><path d="M186 134c14 4 40 4 52-6M118 130c18 8 50 10 64 4"/></g></svg><b id="ldtxt">ЗАГРУЖАЮ МОДЕЛЬ 0%</b></div>
+    <script>/* if the page script never starts (no network, blocked library), say so instead of waiting forever */
+    setTimeout(function(){var l=document.getElementById('loader');if(l&&!window.__r9tLoaded){var t=document.getElementById('ldtxt');if(t)t.textContent='НЕ ЗАГРУЗИЛОСЬ. ОБНОВИ СТРАНИЦУ';}},45000);</script>
     <canvas id="gl" aria-label="3D-модель мотоцикла, вращается мышью или пальцем"></canvas>
     <div class="tag3d" id="tag3d">ВИД: ОБЩИЙ</div>
     <div class="hint">Вращать во все стороны, даже снизу · Зум: колесо или щипок<br>Наведи на деталь: что это и зачем</div>
@@ -447,8 +441,11 @@ mb.onclick=()=>{playing=!playing;mb.setAttribute('aria-pressed',playing);mb.quer
 })();
 
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<!-- three.js r128 is shipped next to the page, so the model does not depend on an outside CDN being reachable -->
+<script src="three.min.js"></script>
+<script>if(!window.THREE)document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+<script src="OrbitControls.js"></script>
+<script>if(window.THREE&&!THREE.OrbitControls)document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');</script>
 <script>
 (function(){
 "use strict";
@@ -2520,15 +2517,15 @@ function finishScanOffsets(){Object.values(P).forEach(p=>{if(!p.scanU)return;con
   ms.forEach(m=>{const cc=m.userData.compC,off=new Float32Array(cc.length);for(let i=0;i<cc.length;i+=3){let x=cc[i]-c.x,y=cc[i+1]-c.y,z=cc[i+2]-c.z;const L=Math.hypot(x,y,z);if(L>260){x*=260/L;y*=260/L;z*=260/L;}off[i]=x;off[i+1]=y;off[i+2]=z;}
     m.geometry.setAttribute('aOff',new THREE.BufferAttribute(off,3));delete m.userData.compC;});});}
 /* loading screen: an outline bike fills up from the bottom while the detailed scan downloads; the simple placeholder bike is never shown */
-function loaderProgress(f){const r=document.getElementById('ldrect'),t=document.getElementById('ldtxt');if(!r)return;const h=210*f;r.setAttribute('y',210-h);t.textContent='ЗАГРУЖАЮ МОДЕЛЬ '+Math.round(f*100)+'%';}
-function loaderDone(){const l=document.getElementById('loader');if(l){l.classList.add('done');setTimeout(()=>l.remove(),600);}}
+function loaderProgress(f){const r=document.getElementById('ldrect'),t=document.getElementById('ldtxt');if(!r)return;r.setAttribute('width',330*f);t.textContent='ЗАГРУЖАЮ МОДЕЛЬ '+Math.round(f*100)+'%';}
+function loaderDone(){window.__r9tLoaded=true;const l=document.getElementById('loader');if(l){l.classList.add('done');setTimeout(()=>l.remove(),600);}}
 async function loadBody(){
   let buf;try{const r=await fetch('bike.wasm');if(!r.ok)throw 0;
     const total=+r.headers.get('content-length')||5637773;
-    if(r.body&&r.body.getReader){const rd=r.body.getReader(),parts=[];let got=0;
+    try{const rd=r.body.getReader(),parts=[];let got=0;
       for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;loaderProgress(Math.min(.95,got/total*.95));}
       const all=new Uint8Array(got);let o=0;parts.forEach(q=>{all.set(q,o);o+=q.length;});buf=all.buffer;}
-    else buf=await r.arrayBuffer();
+    catch(e){buf=await (await fetch('bike.wasm')).arrayBuffer();}
     loaderProgress(.97);const u=new Uint8Array(buf,0,2);
     if(u[0]===0x1f&&u[1]===0x8b){if(typeof DecompressionStream==='undefined')throw 0;buf=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}}catch(e){console.warn('body',e);loaderDone();return;}
   const dv=new DataView(buf),hl=dv.getUint32(0,true),H=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl))),base=4+hl;
@@ -2581,7 +2578,8 @@ async function loadBody(){
   const KEEP=new Set(['wheelF','wheelR','capR','capL']);
   Object.values(P).forEach(p=>{if(got.has(p.id)||KEEP.has(p.id))return;if(p.layer==='bike'||p.layer==='drive'){p.hid=true;if(p.layer==='bike'){p.wasBike=true;p.layer='internal';}}});
   finishScanOffsets();GLB_OK=true;loaderProgress(1);setTimeout(loaderDone,250);computeSys();setTargets();if(SYSDEF[tab])goView('sys_'+tab);if(window.__onBody)window.__onBody();}
-loadBody();
+loadBody().catch(e=>{console.warn('body',e);loaderDone();});
+setTimeout(()=>{if(!GLB_OK)loaderDone();},60000);   /* never leave the loader up for good */
 requestAnimationFrame(loop);
 /* ===== Каталог BMW: все разделы K23 с номерами деталей, связаны с 3D ===== */
 const CAT=(function(){
